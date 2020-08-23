@@ -6,14 +6,18 @@ var bodyParser = require('body-parser');
 var logger = require('morgan');
 
 
-var router = require('./routes')(app);
+var User_router = require('./routes/api/user');
+var Version_router = require('./routes/api/version');
+
 var connect = require('./models');
+
+
 
 var app = express();
 connect();  //mongoDB 와 연결
 
 
-var port = 3000;
+var port = 8901;
 app.set('port', port);
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -34,8 +38,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 //라우팅
-// app.use('/', indexRouter);
-// app.use('/users', usersRouter);
+app.use('/api/version',Version_router);
+app.use('/api/user', User_router);
+
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
