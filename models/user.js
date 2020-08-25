@@ -14,32 +14,39 @@ const User = new Schema({
     //전체랭킹
     global_rank: {
         type: Number,
-        required: true,
         default: 0,
     },
     //토탈스코어
     total_score:{
         type:Number,
-        required: true,
         default: 0,
     },
     //총 죽은 횟수
     total_death: {
         type: Number,
-        required: true,
         default: 0,
     },
     //플레이타임
     playtime: {
         type: Number,
-        required: true,
         default: 0,
+    },
+    /*
+    //인 게임 비행시간
+    flight_time:{
+        type: Number,
+        default: 0,
+    } */
+    //프리미엄 여부
+    premium:{
+        type:Boolean,
+        default:false,
     },
     //크리스탈
     crystal: {
         type: Number,
-        required: true,
         default: 0,
+        min: 0,
     },
     //가입한 날짜
     created_date: {
@@ -50,6 +57,7 @@ const User = new Schema({
     latest_login: {
         type: Date,
     },
+    //어드민 여부
     admin:{
         type:Boolean,
         default: false,
@@ -57,21 +65,36 @@ const User = new Schema({
     //이 밑은 로컬파일로 저장되면 필요없음
     //옵션
     option: {
-        type: Schema.Types.Mixed
-    }, //String이 맞는지도 모르겠다
+        //음량
+        sound:{
+            type:Number,
+            default:100,
+            max: 100,
+            min: 0,
+        },
+        //국가(언어)
+        language: String,
+    },
     //보유중인 커스터마이징 종류
     customizing: {
-        type: Schema.Types.Mixed,
+        type: [String],
     },
     //사용자 클라이언트의 버전
     version: {
         type: String,
     },
+    //스테이지 즐겨찾기 목록
+    favorite:[String],
+    //스테이지 정렬 방식
+    sort_method:{
+        type:String,
+        default:"descend",
+    },
 });
 
-//메소드
-User.statics.findById = function(userid) {
-    return this.findOne({'googleid': userid}).exec();
+//구글아이디로 찾는 메서드 
+User.statics.findByGoogleid = function(userid) {
+    return this.findOne({'googleid': userid}); //.exec() 지웠음
 };
 
 module.exports = mongoose.model("User", User,"User");
