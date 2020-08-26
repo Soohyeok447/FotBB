@@ -76,9 +76,7 @@ const User = new Schema({
         language: String,
     },
     //보유중인 커스터마이징 종류
-    customizing: {
-        type: [String],
-    },
+    customizing: [String],
     //사용자 클라이언트의 버전
     version: {
         type: String,
@@ -95,6 +93,11 @@ const User = new Schema({
 //구글아이디로 찾는 메서드 
 User.statics.findByGoogleid = function(userid) {
     return this.findOne({'googleid': userid}); //.exec() 지웠음
+};
+
+User.methods.addCustomize = function (info) {
+    this.customizing.push({customizing: info.customizing},{upsert:true});
+    return this.save();
 };
 
 module.exports = mongoose.model("User", User,"User");

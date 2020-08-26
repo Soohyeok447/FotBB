@@ -36,7 +36,7 @@ router.post("/", async (req, res, next) => {
             jsonObj.user = user;
             jsonObj.user_stage = user_stage;
             res.status(201).json(jsonObj);
-        } catch {
+        } catch(err) {
             res.status(500).json({ error: "database failure" });
             console.error(err);
             next(err);
@@ -56,7 +56,7 @@ router.post("/", async (req, res, next) => {
             jsonObj.user_stage = user_stage;
             jsonObj.user = user;
             res.status(201).json(jsonObj);
-        } catch {
+        } catch(err) {
             res.status(500).json({ error: "database failure" });
             console.error(err);
             next(err);
@@ -74,59 +74,82 @@ router.post("/crystal", async (req, res, next) => {
             { new: true }
         ).setOptions({ runValidators: true });
         res.status(201).json(result.crystal);
-    } catch {
+    } catch(err) {
         res.status(500).json({ error: "database failure" });
-        console.error(error);
-        next(error);
+        console.error(err);
+        next(err);
     }
 });
 
-//유저 옵션 저장 라우터 (수정 필요) (에러있다 수정)
+//유저 옵션 저장 라우터
 router.post("/option", async (req, res, next) => {
     const { id, option } = req.body;
 
     try {
-        var result = await User.findOneAndUpdate(
+        await User.findOneAndUpdate(
             { googleid: id },
             { option: option },
             { new: true }
-        );
-        res.status(201).send("옵션수정 완료"); //?????무슨 차이지
-        /*
-        User.findOneAndUpdate(
-            { googleid: id },
-            { option: option },
-            { new: true }
-        );
+        ).setOptions({ runValidators: true });
         res.status(201).send("옵션수정 완료");
-        */
-    } catch {
+        
+    } catch(err) {
         res.status(500).json({ error: "database failure" });
-        console.error(error);
-        next(error);
+        console.error(err);
+        next(err);
     }
 
     
 });
 
 //유저 커스터마이징 저장 라우터 (수정 필요) 
-//(구매 시 TEXT데이터 POST요청 보내고 라우터실행, 
-// TEXT데이터(커스터마이징 이름)를 배열로 push)
-router.post("/customize", (req, res, next) => {
-    const { id, customizing } = req.body;
-    User.findOneAndUpdate(
-        { googleid: id },
-        { customizing: customizing },
-        { new: true }
-    )
-        .then((result) => {
-            res.status(201).json(result);
-        })
-        .catch((err) => {
-            res.status(500).json({ error: "database failure" });
-            console.error(err);
-            next(err);
-        });
+//이미 존재하는 커스텀일 경우 보유중이라는 메시지 전송하도록 수정 (상자깡, 크리스탈구매 둘 다)
+router.post("/customize",async (req, res, next) => {
+    const { id, customizing ,chest , reduce_crystal} = req.body;
+    try{
+        if (chest){
+            console.log("상자깡 처리");
+            var user = await User.find({googleid:id}); //비교용 find
+            //var compare_customizing = user.customizing;
+            var result = await User.findOneAndUpdate(
+                {googleid:id},
+                {$addToSet:{customizing: customizing}},
+                {new:true,upsert:true},
+        ).setOptions({ runValidators: true });
+            //var compare_result = (compare_customizing===result.customizing);
+             //if(compare_result){
+             //   res.status(201).send("이미 보유중인 커스텀입니다.");
+             //}else{
+               //  res.status(201).json(result.customizing);
+            //}
+            //res.status(201).json(result.customizing);
+        }else if(reduce_crystal>0){
+            console.log("크리스탈 처리");
+            var user = await User.find({ googleid: id })
+            var now_crystal = user[0].crystal;//현재 보유중인 크리스탈
+            if(now_crystal<reduce_crystal){
+                res.status(201).send("크리스탈이 부족합니다.");
+            }else{
+                var result = await User.findOneAndUpdate(
+                    {googleid:id},
+                    {
+                        $inc:{crystal: -reduce_crystal},
+                        $addToSet:{customizing: customizing}
+                    },
+                    {new:true,upsert:true},
+                )
+                
+                const jsonObj = {};
+                jsonObj.crystal = result.crystal;
+                jsonObj.customizing = result.customizing;
+                res.status(201).json(jsonObj);
+            }
+        }
+        }catch(err){
+        res.status(500).json({ error: "database failure" });
+        console.error(err);
+        next(err);
+    }
 });
 
 //유저 언어 설정 라우터

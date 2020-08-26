@@ -4,8 +4,18 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 const leaderboardSchema = new Schema({
-    Normal: [Schema.Types.Mixed],
-    Hard: [Schema.Types.Mixed],
+    Normal: [new Schema({
+        userid: Number,
+        cleartime: Number,
+        death: Number,
+        country: String,
+    })],
+    Hard: [new Schema({
+        userid: Number,
+        cleartime: Number,
+        death: Number,
+        country: String,
+    })],
 });
 
 module.exports = mongoose.model(

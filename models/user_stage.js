@@ -18,7 +18,13 @@ const User_stage= new Schema({
         type: String,
         required: true,
     },
-    stage:[Schema.Types.Mixed],
+    stage:[new Schema({
+        stage_number: Number,
+        unlock: Boolean,
+        N_cleartime: Number, //Normal
+        H_cleartime: Number, //hard
+        death:Number
+    })],
     /*  stage 데이터 폼
         stage_number: Number,
         unlock: Boolean, (필요없어보여서 우선 제거)
