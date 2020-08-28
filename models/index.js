@@ -34,7 +34,7 @@ module.exports = () => {
     });
 
     //스키마 연결부
-    require("./stage_leaderboard");
+    require("./stage");
     require("./leaderboard");
     require("./user_stage");
     require("./user");

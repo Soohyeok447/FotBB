@@ -19,8 +19,7 @@ const User_stage= new Schema({
         required: true,
     },
     stage:[new Schema({
-        stage_number: Number,
-        unlock: Boolean,
+        stage_name: String,
         N_cleartime: Number, //Normal
         H_cleartime: Number, //hard
         death:Number
