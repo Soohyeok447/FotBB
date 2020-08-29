@@ -16,7 +16,7 @@ const User = new Schema({
         type: Number,
         default: 0,
     },
-    //토탈스코어
+    //토탈스코어 (아직 미사용)
     total_score:{
         type:Number,
         default: 0,

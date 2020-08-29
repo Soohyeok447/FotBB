@@ -2,7 +2,6 @@ var express = require("express");
 
 var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
-const { json } = require("body-parser");
 var current_version = require("../version").version;
 
 const router = express.Router();
@@ -28,8 +27,8 @@ router.post("/", async (req, res, next) => {
                     stage_name: "startmusic",
                     N_cleartime: 0, //Normal
                     H_cleartime: 0, //hard
-                    death:0
-                    //unlock: true,
+                    N_death:0,
+                    H_death:0,
                 },
             });
             await user.save({ new: true });
@@ -189,7 +188,8 @@ router.post("/stage",async (req, res, next) => {
                         stage_name:stage_name,
                         N_cleartime:0,
                         H_cleartime:0,
-                        death:0
+                        N_death:0,
+                        H_death:0,
                     }}},
                     {new:true}
                     ).setOptions({ runValidators: true });

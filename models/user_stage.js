@@ -22,7 +22,8 @@ const User_stage= new Schema({
         stage_name: String,
         N_cleartime: Number, //Normal
         H_cleartime: Number, //hard
-        death:Number
+        N_death:Number,
+        H_death:Number,
     })],
     /*  stage 데이터 폼
         stage_number: Number,

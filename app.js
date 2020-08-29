@@ -6,10 +6,13 @@ var bodyParser = require('body-parser');
 var logger = require('morgan');
 
 
+var Stage = require("./models/stage");
+
 var User_router = require('./routes/api/user');
 var Version_router = require('./routes/api/version');
 var Clear_router = require('./routes/api/clear');
-//var Fail_router = require("./routes/api/fail");
+var Fail_router = require("./routes/api/fail");
+
 
 var connect = require('./models');
 
@@ -39,11 +42,27 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+/*
+var initialize = async(req,res,next)=>{
+  const stages = {startmusic,song1,song2}
+  for(song in stages){
+    let stage = new Stage({
+      stage_name:song,
+    })
+    await stage.save({ new: true });
+  }
+  console.log("진입");
+  next();
+}
+//stage 모델 초기화
+app.use(initialize)
+ */
+
 //라우팅
 app.use('/api/version',Version_router);
 app.use('/api/user', User_router);
 app.use('/api/clear',Clear_router);
-//app.use('/api/fail',Fail_router);
+app.use('/api/fail',Fail_router);
 
 
 
@@ -63,7 +82,7 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-app.listen(port, () => {
+app.listen(port, (req,res) => {
   // console.log(`Example app listening at http://localhost:${port}`)
 })
 
