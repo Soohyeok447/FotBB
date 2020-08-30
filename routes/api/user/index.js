@@ -2,13 +2,15 @@ var express = require("express");
 
 var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
+var Stage = require("../../../models/stage");
 var current_version = require("../version").version;
+
 
 const router = express.Router();
 
 //접속 처리 라우터 (클라이언트 접속 시 동기화용)
 router.post("/", async (req, res, next) => {
-    const { id } = req.body;
+    const { id ,country} = req.body;
     const jsonObj = {};
     var result = await User.exists({ googleid: id });
     //신규 유저
@@ -31,6 +33,24 @@ router.post("/", async (req, res, next) => {
                     H_death:0,
                 },
             });
+            await Stage.findOneAndUpdate(
+                {stage_name:"startmusic"},
+                {
+                    $addToSet: {
+                        Normal: {
+                            userid: id,
+                            cleartime: 0,
+                            death: 0,
+                            country: country,
+                        },
+                        Hard:{
+                            userid:id,
+                            cleartime: 0,
+                            death: 0,
+                            country: country,
+                        },
+                    },
+                },{new:true}).setOptions({ runValidators: true });
             await user.save({ new: true });
             await user_stage.save({ new: true });
             jsonObj.user = user;
@@ -170,7 +190,7 @@ router.post("/playtime", async (req, res, next) => {
 
 //stage인 앱 구매 (크리스탈)
 router.post("/stage",async (req, res, next) => {
-    const { id ,reduce_crystal , stage_name} = req.body;
+    const { id ,reduce_crystal , stage_name, country} = req.body;
     let user = await User.findOne({googleid:id}); //비교용 find
     let user_stage = await User_stage.findOne({userid:id});
     let has_stage = (user_stage.stage.filter(s=>s.stage_name === stage_name));
@@ -182,6 +202,26 @@ router.post("/stage",async (req, res, next) => {
             if(has_stage.length!==0){
                 res.status(201).send("보유중인 스테이지입니다.");
             }else{
+                //stage 모델 배열에 유저추가
+                await Stage.findOneAndUpdate(
+                    {stage_name:stage_name},
+                    {
+                        $addToSet: {
+                            Normal: {
+                                userid: id,
+                                cleartime: 0,
+                                death: 0,
+                                country: country,
+                            },
+                            Hard:{
+                                userid:id,
+                                cleartime: 0,
+                                death: 0,
+                                country: country,
+                            },
+                        },
+                    },{new:true}).setOptions({ runValidators: true });
+
                 let stage = await User_stage.findOneAndUpdate(
                     {userid:id},
                     {$addToSet: {stage:{
@@ -210,6 +250,36 @@ router.post("/stage",async (req, res, next) => {
         next(err);
     }
 });
+
+//premium 구매 라우터
+router.post("/premium", async (req, res, next) => {
+    const { id, reduce_crystal, premium } = req.body; //premium -> Boolean
+    try {
+        let user = await User.findOne({googleid:id}); //비교용 find
+        let now_crystal = user.crystal;//현재 보유중인 크리스탈
+        let check_premium = user.premium;
+
+        if(now_crystal<reduce_crystal){ //크리스탈 부족 시
+            res.status(201).send("크리스탈이 부족합니다.");
+        }else{
+            if(check_premium){ //프리미엄 유저 일 시
+                res.status(201).send("이미 프리미엄 유저입니다.")
+            }else{
+                var result = await User.findOneAndUpdate(
+                    { googleid: id },
+                    { $inc:{crystal: -reduce_crystal} ,premium: premium },
+                    { new: true }
+                ).setOptions({ runValidators: true });
+                res.status(201).json({"crystal":result.crystal,"premium":premium});
+            }
+        }    
+    } catch(err) {
+        res.status(500).json({ error: "database failure" });
+        console.error(err);
+        next(err);
+    }
+});
+
 
 
 //findbygoogleid 테스트용 라우터 async await 적용
@@ -240,35 +310,5 @@ router.post("/test2", async (req, res, next) => {
     }
     res.json(jsonObj);
 });
-
-
-/*
-//유저 언어 설정 라우터
-router.post("/language", async (req, res, next) => {
-    const { id, option } = req.body;
-    try{
-        console.log(`${id} , ${option.language}`);
-        
-        var result = await User.findOneAndUpdate(
-            { googleid: id},
-            { option: option },
-            { new: true }.setOptions({ runValidators: true })
-        )
-
-        res.status(201).json(result.option);
-    }catch(err){
-            res.status(500).json({ error: "database failure" });
-            console.error(err);
-            next(err);
-    }
-});
-*/
-
-
-
-
-
-
-
 
 module.exports = router;
