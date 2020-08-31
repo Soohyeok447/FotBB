@@ -10,6 +10,8 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const Stage = new Schema({
     stage_name:String,
+    composer:String,
+    popularity:Number,
     Normal: [new Schema({
         userid: String,
         cleartime: Number,
@@ -21,8 +23,10 @@ const Stage = new Schema({
         cleartime: Number,
         death: Number,
         country: String,
-    })],
+    })]},{ 
+        versionKey : false 
 });
+
 
 module.exports = mongoose.model(
     "Stage",

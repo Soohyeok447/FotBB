@@ -14,12 +14,14 @@ router.post("/", async (req, res, next) => {
         gametype,
         stage_name,
         country,
-        death, //(이거 user모델에서 받아오도록 수정)
         nextstage, //(만약 유니티에서 처리가 가능하다면 Boolean값으로)
     } = req.body;
+
+
+
     try {
         //유저 db 갱신
-        let user = await User.findOneAndUpdate(
+        await User.findOneAndUpdate(
             { googleid: id },
             {
                 $inc: {
@@ -88,8 +90,6 @@ router.post("/", async (req, res, next) => {
             // 왜냐하면 업데이트 death는 fail라우터에서 처리할 거기 때문에)
             //let user_stage = await User_stage.findOne({ userid: id }); //user_stage 에서 id로 찾기
             
-            console.log(stage);
-            
             //이전 클리어타임 확인용
             let stage_select = stage.Normal.filter( //stage_name으로 stage 선택
                 (s) => s.userid === id
@@ -125,7 +125,7 @@ router.post("/", async (req, res, next) => {
                 userindex = stage.Normal.findIndex((s) => s.userid === id);
                 //console.log(stage.Normal[userindex])
                 stage.Normal[userindex].cleartime = cleartime;
-                stage.Normal[userindex].death = death;
+                //stage.Normal[userindex].death = user_stage.N_death;
                 await stage.save({ new: true }); 
 
                 
@@ -172,7 +172,7 @@ router.post("/", async (req, res, next) => {
                     userindex = stage.Normal.findIndex((s) => s.userid === id);
                     //console.log(stage.Normal[userindex])
                     stage.Normal[userindex].cleartime = cleartime;
-                    stage.Normal[userindex].death = death;
+                    //stage.Normal[userindex].death = user_stage.N_death;
                     await stage.save({ new: true }); //신기록 갱신
                     
 
@@ -261,7 +261,7 @@ router.post("/", async (req, res, next) => {
                 userindex = stage.Hard.findIndex((s) => s.userid === id);
                 //console.log(stage.Normal[userindex])
                 stage.Hard[userindex].cleartime = cleartime;
-                stage.Hard[userindex].death = death;
+                //stage.Hard[userindex].death = user_stage.H_death;
                 await stage.save({ new: true }); 
 
 
@@ -307,7 +307,7 @@ router.post("/", async (req, res, next) => {
                     userindex = stage.Hard.findIndex((s) => s.userid === id);
                     //console.log(stage.Hard[userindex])
                     stage.Hard[userindex].cleartime = cleartime;
-                    stage.Hard[userindex].death = death;
+                    //stage.Hard[userindex].death = user_stage.H_death;
                     await stage.save({ new: true }); //신기록 갱신
                     
 

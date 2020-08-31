@@ -87,7 +87,8 @@ const User = new Schema({
     sort_method:{
         type:String,
         default:"descend",
-    },
+    }},{ 
+        versionKey : false 
 });
 
 //구글아이디로 찾는 메서드 

@@ -7,11 +7,13 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const leaderboardSchema = new Schema({
     //users스키마에서 가져온 id
+    
     userid: {
         type: String,
         required: true,
-    },
-});
+    }},{ 
+        versionKey : false 
+    },{ _id : false });
 
 module.exports = mongoose.model(
     "Leaderboard",
