@@ -13,7 +13,7 @@ const leaderboardSchema = new Schema({
         required: true,
     }},{ 
         versionKey : false 
-    },{ _id : false });
+    });
 
 module.exports = mongoose.model(
     "Leaderboard",

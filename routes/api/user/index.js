@@ -82,15 +82,18 @@ router.post("/", async (req, res, next) => {
             next(err);
         }
     }
+
+    //스테이지 목록 불러오기 ( 본인 기록 ) | 스테이지 별 랭킹 불러오기 (1회)
+
 });
 
 //크리스탈 처리 라우터 (크리스탈 구매)
 router.post("/crystal", async (req, res, next) => {
-    const { id, crystal } = req.body;
+    const { id, get_crystal } = req.body;
     try {
         var result = await User.findOneAndUpdate(
             { googleid: id },
-            { $inc: { crystal: crystal } },
+            { $inc: { crystal: get_crystal } },
             { new: true }
         ).setOptions({ runValidators: true });
         res.status(201).json(result.crystal);
@@ -195,6 +198,8 @@ router.post("/stage",async (req, res, next) => {
     let user_stage = await User_stage.findOne({userid:id});
     let has_stage = (user_stage.stage.filter(s=>s.stage_name === stage_name));
     let now_crystal = user.crystal;//현재 보유중인 크리스탈
+    //유저 country 알 수 있으면 받아오게 수정
+
     try{
         if(now_crystal<reduce_crystal){
             res.status(201).send("크리스탈이 부족합니다.");
@@ -260,10 +265,10 @@ router.post("/premium", async (req, res, next) => {
         let check_premium = user.premium;
 
         if(now_crystal<reduce_crystal){ //크리스탈 부족 시
-            res.status(201).send("크리스탈이 부족합니다.");
+            res.status(200).send("크리스탈이 부족합니다.");
         }else{
             if(check_premium){ //프리미엄 유저 일 시
-                res.status(201).send("이미 프리미엄 유저입니다.")
+                res.status(200).send("이미 프리미엄 유저입니다.")
             }else{
                 var result = await User.findOneAndUpdate(
                     { googleid: id },

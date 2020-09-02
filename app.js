@@ -4,6 +4,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
+var helmet = require('helmet')
 
 
 var Stage = require("./models/stage");
@@ -30,6 +31,9 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
+//helmet
+app.use(helmet());
+
 //내장된 body-parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

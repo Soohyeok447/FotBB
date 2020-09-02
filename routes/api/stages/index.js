@@ -65,7 +65,7 @@ router.post("/", async (req, res, next) => {
                 let select_composer = await Stage.find({composer:uniq_composer_array[s]});
                 composer_array.push(select_composer); //총 스테이지 목록
             }
-
+            
             //정렬방식 저장
             user.sort_method = sort_type;
             await user.save({new:true});

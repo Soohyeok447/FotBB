@@ -7,10 +7,17 @@ module.exports = () => {
             mongoose.set("debug", true);
         }
 
+        var DBurl = 'mongodb://soohyeok:asd123@localhost:27017/admin';
+
+
+        
         mongoose.connect(
-            "mongodb://soohyeok:asd123@localhost:27017/admin",
+            DBurl,
             {
                 dbName: "FotBB-DB",
+                useNewUrlParser: true ,
+                useCreateIndex: true,
+                useUnifiedTopology :true,
             },
             (error) => {
                 //마지막 인자(error) -> 연결 여부 확인
