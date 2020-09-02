@@ -86,7 +86,7 @@ const User = new Schema({
     //스테이지 정렬 방식
     sort_method:{
         type:String,
-        default:"descend",
+        default:"basic",
     }},{ 
         versionKey : false 
 });

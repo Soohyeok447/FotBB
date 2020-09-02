@@ -37,7 +37,9 @@ router.post("/", async (req, res, next) => {
                 stage_array.push(s.stage_name); //총 스테이지 목록
             })
 
-
+            //정렬방식 저장
+            user.sort_method = sort_type;
+            await user.save({new:true});
             res.status(201).json({"total_stage":stage_array,"user_stage":user_stage.stage});
             break;
         case "composer": //작곡가
@@ -64,6 +66,9 @@ router.post("/", async (req, res, next) => {
                 composer_array.push(select_composer); //총 스테이지 목록
             }
 
+            //정렬방식 저장
+            user.sort_method = sort_type;
+            await user.save({new:true});
             res.status(201).json({"composer_index":uniq_composer_array,"user_stage":composer_array});
             break;
         case "popularity_desc": //인기내림차순
@@ -85,6 +90,10 @@ router.post("/", async (req, res, next) => {
                 // 동률
                 return 0;
             });
+
+            //정렬방식 저장
+            user.sort_method = sort_type;
+            await user.save({new:true});
             res.status(201).json({"sorted_ranking":desc_popularity_array});
 
             break;
@@ -107,6 +116,9 @@ router.post("/", async (req, res, next) => {
                 // 동률
                 return 0;
             });
+                //정렬방식 저장
+            user.sort_method = sort_type;
+            await user.save({new:true});
             res.status(201).json({"sorted_ranking":asc_popularity_array});
 
         break;
@@ -119,7 +131,9 @@ router.post("/", async (req, res, next) => {
                 let search_favorite = await Stage.findOne({stage_name:user.favorite[s]})
                 stage_array.push(search_favorite);
             }
-
+            //정렬방식 저장
+            user.sort_method = sort_type;
+            await user.save({new:true});
             res.status(201).json(stage_array);
             break;
         default:
