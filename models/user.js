@@ -50,12 +50,12 @@ const User = new Schema({
     },
     //가입한 날짜
     created_date: {
-        type: Date,
-        default: Date.now,
+        type: String
+ 
     },
     //최근 접속 날짜
     latest_login: {
-        type: Date,
+        type: String
     },
     //어드민 여부
     admin:{

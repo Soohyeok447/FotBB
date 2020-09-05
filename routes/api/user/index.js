@@ -1,9 +1,12 @@
 var express = require("express");
+var moment = require('moment');
 
 var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 var current_version = require("../version").version;
+
+
 
 
 const router = express.Router();
@@ -16,9 +19,18 @@ router.post("/", async (req, res, next) => {
     //신규 유저
     if (result === false) {
         try {
+            //moment format
+            var day = new Date();
+            var day_format = 'YYYY.MM.DD HH:mm:ss';
+            var now = moment(day).format(day_format);
+
+
+
+
             var user = new User({
                 googleid: id,
-                latest_login: Date.now(),
+                created_date: now,
+                latest_login: now,   //Date.now(),
                 version: current_version,
                 //crystal: crystal,
                 //...나머지는 default
@@ -64,13 +76,20 @@ router.post("/", async (req, res, next) => {
     } else {
         //이미 등록된 유저
         try {
+            //moment format
+            var day = new Date();
+            var day_format = 'YYYY.MM.DD HH:mm:ss';
+            var now = moment(day).format(day_format);
+
+
+
             var user_stage = await User_stage.findOne()
                 .where("userid")
                 .equals(id);
 
             var user = await User.findOneAndUpdate(
                 { googleid: id },
-                { latest_login: Date.now() },
+                { latest_login: now },
                 { new: true }
             ).setOptions({ runValidators: true });
             jsonObj.user_stage = user_stage;
