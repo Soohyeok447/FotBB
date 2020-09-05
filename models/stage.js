@@ -11,7 +11,9 @@ const { Schema } = mongoose;
 const Stage = new Schema({
     stage_name:String,
     composer:String,
-    popularity:Number,
+    playcount:Number,
+    total_death:Number,
+    total_clear:Number,
     Normal: [new Schema({
         userid: String,
         cleartime: Number,

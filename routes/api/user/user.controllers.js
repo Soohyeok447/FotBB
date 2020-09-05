@@ -1,4 +1,3 @@
-var express = require("express");
 var moment = require('moment');
 
 var User = require("../../../models/user");
@@ -7,12 +6,8 @@ var Stage = require("../../../models/stage");
 var current_version = require("../version").version;
 
 
-
-
-const router = express.Router();
-
 //접속 처리 라우터 (클라이언트 접속 시 동기화용)
-router.post("/", async (req, res, next) => {
+exports.user_login =  async (req, res, next) => {
     const { id ,country} = req.body;
     const jsonObj = {};
     var result = await User.exists({ googleid: id });
@@ -102,13 +97,10 @@ router.post("/", async (req, res, next) => {
             next(err);
         }
     }
-
-    //스테이지 목록 불러오기 ( 본인 기록 ) | 스테이지 별 랭킹 불러오기 (1회)
-
-});
+}
 
 //크리스탈 처리 라우터 (크리스탈 구매)
-router.post("/crystal", async (req, res, next) => {
+exports.crystal = async (req, res, next) => {
     const { id, get_crystal } = req.body;
     try {
         var result = await User.findOneAndUpdate(
@@ -122,10 +114,10 @@ router.post("/crystal", async (req, res, next) => {
         console.error(err);
         next(err);
     }
-});
+};
 
 //유저 옵션 저장 라우터 (볼륨, 언어)
-router.post("/option", async (req, res, next) => {
+exports.option = async (req, res, next) => {
     const { id, option } = req.body;
 
     try {
@@ -141,12 +133,10 @@ router.post("/option", async (req, res, next) => {
         console.error(err);
         next(err);
     }
+}
 
-    
-});
-
-//유저 커스터마이징 저장 라우터
-router.post("/customizing",async (req, res, next) => {
+//커스터마이징 처리
+exports.customizing = async (req, res, next) => {
     const { id, customizing ,chest , reduce_crystal} = req.body;
     let user = await User.findOne({googleid:id}); //비교용 find
     let user_cus = user.customizing;
@@ -190,12 +180,10 @@ router.post("/customizing",async (req, res, next) => {
         console.error(err);
         next(err);
     }
-});
+}
 
-
-//총 플레이 타임 갱신 (수정 해야 할 수 있음)
-// (총 비행 시간)으로 변경 가능
-router.post("/playtime", async (req, res, next) => {
+//플레이타임
+exports.playtime = async (req, res, next) => {
     const { id, playtime } = req.body;
     try{
         var user = await User.findOneAndUpdate(
@@ -209,10 +197,10 @@ router.post("/playtime", async (req, res, next) => {
         console.error(err);
         next(err);
     };
-});
+}
 
-//stage인 앱 구매 (크리스탈)
-router.post("/stage",async (req, res, next) => {
+//스테이지 언락
+exports.stage = async (req, res, next) => {
     const { id ,reduce_crystal , stage_name} = req.body;
     let user = await User.findOne({googleid:id}); //비교용 find
     let user_stage = await User_stage.findOne({userid:id});
@@ -272,10 +260,10 @@ router.post("/stage",async (req, res, next) => {
         console.error(err);
         next(err);
     }
-});
+}
 
-//premium 구매 라우터
-router.post("/premium", async (req, res, next) => {
+//프리미엄 구매
+exports.premium = async (req, res, next) => {
     const { id, reduce_crystal, premium } = req.body; //premium -> Boolean
     try {
         let user = await User.findOne({googleid:id}); //비교용 find
@@ -301,6 +289,4 @@ router.post("/premium", async (req, res, next) => {
         console.error(err);
         next(err);
     }
-});
-
-module.exports = router;
+}

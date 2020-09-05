@@ -1,12 +1,23 @@
-var express = require("express");
-
 var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 
-const router = express.Router();
 
-router.post("/", async (req, res, next) => {
+//compare with nextuser
+var nextuser = (sorted_ranking,ranking,previous_cleartime)=>{
+    //내 바로 다음 랭커 기록 찾기
+    let compare_with_me = sorted_ranking[ranking-2];
+    console.log(compare_with_me);
+    if(compare_with_me<0){
+        console.log("1등입니다.")
+        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
+    }else{ //1등이 아니면 바로 윗 랭크 기록 반환
+        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+    }
+}
+
+//클리어 시
+exports.clear = async (req, res, next) => {
     const {
         id,
         get_crystal,
@@ -16,8 +27,6 @@ router.post("/", async (req, res, next) => {
         country,
         nextstage, //(만약 유니티에서 처리가 가능하다면 Boolean값으로)
     } = req.body;
-
-
 
     try {
         //유저 db 갱신
@@ -31,11 +40,6 @@ router.post("/", async (req, res, next) => {
             },
             { new: true }
         ).setOptions({ runValidators: true });
-
-
-
-
-
 
         //다음 스테이지 언락  (유니티에서 처리 가능해보임) 
         //처리가 가능하다면 true false 여부만 판단해서 스테이지등록
@@ -84,8 +88,13 @@ router.post("/", async (req, res, next) => {
         //유저 stage db , stage 모델 갱신
         let stage = await Stage.findOne({stage_name:stage_name});
 
+        
+
         if (gametype === "Normal") {
             console.log("Normal 진입");
+
+            //total_clear 갱신
+            stage.total_clear++;
             // (death 변수는 user_stage 에서 가져와서 그대로 
             // 왜냐하면 업데이트 death는 fail라우터에서 처리할 거기 때문에)
             //let user_stage = await User_stage.findOne({ userid: id }); //user_stage 에서 id로 찾기
@@ -121,11 +130,12 @@ router.post("/", async (req, res, next) => {
                 await user_stage.save({ new: true }); //user_stage 모델에 cleartime 갱신
                 
                 //랭킹등록 
-                let stage = await Stage.findOne( { stage_name: stage_name});
+                //let stage = await Stage.findOne( { stage_name: stage_name});
                 userindex = stage.Normal.findIndex((s) => s.userid === id);
                 //console.log(stage.Normal[userindex])
                 stage.Normal[userindex].cleartime = cleartime;
                 //stage.Normal[userindex].death = user_stage.N_death;
+                
                 await stage.save({ new: true }); 
 
                 
@@ -148,9 +158,16 @@ router.post("/", async (req, res, next) => {
                 //등수 찾기
                 let ranking = (sorted_ranking.findIndex((s) => s.userid === id)+1);
                 console.log(cleartime,"초  ",ranking,"등입니다.");
-                res.status(201).json({"ranking": `${ranking}`});
-                
-                
+
+                //내 바로 다음 랭커 기록 찾기
+                let compare_with_me = sorted_ranking[ranking-2];
+                console.log(compare_with_me);
+                if(compare_with_me<0){
+                    console.log("1등입니다.")
+                    res.status(201).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                }else{ //1등이 아니면 바로 윗 랭크 기록 반환
+                    res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                }
             }else{ //첫 플레이가 아닐경우(기록 존재)
                 console.log("첫플레이가 아닙니다.");
                 //이제 기록 갱신과 갱신이 아닌경우 처리
@@ -173,6 +190,7 @@ router.post("/", async (req, res, next) => {
                     //console.log(stage.Normal[userindex])
                     stage.Normal[userindex].cleartime = cleartime;
                     //stage.Normal[userindex].death = user_stage.N_death;
+
                     await stage.save({ new: true }); //신기록 갱신
                     
 
@@ -194,8 +212,16 @@ router.post("/", async (req, res, next) => {
                     //등수 찾기
                     let ranking = (sorted_ranking.findIndex((s) => s.userid === id)+1);
                     console.log("기록 갱신  ",cleartime,"초  ",ranking,"등입니다.");
-                    res.status(201).json({"ranking": `${ranking}`});
-                
+
+                    //내 바로 다음 랭커 기록 찾기
+                    let compare_with_me = sorted_ranking[ranking-2];
+                    console.log(compare_with_me);
+                    if(compare_with_me<0){
+                        console.log("1등입니다.")
+                        res.status(201).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                    }else{ //1등이 아니면 바로 윗 랭크 기록 반환
+                        res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                    }
                 }else{ //기록 갱신 실패했을 경우
                     console.log("기록갱신 실패했습니다.");
                     let stage = await Stage.findOne( { stage_name: stage_name});
@@ -215,18 +241,29 @@ router.post("/", async (req, res, next) => {
                         // 동률
                         return 0;
                     });
-                    console.log(sorted_ranking);
 
                     //등수 찾기
                     let ranking = (sorted_ranking.findIndex((s) => s.userid === id)+1);
                     console.log("갱신실패 ",previous_cleartime,"초  ",ranking,"등입니다. 현재 초 :",cleartime);
-                    res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`});
+                    
+                    //내 바로 다음 랭커 기록 찾기
+                    let compare_with_me = sorted_ranking[ranking-2];
+                    console.log(compare_with_me);
+                    if(compare_with_me<0){
+                        console.log("1등입니다.")
+                        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
+                    }else{ //1등이 아니면 바로 윗 랭크 기록 반환
+                        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                    }
+                    
+                    
                 }
             }
         }else{ //Hard
             console.log("Hard 진입");
 
-
+            //total_clear 갱신
+            stage.total_clear++;
             //let user_stage = await User_stage.findOne({ userid: id }); //user_stage 에서 id로 찾기
             
             //stage 모델에 Hard 클리어 타임 갱신
@@ -242,7 +279,7 @@ router.post("/", async (req, res, next) => {
             let user_stage = await User_stage.findOne( { userid: id});
             let userindex = user_stage.stage.findIndex((s) => s.stage_name === stage_name);
             //console.log(stage.Normal[userindex])
-           
+            await stage.save({new:true}); 
 
 
 
@@ -256,12 +293,14 @@ router.post("/", async (req, res, next) => {
 
                 await user_stage.save({ new: true }); //user_stage 모델에 cleartime 갱신
                 
+                
 
-                let stage = await Stage.findOne( { stage_name: stage_name});
+                //let stage = await Stage.findOne( { stage_name: stage_name});
                 userindex = stage.Hard.findIndex((s) => s.userid === id);
                 //console.log(stage.Normal[userindex])
                 stage.Hard[userindex].cleartime = cleartime;
                 //stage.Hard[userindex].death = user_stage.H_death;
+                
                 await stage.save({ new: true }); 
 
 
@@ -284,8 +323,16 @@ router.post("/", async (req, res, next) => {
                 //등수 찾기
                 let ranking = (sorted_ranking.findIndex((s) => s.userid === id)+1);
                 console.log(cleartime,"초  ",ranking,"등입니다.");
-                res.status(201).json({"ranking": `${ranking}`});
-                
+
+                //내 바로 다음 랭커 기록 찾기
+                let compare_with_me = sorted_ranking[ranking-2];
+                console.log(compare_with_me);
+                if(compare_with_me<0){
+                    console.log("1등입니다.")
+                    res.status(201).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                }else{ //1등이 아니면 바로 윗 랭크 기록 반환
+                    res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                }
             }else{ //첫 플레이가 아닐경우(기록 존재)
                 console.log("첫플레이가 아닙니다.");
                 //이제 기록 갱신과 갱신이 아닌경우 처리
@@ -303,7 +350,7 @@ router.post("/", async (req, res, next) => {
                     user_stage.stage[userindex].H_cleartime = cleartime;
 
                     //랭킹등록 
-                    let stage = await Stage.findOne( { stage_name: stage_name});
+                    //let stage = await Stage.findOne( { stage_name: stage_name});
                     userindex = stage.Hard.findIndex((s) => s.userid === id);
                     //console.log(stage.Hard[userindex])
                     stage.Hard[userindex].cleartime = cleartime;
@@ -329,7 +376,17 @@ router.post("/", async (req, res, next) => {
                     //등수 찾기
                     let ranking = (sorted_ranking.findIndex((s) => s.userid === id)+1);
                     console.log("기록 갱신  ",cleartime,"초  ",ranking,"등입니다.");
-                    res.status(201).json({"ranking": `${ranking}`});
+
+                     //내 바로 다음 랭커 기록 찾기
+                     let compare_with_me = (sorted_ranking[ranking-2]);
+                     if((ranking-2)<0){
+                         console.log("1등입니다.")
+                         res.status(201).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                     }else{ //1등이 아니면 바로 윗 랭크 기록 반환
+                         res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                     }
+
+                   
 
                 
                 }else{ //기록 갱신 실패했을 경우
@@ -350,12 +407,22 @@ router.post("/", async (req, res, next) => {
                         // 동률
                         return 0;
                     });
-                    console.log(sorted_ranking);
+
 
                     //등수 찾기
                     let ranking = (sorted_ranking.findIndex((s) => s.userid === id)+1);
                     console.log("갱신실패 ",previous_cleartime,"초  ",ranking,"등입니다. 현재 초 :",cleartime);
-                    res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`});
+
+                    //내 바로 다음 랭커 기록 찾기
+                    let compare_with_me = (sorted_ranking[ranking-2]);
+                    if((ranking-2)<0){
+                        console.log("1등입니다.")
+                        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
+                    }else{ //1등이 아니면 바로 윗 랭크 기록 반환
+                        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                    }
+
+                   
                 }
             }
         }
@@ -364,5 +431,4 @@ router.post("/", async (req, res, next) => {
         console.error(err);
         next(err);
     }
-});
-module.exports = router;
+}

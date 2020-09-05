@@ -5,16 +5,16 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var logger = require('morgan');
 var helmet = require('helmet')
-var moment = require('moment');
+
 
 var Stage = require("./models/stage");
 
-var User_router = require('./routes/api/user');
+var User_router = require('./routes/api/user/user.routes');
 var Version_router = require('./routes/api/version');
-var Clear_router = require('./routes/api/clear');
-var Fail_router = require("./routes/api/fail");
-var Stage_router = require("./routes/api/stages");
-var Play_router = require("./routes/api/play");
+var Clear_router = require('./routes/api/clear/clear.routes');
+var Fail_router = require("./routes/api/fail/fail.routes");
+var Stage_router = require("./routes/api/stages/stages.routes");
+var Play_router = require("./routes/api/play/play.routes");
 
 var connect = require('./models');
 

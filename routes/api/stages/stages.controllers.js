@@ -1,13 +1,8 @@
-var express = require("express");
-
 var User = require("../../../models/user");
-var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 
-const router = express.Router();
-
-//메인메뉴에서 stage버튼을 누를 시,
-router.post("/", async (req, res, next) => {
+//메인메뉴에서 stage버튼을 누를 시 & 정렬방식 저장
+exports.stages = async (req, res, next) => {
     const {id ,sort_type} = req.body;
     console.log(id);
     let user = await User.findOne({googleid:id});
@@ -49,10 +44,10 @@ router.post("/", async (req, res, next) => {
         default:
             res.status(200).send("잘못된 정렬 타입입니다.")
     }
-});
+}
 
-//스테이지 창에서 어떤 곡을 눌렀을 때
-router.post("/stage", async (req,res,next)=>{
+//스테이지목록에서 한 스테이지 눌렀을 때 랭킹 받아오기
+exports.stage = async (req,res,next)=>{
     const {id,stage_name} = req.body;
     try{
         const jsonObj = {};
@@ -167,10 +162,11 @@ router.post("/stage", async (req,res,next)=>{
         next(err);
     }
     
-});
+}
 
-//즐겨찾기 추가
-router.post("/favorite", async(req,res,next)=>{
+
+//스테이지 즐겨찾기 추가
+exports.favorite = async(req,res,next)=>{
     const {id,stage_name,update_type} = req.body;
     let user = await User.findOne({googleid:id});
     try{
@@ -204,6 +200,4 @@ router.post("/favorite", async(req,res,next)=>{
         console.error(err);
         next(err);
     }
-});
-
-module.exports = router;
+}
