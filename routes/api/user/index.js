@@ -24,13 +24,11 @@ router.post("/", async (req, res, next) => {
             var day_format = 'YYYY.MM.DD HH:mm:ss';
             var now = moment(day).format(day_format);
 
-
-
-
             var user = new User({
                 googleid: id,
                 created_date: now,
                 latest_login: now,   //Date.now(),
+                country:country,
                 version: current_version,
                 //crystal: crystal,
                 //...나머지는 default
@@ -81,8 +79,11 @@ router.post("/", async (req, res, next) => {
             var day_format = 'YYYY.MM.DD HH:mm:ss';
             var now = moment(day).format(day_format);
 
-
-
+            var user = await User.findOneAndUpdate(
+                {googleid:id},
+                {stage_checked:[]},
+                {new:true}).setOptions({ runValidators: true });
+            
             var user_stage = await User_stage.findOne()
                 .where("userid")
                 .equals(id);
@@ -212,7 +213,7 @@ router.post("/playtime", async (req, res, next) => {
 
 //stage인 앱 구매 (크리스탈)
 router.post("/stage",async (req, res, next) => {
-    const { id ,reduce_crystal , stage_name, country} = req.body;
+    const { id ,reduce_crystal , stage_name} = req.body;
     let user = await User.findOne({googleid:id}); //비교용 find
     let user_stage = await User_stage.findOne({userid:id});
     let has_stage = (user_stage.stage.filter(s=>s.stage_name === stage_name));
@@ -235,18 +236,18 @@ router.post("/stage",async (req, res, next) => {
                                 userid: id,
                                 cleartime: 0,
                                 death: 0,
-                                country: country,
+                                country: user.country,
                             },
                             Hard:{
                                 userid:id,
                                 cleartime: 0,
                                 death: 0,
-                                country: country,
+                                country: user.country,
                             },
                         },
                     },{new:true}).setOptions({ runValidators: true });
 
-                let stage = await User_stage.findOneAndUpdate(
+                await User_stage.findOneAndUpdate(
                     {userid:id},
                     {$addToSet: {stage:{
                         stage_name:stage_name,
@@ -257,15 +258,13 @@ router.post("/stage",async (req, res, next) => {
                     }}},
                     {new:true}
                     ).setOptions({ runValidators: true });
-                let user = await User.findOneAndUpdate(
-                        {googleid:id},
-                        {$inc:{crystal: -reduce_crystal},},
-                        {new:true,upsert:true},
-                    ).setOptions({ runValidators: true });           
-                    const jsonObj = {};
-                    jsonObj.crystal = user.crystal;
-                    jsonObj.user_stage = stage;
-                    res.status(201).json(jsonObj);
+                await User.findOneAndUpdate(
+                    {googleid:id},
+                    {$inc:{crystal: -reduce_crystal},},
+                    {new:true,upsert:true},
+                ).setOptions({ runValidators: true });           
+                    
+                res.status(201).send("스테이지 언락 완료");
             } 
         }      
     }catch(err){
@@ -302,37 +301,6 @@ router.post("/premium", async (req, res, next) => {
         console.error(err);
         next(err);
     }
-});
-
-
-
-//findbygoogleid 테스트용 라우터 async await 적용
-router.post("/test1", async (req, res, next) => {
-    const { id } = req.body;
-    const jsonObj = {};
-    try {
-        var result = await User.findByGoogleid(id);
-        jsonObj.user = result;
-        console.log(jsonObj);
-    } catch (error) {
-        consolg.log(error);
-    }
-    res.json(jsonObj);
-});
-
-//쿼리빌더 테스트용 라우터
-router.post("/test2", async (req, res, next) => {
-    const { id } = req.body;
-    const jsonObj = {};
-    try {
-        var result = await User.find().where("googleid").equals(id);
-
-        jsonObj.user = result;
-        console.log(jsonObj);
-    } catch (error) {
-        consolg.log(error);
-    }
-    res.json(jsonObj);
 });
 
 module.exports = router;

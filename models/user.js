@@ -75,6 +75,7 @@ const User = new Schema({
         //국가(언어)
         language: String,
     },
+    country:String,
     //보유중인 커스터마이징 종류
     customizing: [String],
     //사용자 클라이언트의 버전
@@ -87,7 +88,9 @@ const User = new Schema({
     sort_method:{
         type:String,
         default:"basic",
-    }},{ 
+    },
+    stage_checked :[String]
+    },{ 
         versionKey : false 
 });
 
