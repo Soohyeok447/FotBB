@@ -1,0 +1,25 @@
+{
+	"gametype":"Hard",
+	"nextstage":"song1",
+	"id":"ksh",
+	"stage_name":"startmusic",
+	"cleartime":44,
+	"get_crystal":3,
+	"reduce_crystal":0,
+	"playtime":60,
+	"customizing":"cus3",
+	"country":"southkorea",
+	"premium":true,
+	"death":0,
+	"sort_type":"total",
+	"update_type":"remove",
+	"option":{
+		"sound":50,
+		"language":"korean"
+	},
+	"chest":true
+}
+
+
+set NODE_ENV=production
+set NODE_ENV=deveolopment

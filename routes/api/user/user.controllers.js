@@ -1,5 +1,5 @@
 var moment = require('moment');
-
+var {logger,payment,userinfo} = require('../../../config/logger');
 var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
@@ -60,10 +60,13 @@ exports.user_login =  async (req, res, next) => {
             await user_stage.save({ new: true });
             jsonObj.user = user;
             jsonObj.user_stage = user_stage;
+            logger.info(`신규 유저 등록 : ${id}`);
+            userinfo.info(`신규 유저 등록 : ${id}`);
             res.status(201).json(jsonObj);
         } catch(err) {
             res.status(500).json({ error: "database failure" });
-            console.error(err);
+            logger.error(`신규 유저 등록 에러: ${id} [${err}]`);
+            userinfo.error(`신규 유저 등록 에러: ${id} [${err}]`);
             next(err);
         }
     } else {
@@ -90,10 +93,13 @@ exports.user_login =  async (req, res, next) => {
             ).setOptions({ runValidators: true });
             jsonObj.user_stage = user_stage;
             jsonObj.user = user;
+            logger.info(`${id} 가 로그인 했습니다.`);
+            userinfo.info(`${id} 가 로그인 했습니다.`);
             res.status(201).json(jsonObj);
         } catch(err) {
             res.status(500).json({ error: "database failure" });
-            console.error(err);
+            logger.error(`신규 유저 로그인 에러: ${id} [${err}]`);
+            userinfo.error(`신규 유저 로그인 에러: ${id} [${err}]`);
             next(err);
         }
     }
@@ -108,10 +114,13 @@ exports.crystal = async (req, res, next) => {
             { $inc: { crystal: get_crystal } },
             { new: true }
         ).setOptions({ runValidators: true });
+        logger.info(`${id} 가 크리스탈 ${get_crystal}개를 구매했습니다.`);
+        payment.info(`${id} 가 크리스탈 ${get_crystal}개를 구매했습니다.`);
         res.status(201).json(result.crystal);
     } catch(err) {
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`크리스탈 구매 에러: ${id} [${err}]`);
+        payment.error(`크리스탈 구매 에러: ${id} [${err}]`);
         next(err);
     }
 };
@@ -130,7 +139,7 @@ exports.option = async (req, res, next) => {
         
     } catch(err) {
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`옵션 설정 에러: ${id} [${err}]`);
         next(err);
     }
 }
@@ -152,6 +161,8 @@ exports.customizing = async (req, res, next) => {
                     {$addToSet:{customizing: customizing}},
                     {new:true,upsert:true},
                 ).setOptions({ runValidators: true });
+                logger.info(`${id} 가 커스텀 ${customizing}을(를) 상자깡으로 획득했습니다.`);
+                userinfo.info(`${id} 가 커스텀 ${customizing}을(를) 상자깡으로 획득했습니다.`);
                 res.status(201).json(result.customizing);
             }
         }else if(reduce_crystal>0){ //크리스탈 인 앱 결제
@@ -172,17 +183,20 @@ exports.customizing = async (req, res, next) => {
                 const jsonObj = {};
                 jsonObj.crystal = result.crystal;
                 jsonObj.customizing = result.customizing;
+                logger.info(`${id} 가 커스텀 ${customizing}을(를) 크리스탈로 획득했습니다.`);
+                payment.info(`${id} 가 커스텀 ${customizing}을(를) 크리스탈로 획득했습니다.`);
                 res.status(201).json(jsonObj);
             }
         }
         }catch(err){
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`커스텀 구매 에러: ${id} [${err}]`);
+        payment.error(`커스텀 구매 에러: ${id} [${err}]`);
         next(err);
     }
 }
 
-//플레이타임
+//플레이타임 (수정 필요)
 exports.playtime = async (req, res, next) => {
     const { id, playtime } = req.body;
     try{
@@ -194,7 +208,7 @@ exports.playtime = async (req, res, next) => {
         res.status(201).json(user.playtime);
     }catch(err){
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`플레이타임 설정 에러: ${id} [${err}]`);
         next(err);
     };
 }
@@ -251,13 +265,15 @@ exports.stage = async (req, res, next) => {
                     {$inc:{crystal: -reduce_crystal},},
                     {new:true,upsert:true},
                 ).setOptions({ runValidators: true });           
-                    
+                logger.info(`${id} 가 스테이지 ${stage_name}을(를) 크리스탈로 획득했습니다.`);
+                payment.info(`${id} 가 스테이지 ${stage_name}을(를) 크리스탈로 획득했습니다.`);
                 res.status(201).send("스테이지 언락 완료");
             } 
         }      
     }catch(err){
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`스테이지 구매 에러: ${id} [${err}]`);
+        payment.error(`스테이지 구매 에러: ${id} [${err}]`);
         next(err);
     }
 }
@@ -281,12 +297,15 @@ exports.premium = async (req, res, next) => {
                     { $inc:{crystal: -reduce_crystal} ,premium: premium },
                     { new: true }
                 ).setOptions({ runValidators: true });
+                logger.info(`${id} 가 프리미엄을 구매했습니다.`);
+                payment.info(`${id} 가 프리미엄을 구매했습니다.`);
                 res.status(201).json({"crystal":result.crystal,"premium":premium});
             }
         }    
     } catch(err) {
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`프리미엄 구매 에러: ${id} [${err}]`);
+        payment.error(`프리미엄 구매 에러: ${id} [${err}]`);
         next(err);
     }
 }

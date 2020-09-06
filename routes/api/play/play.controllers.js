@@ -1,7 +1,7 @@
 
 
 var Stage = require("../../../models/stage");
-
+var {logger,play} = require('../../../config/logger');
 
 //스테이지 플레이 횟수 +1
 exports.playcount_up = async (req, res, next) => {
@@ -10,10 +10,11 @@ exports.playcount_up = async (req, res, next) => {
         let selected_stage = await Stage.findOne({stage_name});
         selected_stage.playcount++;
         await selected_stage.save({new:true});
+        logger.info(`스테이지${stage_name} 플레이됨.`);
         res.status(201).json({"playcount":selected_stage.playcount});
     }catch (err) {
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`스테이지 플레이 에러: ${stage_name} [${err}]`);
         next(err);
     }
 }

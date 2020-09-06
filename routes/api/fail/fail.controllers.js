@@ -2,6 +2,8 @@ var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 
+var {logger,play} = require('../../../config/logger');
+
 //죽으면 death 갱신
 exports.death_up = async (req, res, next) => {
     const {id, playtime, stage_name, gametype} = req.body
@@ -42,19 +44,22 @@ exports.death_up = async (req, res, next) => {
             
             stage.Normal[userindex].death++;  //Normal death 갱신
             await stage.save({ new: true });
-
+            logger.info(`${id} 가 노말 ${stage_name} 실패.`);
+            play.info(`${id} 가 노말 ${stage_name} 실패.`);
             res.status(201).json({"total_death":user.total_death,"stage_total_death":stage.total_death,"Normal_death":stage.Normal[userindex].death});
         }else{ //Hard
             var userindex = stage.Hard.findIndex((s) => s.userid === id);
 
             stage.Hard[userindex].death++;
             await stage.save({ new: true }); //Hard death 갱신
-
+            logger.info(`${id} 가 하드 ${stage_name} 실패.`);
+            play.info(`${id} 가 하드 ${stage_name} 실패.`);
             res.status(201).json({"total_death":user.total_death,"stage_total_death":stage.total_death,"Hard_death":stage.Hard[userindex].death});
         }       
     }catch (err) {
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`스테이지 fail 에러: ${id} [${err}]`);
+        play.error(`스테이지 fail 에러: ${id} [${err}]`);
         next(err);
     }
 }

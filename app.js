@@ -3,7 +3,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var logger = require('morgan');
+var morgan = require('morgan');
 var helmet = require('helmet')
 
 
@@ -30,7 +30,15 @@ app.set('port', port);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-app.use(logger('dev'));
+
+
+if(process.env.NODE_ENV === 'production'){ //배포환경
+  app.use(morgan('combined', {
+    skip: (req, res)=>{ return res.statusCode < 400 } //에러 말고는 콘솔에 안찍겠다.
+  }))
+}else{ //개발환경
+  app.use(morgan('dev'));
+}
 //helmet
 app.use(helmet());
 

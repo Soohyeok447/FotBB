@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+require('dotenv').config();
 
 module.exports = () => {
     //connect 함수
@@ -7,7 +8,7 @@ module.exports = () => {
             mongoose.set("debug", true);
         }
 
-        var DBurl = 'mongodb://soohyeok:asd123@localhost:27017/admin';
+        var DBurl = `mongodb://soohyeok:${process.env.DB_PASSWORD}@localhost:27017/admin`;
 
 
         
@@ -18,6 +19,7 @@ module.exports = () => {
                 useNewUrlParser: true ,
                 useCreateIndex: true,
                 useUnifiedTopology :true,
+                useFindAndModify: false 
             },
             (error) => {
                 //마지막 인자(error) -> 연결 여부 확인
@@ -40,6 +42,8 @@ module.exports = () => {
         console.error("disconnected. try connect to FotBB");
     });
 
+    
+    
     //스키마 연결부
     require("./stage");
     require("./leaderboard");

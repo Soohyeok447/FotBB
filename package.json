@@ -3,14 +3,17 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www"
+    "start": "cross-env NODE_ENV=production PORT=80 pm2 start app.js -i 0",
+    "dev": "nodemon app"
   },
   "dependencies": {
     "JSON": "^1.0.0",
     "app-root-path": "^3.0.0",
     "body-parser": "^1.19.0",
     "cookie-parser": "~1.4.4",
+    "cross-env": "^7.0.2",
     "debug": "~2.6.9",
+    "dotenv": "^8.2.0",
     "ejs": "~2.6.1",
     "express": "~4.16.1",
     "helmet": "^4.1.0",

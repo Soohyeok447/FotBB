@@ -1,5 +1,7 @@
 var User = require("../../../models/user");
 var Stage = require("../../../models/stage");
+var {logger} = require('../../../config/logger');
+
 
 //메인메뉴에서 stage버튼을 누를 시 & 정렬방식 저장
 exports.stages = async (req, res, next) => {
@@ -152,13 +154,13 @@ exports.stage = async (req,res,next)=>{
             jsonObj.country_Hard_ranking = my_country_Hard_ranking;
 
             res.status(201).json(jsonObj);
-            
+            logger.info(`${id} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
         }else{ //스테이지를 불러온적이 있을 때,
             res.status(200).send("이미 불러온 적 있습니다.")
         }
     }catch(err){
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`${id} 가 스테이지 ${stage_name}의 랭킹로딩에 실패 [${err}]`)
         next(err);
     }
     
@@ -197,7 +199,7 @@ exports.favorite = async(req,res,next)=>{
         }
     }catch(err){
         res.status(500).json({error : "db failure"});
-        console.error(err);
+        logger.error(`${id} 가 스테이지 ${stage_name}의 즐겨찾기 저장 or 삭제에 실패 [${err}]`)
         next(err);
     }
 }

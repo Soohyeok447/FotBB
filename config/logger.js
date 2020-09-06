@@ -1,48 +1,160 @@
-// config/logConfig.js
-"use strict"
-const { createLogger, format, transports } = require("winston")
-require("winston-daily-rotate-file")
-const fs = require("fs")
+var winston = require('winston');
+var winstonDaily = require('winston-daily-rotate-file');
 
-const env = process.env.NODE_ENV || "development"
-const logDir = "../log"
+const logDir = 'logs';
+const { combine, timestamp, printf} = winston.format;
 
-// Create the log directory if it does not exist
-if (!fs.existsSync(logDir)) {
-	fs.mkdirSync(logDir)
-}
+// define log format 
+const logFormat = printf(info =>{
+  return `${info.timestamp} [${info.level}] ${info.message}`;
+});
 
-const dailyRotateFileTransport = new transports.DailyRotateFile({
-  level: "debug",
-  filename: `${logDir}/%DATE%-smart-push.log`,
-  datePattern: "YYYY-MM-DD",
-  zippedArchive: true,
-  maxSize: "10m",
-  maxFiles: "14d"
-})
+/*
+ * Log Level
+ * error: 0, warn: 1, info: 2, http: 3, verbose: 4, debug: 5, silly: 6
+ */
 
-const logger = createLogger({
-  level: env === "development" ? "debug" : "info", //development면 디버그레벨 부터 로깅
-  format: format.combine(
-    format.timestamp({
-      format: "YYYY-MM-DD HH:mm:ss"
+ const logger = winston.createLogger({
+  format: combine(
+    timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss',
     }),
-    format.json()
+    logFormat,
   ),
-  transports: [
-    new transports.Console({
-      level: "info",
-      format: format.combine(
-        format.colorize(),
-        format.printf(
-          info => `${info.timestamp} ${info.level}: ${info.message}`
-        )
-      )
+  transports:[
+    //info 레벨 로그를 저장할 파일 설정
+    new winstonDaily({
+      level: 'info',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir,
+      filename: `%DATE%_app.log`,
+      maxFiles: 14,  // 14일치 로그 파일 저장
+      zippedArchive: true, 
     }),
-    dailyRotateFileTransport
-  ]
+    new winstonDaily({
+      level: 'error',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir + '/error',  // error.log 파일은 /logs/error 하위에 저장 
+      filename: `%DATE%_error.log`,
+      maxFiles: 14,
+      zippedArchive: true,
+    }),
+  ],
 })
 
-module.exports = {
-  logger: logger
+//payment
+const userinfo = winston.createLogger({
+  format: combine(
+    timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss',
+    }),
+    logFormat,
+  ),
+  transports:[
+    //info 레벨 로그를 저장할 파일 설정
+    new winstonDaily({
+      level: 'info',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir + '/userinfo',
+      filename: `%DATE%_app.log`,
+      maxFiles: 14,  // 14일치 로그 파일 저장
+      zippedArchive: true, 
+    }),
+    new winstonDaily({
+      level: 'error',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir + '/userinfo' + '/error',  // error.log 파일은 /logs/error 하위에 저장 
+      filename: `%DATE%_error.log`,
+      maxFiles: 14,
+      zippedArchive: true,
+    }),
+  ],
+})
+
+//payment
+const payment = winston.createLogger({
+  format: combine(
+    timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss',
+    }),
+    logFormat,
+  ),
+  transports:[
+    //info 레벨 로그를 저장할 파일 설정
+    new winstonDaily({
+      level: 'info',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir + '/payment',
+      filename: `%DATE%_app.log`,
+      maxFiles: 14,  // 14일치 로그 파일 저장
+      zippedArchive: true, 
+    }),
+    new winstonDaily({
+      level: 'error',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir + '/payment' + '/error',  // error.log 파일은 /logs/error 하위에 저장 
+      filename: `%DATE%_error.log`,
+      maxFiles: 14,
+      zippedArchive: true,
+    }),
+  ],
+})
+
+//play
+const play = winston.createLogger({
+  format: combine(
+    timestamp({
+      format: 'YYYY-MM-DD HH:mm:ss',
+    }),
+    logFormat,
+  ),
+  transports:[
+    //info 레벨 로그를 저장할 파일 설정
+    new winstonDaily({
+      level: 'info',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir + '/play',
+      filename: `%DATE%_play.log`,
+      maxFiles: 14,  // 14일치 로그 파일 저장
+      zippedArchive: true, 
+    }),
+    new winstonDaily({
+      level: 'error',
+      datePattern: 'YYYY-MM-DD',
+      dirname: logDir + '/play' + '/error',  // error.log 파일은 /logs/error 하위에 저장 
+      filename: `%DATE%_error.log`,
+      maxFiles: 14,
+      zippedArchive: true,
+    }),
+  ],
+})
+
+// Production 환경이 아닌 경우(dev 등) 
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),  // 색깔 넣어서 출력
+      winston.format.simple(),  // `${info.level}: ${info.message} JSON.stringify({ ...rest })` 포맷으로 출력
+      )
+    }));
+  userinfo.add(new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),  // 색깔 넣어서 출력
+      winston.format.simple(),  // `${info.level}: ${info.message} JSON.stringify({ ...rest })` 포맷으로 출력
+    )
+  }));
+  payment.add(new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),  // 색깔 넣어서 출력
+      winston.format.simple(),  // `${info.level}: ${info.message} JSON.stringify({ ...rest })` 포맷으로 출력
+    )
+  }));
+  play.add(new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),  // 색깔 넣어서 출력
+      winston.format.simple(),  // `${info.level}: ${info.message} JSON.stringify({ ...rest })` 포맷으로 출력
+    )
+  }));
 }
+
+module.exports = {logger,payment,play,userinfo};

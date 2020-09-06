@@ -2,19 +2,7 @@ var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 
-
-//compare with nextuser
-var nextuser = (sorted_ranking,ranking,previous_cleartime)=>{
-    //내 바로 다음 랭커 기록 찾기
-    let compare_with_me = sorted_ranking[ranking-2];
-    console.log(compare_with_me);
-    if(compare_with_me<0){
-        console.log("1등입니다.")
-        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
-    }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
-    }
-}
+var {logger,play} = require('../../../config/logger');
 
 //클리어 시
 exports.clear = async (req, res, next) => {
@@ -168,6 +156,8 @@ exports.clear = async (req, res, next) => {
                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
                     res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                 }
+                logger.info(`${id} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
+                play.info(`${id} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
             }else{ //첫 플레이가 아닐경우(기록 존재)
                 console.log("첫플레이가 아닙니다.");
                 //이제 기록 갱신과 갱신이 아닌경우 처리
@@ -222,6 +212,8 @@ exports.clear = async (req, res, next) => {
                     }else{ //1등이 아니면 바로 윗 랭크 기록 반환
                         res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                     }
+                    logger.info(`${id} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
+                    play.info(`${id} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
                 }else{ //기록 갱신 실패했을 경우
                     console.log("기록갱신 실패했습니다.");
                     let stage = await Stage.findOne( { stage_name: stage_name});
@@ -255,8 +247,8 @@ exports.clear = async (req, res, next) => {
                     }else{ //1등이 아니면 바로 윗 랭크 기록 반환
                         res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                     }
-                    
-                    
+                    logger.info(`${id} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
+                    play.info(`${id} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
                 }
             }
         }else{ //Hard
@@ -271,8 +263,6 @@ exports.clear = async (req, res, next) => {
                 (s) => s.userid === id
             );
             let previous_cleartime = stage_select[0].cleartime; //이전기록과 클리어타임 비교용인 이전기록 변수
-            
-            
 
             
             //user_stage 모델에 Hard클리어타임 갱신
@@ -333,6 +323,8 @@ exports.clear = async (req, res, next) => {
                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
                     res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                 }
+                logger.info(`${id} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
+                play.info(`${id} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
             }else{ //첫 플레이가 아닐경우(기록 존재)
                 console.log("첫플레이가 아닙니다.");
                 //이제 기록 갱신과 갱신이 아닌경우 처리
@@ -386,7 +378,8 @@ exports.clear = async (req, res, next) => {
                          res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                      }
 
-                   
+                    logger.info(`${id} 가 하드 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
+                    play.info(`${id} 가 하드 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
 
                 
                 }else{ //기록 갱신 실패했을 경우
@@ -422,13 +415,15 @@ exports.clear = async (req, res, next) => {
                         res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                     }
 
-                   
+                    logger.info(`${id} 가 하드 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
+                    play.info(`${id} 가 하드 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
                 }
             }
         }
     } catch (err) {
         res.status(500).json({ error: "database failure" });
-        console.error(err);
+        logger.error(`스테이지 clear 에러: ${id} [${err}]`);
+        play.error(`스테이지 clear 에러: ${id} [${err}]`);
         next(err);
     }
 }
