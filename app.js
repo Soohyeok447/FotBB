@@ -7,8 +7,6 @@ var morgan = require('morgan');
 var helmet = require('helmet')
 
 
-var Stage = require("./models/stage");
-
 var User_router = require('./routes/api/user/user.routes');
 var Version_router = require('./routes/api/version');
 var Clear_router = require('./routes/api/clear/clear.routes');

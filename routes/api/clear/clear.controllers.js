@@ -149,7 +149,7 @@ exports.clear = async (req, res, next) => {
 
                 //내 바로 다음 랭커 기록 찾기
                 let compare_with_me = sorted_ranking[ranking-2];
-                console.log(compare_with_me);
+                //console.log(compare_with_me);
                 if(compare_with_me<0){
                     console.log("1등입니다.")
                     res.status(201).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});

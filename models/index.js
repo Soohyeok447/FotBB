@@ -8,10 +8,8 @@ module.exports = () => {
             mongoose.set("debug", true);
         }
 
-        var DBurl = `mongodb://soohyeok:${process.env.DB_PASSWORD}@localhost:27017/admin`;
+        var DBurl = `mongodb+srv://soohyeok:${process.env.DB_PASSWORD}@freetier-kotbb.cg7zr.mongodb.net/FotBB-DB?retryWrites=true&w=majority`;
 
-
-        
         mongoose.connect(
             DBurl,
             {

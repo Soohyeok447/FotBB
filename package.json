@@ -1,6 +1,6 @@
 {
-  "name": "unity-db",
-  "version": "0.0.0",
+  "name": "kotbb-api",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "start": "cross-env NODE_ENV=production PORT=80 pm2 start app.js -i 0",
@@ -16,13 +16,13 @@
     "dotenv": "^8.2.0",
     "ejs": "~2.6.1",
     "express": "~4.16.1",
+    "google-auth-library": "^6.0.6",
     "helmet": "^4.1.0",
     "http-errors": "~1.6.3",
     "moment": "^2.27.0",
     "mongoose": "^5.10.0",
     "morgan": "~1.9.1",
     "nodemon": "^2.0.4",
-    "redis": "^3.0.2",
     "winston": "^3.3.3",
     "winston-daily-rotate-file": "^4.5.0"
   }
