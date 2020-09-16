@@ -153,7 +153,7 @@ exports.stage = async (req,res,next)=>{
             jsonObj.country_Hard_leaderboard = sliced_country_Hard_array;
             jsonObj.country_Hard_ranking = my_country_Hard_ranking;
 
-            res.status(201).json(jsonObj);
+            res.status(200).json(jsonObj);
             logger.info(`${id} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
         }else{ //스테이지를 불러온적이 있을 때,
             res.status(200).send("이미 불러온 적 있습니다.")
@@ -185,17 +185,17 @@ exports.favorite = async(req,res,next)=>{
                     if (a.indexOf(b) < 0 ) a.push(b);
                         return a;
                     },[]);
-                res.status(201).json(uniq_composer_array);
+                res.status(200).json(uniq_composer_array);
 
                 break;
             case "remove":
                 console.log("remove");
                 favorite.pull(stage_name); 
                 await user.save({new:true});
-                res.status(201).json(favorite);
+                res.status(200).json(favorite);
 
                 break;
-            default:res.status(201).send("error : 잘못된 update_type 인자");
+            default:res.status(200).send("error : 잘못된 update_type 인자");
         }
     }catch(err){
         res.status(500).json({error : "db failure"});

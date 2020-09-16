@@ -11,7 +11,7 @@ exports.playcount_up = async (req, res, next) => {
         selected_stage.playcount++;
         await selected_stage.save({new:true});
         logger.info(`스테이지${stage_name} 플레이됨.`);
-        res.status(201).json({"playcount":selected_stage.playcount});
+        res.status(200).json({"playcount":selected_stage.playcount});
     }catch (err) {
         res.status(500).json({ error: "database failure" });
         logger.error(`스테이지 플레이 에러: ${stage_name} [${err}]`);

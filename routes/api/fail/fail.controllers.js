@@ -46,7 +46,7 @@ exports.death_up = async (req, res, next) => {
             await stage.save({ new: true });
             logger.info(`${id} 가 노말 ${stage_name} 실패.`);
             play.info(`${id} 가 노말 ${stage_name} 실패.`);
-            res.status(201).json({"total_death":user.total_death,"stage_total_death":stage.total_death,"Normal_death":stage.Normal[userindex].death});
+            res.status(200).json({"total_death":user.total_death,"stage_total_death":stage.total_death,"Normal_death":stage.Normal[userindex].death});
         }else{ //Hard
             var userindex = stage.Hard.findIndex((s) => s.userid === id);
 
@@ -54,7 +54,7 @@ exports.death_up = async (req, res, next) => {
             await stage.save({ new: true }); //Hard death 갱신
             logger.info(`${id} 가 하드 ${stage_name} 실패.`);
             play.info(`${id} 가 하드 ${stage_name} 실패.`);
-            res.status(201).json({"total_death":user.total_death,"stage_total_death":stage.total_death,"Hard_death":stage.Hard[userindex].death});
+            res.status(200).json({"total_death":user.total_death,"stage_total_death":stage.total_death,"Hard_death":stage.Hard[userindex].death});
         }       
     }catch (err) {
         res.status(500).json({ error: "database failure" });

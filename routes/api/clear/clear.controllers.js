@@ -152,9 +152,9 @@ exports.clear = async (req, res, next) => {
                 //console.log(compare_with_me);
                 if(compare_with_me<0){
                     console.log("1등입니다.")
-                    res.status(201).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                    res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                    res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                    res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                 }
                 logger.info(`${id} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
                 play.info(`${id} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
@@ -208,9 +208,9 @@ exports.clear = async (req, res, next) => {
                     console.log(compare_with_me);
                     if(compare_with_me<0){
                         console.log("1등입니다.")
-                        res.status(201).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                        res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
                     }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                        res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                        res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                     }
                     logger.info(`${id} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
                     play.info(`${id} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
@@ -243,9 +243,9 @@ exports.clear = async (req, res, next) => {
                     console.log(compare_with_me);
                     if(compare_with_me<0){
                         console.log("1등입니다.")
-                        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
+                        res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
                     }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                        res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                     }
                     logger.info(`${id} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
                     play.info(`${id} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
@@ -319,9 +319,9 @@ exports.clear = async (req, res, next) => {
                 console.log(compare_with_me);
                 if(compare_with_me<0){
                     console.log("1등입니다.")
-                    res.status(201).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                    res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                    res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                    res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                 }
                 logger.info(`${id} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
                 play.info(`${id} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
@@ -373,9 +373,9 @@ exports.clear = async (req, res, next) => {
                      let compare_with_me = (sorted_ranking[ranking-2]);
                      if((ranking-2)<0){
                          console.log("1등입니다.")
-                         res.status(201).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                         res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
                      }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                         res.status(201).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                         res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                      }
 
                     logger.info(`${id} 가 하드 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
@@ -410,9 +410,9 @@ exports.clear = async (req, res, next) => {
                     let compare_with_me = (sorted_ranking[ranking-2]);
                     if((ranking-2)<0){
                         console.log("1등입니다.")
-                        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
+                        res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
                     }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                        res.status(201).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                        res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
                     }
 
                     logger.info(`${id} 가 하드 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);

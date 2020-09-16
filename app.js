@@ -16,8 +16,6 @@ var Play_router = require("./routes/api/play/play.routes");
 
 var connect = require('./models');
 
-
-
 var app = express();
 connect();  //mongoDB 와 연결
 
@@ -36,6 +34,8 @@ if(process.env.NODE_ENV === 'production'){ //배포환경
   }))
 }else{ //개발환경
   app.use(morgan('dev'));
+  
+
 }
 //helmet
 app.use(helmet());
@@ -96,6 +96,8 @@ app.use(function(err, req, res, next) {
 
 app.listen(port, (req,res) => {
   // console.log(`Example app listening at http://localhost:${port}`)
+  //console.log("얍");
+
 })
 
 module.exports = app;

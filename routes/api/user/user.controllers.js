@@ -1,9 +1,15 @@
 var moment = require('moment');
 var {logger,payment,userinfo} = require('../../../config/logger');
+var {upload} = require('./../../../config/s3_option');
 var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 var current_version = require("../version").version;
+
+
+
+require('moment-timezone');
+moment.tz.setDefault("Asia/Seoul");
 
 /*
 //Google auth
@@ -24,8 +30,7 @@ async function verify() {
 verify().catch(console.error);
 */
 
-
-
+  
 //접속 처리 라우터 (클라이언트 접속 시 동기화용)
 exports.user_login =  async (req, res, next) => {
     const { id ,country} = req.body;
@@ -35,9 +40,9 @@ exports.user_login =  async (req, res, next) => {
     if (result === false) {
         try {
             //moment format
-            var day = new Date();
+            //var day = new Date();
             var day_format = 'YYYY.MM.DD HH:mm:ss';
-            var now = moment(day).format(day_format);
+            var now = moment().format(day_format);
 
             var user = new User({
                 googleid: id,
@@ -82,11 +87,12 @@ exports.user_login =  async (req, res, next) => {
             jsonObj.user_stage = user_stage;
             logger.info(`신규 유저 등록 : ${id}`);
             userinfo.info(`신규 유저 등록 : ${id}`);
-            res.status(201).json(jsonObj);
+            res.status(200).json(jsonObj);
         } catch(err) {
             res.status(500).json({ error: "database failure" });
             logger.error(`신규 유저 등록 에러: ${id} [${err}]`);
             userinfo.error(`신규 유저 등록 에러: ${id} [${err}]`);
+            upload(err,'/user');
             next(err);
         }
     } else {
@@ -115,11 +121,12 @@ exports.user_login =  async (req, res, next) => {
             jsonObj.user = user;
             logger.info(`${id} 가 로그인 했습니다.`);
             userinfo.info(`${id} 가 로그인 했습니다.`);
-            res.status(201).json(jsonObj);
+            res.status(200).json(jsonObj);
         } catch(err) {
             res.status(500).json({ error: "database failure" });
             logger.error(`신규 유저 로그인 에러: ${id} [${err}]`);
             userinfo.error(`신규 유저 로그인 에러: ${id} [${err}]`);
+            upload();
             next(err);
         }
     }
@@ -136,7 +143,7 @@ exports.crystal = async (req, res, next) => {
         ).setOptions({ runValidators: true });
         logger.info(`${id} 가 크리스탈 ${get_crystal}개를 구매했습니다.`);
         payment.info(`${id} 가 크리스탈 ${get_crystal}개를 구매했습니다.`);
-        res.status(201).json(result.crystal);
+        res.status(200).json(result.crystal);
     } catch(err) {
         res.status(500).json({ error: "database failure" });
         logger.error(`크리스탈 구매 에러: ${id} [${err}]`);
@@ -155,7 +162,7 @@ exports.option = async (req, res, next) => {
             { option: option },
             { new: true }
         ).setOptions({ runValidators: true });
-        res.status(201).json(result.option);
+        res.status(200).json(result.option);
         
     } catch(err) {
         res.status(500).json({ error: "database failure" });
@@ -174,7 +181,7 @@ exports.customizing = async (req, res, next) => {
     try{
         if (chest){ //상자깡
             if(has_customizing){
-                res.status(201).send("이미 보유중인 커스텀입니다.");
+                res.status(200).send("이미 보유중인 커스텀입니다.");
             }else{
                 var result = await User.findOneAndUpdate(
                     {googleid:id},
@@ -183,14 +190,14 @@ exports.customizing = async (req, res, next) => {
                 ).setOptions({ runValidators: true });
                 logger.info(`${id} 가 커스텀 ${customizing}을(를) 상자깡으로 획득했습니다.`);
                 userinfo.info(`${id} 가 커스텀 ${customizing}을(를) 상자깡으로 획득했습니다.`);
-                res.status(201).json(result.customizing);
+                res.status(200).json(result.customizing);
             }
         }else if(reduce_crystal>0){ //크리스탈 인 앱 결제
             console.log("크리스탈 처리");
             if(has_customizing){
-                res.status(201).send("이미 보유중인 커스텀입니다.");
+                res.status(200).send("이미 보유중인 커스텀입니다.");
             }else if(now_crystal<reduce_crystal){
-                res.status(201).send("크리스탈이 부족합니다.");
+                res.status(200).send("크리스탈이 부족합니다.");
             }else{
                 var result = await User.findOneAndUpdate(
                     {googleid:id},
@@ -205,7 +212,7 @@ exports.customizing = async (req, res, next) => {
                 jsonObj.customizing = result.customizing;
                 logger.info(`${id} 가 커스텀 ${customizing}을(를) 크리스탈로 획득했습니다.`);
                 payment.info(`${id} 가 커스텀 ${customizing}을(를) 크리스탈로 획득했습니다.`);
-                res.status(201).json(jsonObj);
+                res.status(200).json(jsonObj);
             }
         }
         }catch(err){
@@ -225,7 +232,7 @@ exports.playtime = async (req, res, next) => {
             { $inc:{ playtime:playtime}},
             { new: true }
         ).setOptions({ runValidators: true });
-        res.status(201).json(user.playtime);
+        res.status(200).json(user.playtime);
     }catch(err){
         res.status(500).json({ error: "database failure" });
         logger.error(`플레이타임 설정 에러: ${id} [${err}]`);
@@ -244,10 +251,10 @@ exports.stage = async (req, res, next) => {
 
     try{
         if(now_crystal<reduce_crystal){
-            res.status(201).send("크리스탈이 부족합니다.");
+            res.status(200).send("크리스탈이 부족합니다.");
         }else{
             if(has_stage.length!==0){
-                res.status(201).send("보유중인 스테이지입니다.");
+                res.status(200).send("보유중인 스테이지입니다.");
             }else{
                 //stage 모델 배열에 유저추가
                 await Stage.findOneAndUpdate(
@@ -287,7 +294,7 @@ exports.stage = async (req, res, next) => {
                 ).setOptions({ runValidators: true });           
                 logger.info(`${id} 가 스테이지 ${stage_name}을(를) 크리스탈로 획득했습니다.`);
                 payment.info(`${id} 가 스테이지 ${stage_name}을(를) 크리스탈로 획득했습니다.`);
-                res.status(201).send("스테이지 언락 완료");
+                res.status(200).send("스테이지 언락 완료");
             } 
         }      
     }catch(err){
@@ -319,7 +326,7 @@ exports.premium = async (req, res, next) => {
                 ).setOptions({ runValidators: true });
                 logger.info(`${id} 가 프리미엄을 구매했습니다.`);
                 payment.info(`${id} 가 프리미엄을 구매했습니다.`);
-                res.status(201).json({"crystal":result.crystal,"premium":premium});
+                res.status(200).json({"crystal":result.crystal,"premium":premium});
             }
         }    
     } catch(err) {
