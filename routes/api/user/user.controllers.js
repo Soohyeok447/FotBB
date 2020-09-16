@@ -92,7 +92,7 @@ exports.user_login =  async (req, res, next) => {
             res.status(500).json({ error: "database failure" });
             logger.error(`신규 유저 등록 에러: ${id} [${err}]`);
             userinfo.error(`신규 유저 등록 에러: ${id} [${err}]`);
-            upload(err,'/user');
+            upload(err,'user_login');
             next(err);
         }
     } else {
@@ -126,7 +126,7 @@ exports.user_login =  async (req, res, next) => {
             res.status(500).json({ error: "database failure" });
             logger.error(`신규 유저 로그인 에러: ${id} [${err}]`);
             userinfo.error(`신규 유저 로그인 에러: ${id} [${err}]`);
-            upload();
+            upload(err,'user_login');
             next(err);
         }
     }
@@ -148,6 +148,7 @@ exports.crystal = async (req, res, next) => {
         res.status(500).json({ error: "database failure" });
         logger.error(`크리스탈 구매 에러: ${id} [${err}]`);
         payment.error(`크리스탈 구매 에러: ${id} [${err}]`);
+        upload(err,'crystal구매');
         next(err);
     }
 };
@@ -167,6 +168,7 @@ exports.option = async (req, res, next) => {
     } catch(err) {
         res.status(500).json({ error: "database failure" });
         logger.error(`옵션 설정 에러: ${id} [${err}]`);
+        upload(err,'옵션설정');
         next(err);
     }
 }
@@ -174,11 +176,11 @@ exports.option = async (req, res, next) => {
 //커스터마이징 처리
 exports.customizing = async (req, res, next) => {
     const { id, customizing ,chest , reduce_crystal} = req.body;
-    let user = await User.findOne({googleid:id}); //비교용 find
-    let user_cus = user.customizing;
-    let has_customizing = (user_cus.find(e => e ===customizing));
-    let now_crystal = user.crystal;//현재 보유중인 크리스탈
     try{
+        let user = await User.findOne({googleid:id}); //비교용 find
+        let user_cus = user.customizing;
+        let has_customizing = (user_cus.find(e => e ===customizing));
+        let now_crystal = user.crystal;//현재 보유중인 크리스탈
         if (chest){ //상자깡
             if(has_customizing){
                 res.status(200).send("이미 보유중인 커스텀입니다.");
@@ -219,6 +221,7 @@ exports.customizing = async (req, res, next) => {
         res.status(500).json({ error: "database failure" });
         logger.error(`커스텀 구매 에러: ${id} [${err}]`);
         payment.error(`커스텀 구매 에러: ${id} [${err}]`);
+        upload(err,'커스텀구매');
         next(err);
     }
 }
@@ -236,6 +239,7 @@ exports.playtime = async (req, res, next) => {
     }catch(err){
         res.status(500).json({ error: "database failure" });
         logger.error(`플레이타임 설정 에러: ${id} [${err}]`);
+        upload(err,'플레이타임 설정');
         next(err);
     };
 }
@@ -243,13 +247,13 @@ exports.playtime = async (req, res, next) => {
 //스테이지 언락
 exports.stage = async (req, res, next) => {
     const { id ,reduce_crystal , stage_name} = req.body;
-    let user = await User.findOne({googleid:id}); //비교용 find
-    let user_stage = await User_stage.findOne({userid:id});
-    let has_stage = (user_stage.stage.filter(s=>s.stage_name === stage_name));
-    let now_crystal = user.crystal;//현재 보유중인 크리스탈
-    //유저 country 알 수 있으면 받아오게 수정
-
     try{
+        let user = await User.findOne({googleid:id}); //비교용 find
+        let user_stage = await User_stage.findOne({userid:id});
+        let has_stage = (user_stage.stage.filter(s=>s.stage_name === stage_name));
+        let now_crystal = user.crystal;//현재 보유중인 크리스탈
+        //유저 country 알 수 있으면 받아오게 수정
+    
         if(now_crystal<reduce_crystal){
             res.status(200).send("크리스탈이 부족합니다.");
         }else{
@@ -301,6 +305,7 @@ exports.stage = async (req, res, next) => {
         res.status(500).json({ error: "database failure" });
         logger.error(`스테이지 구매 에러: ${id} [${err}]`);
         payment.error(`스테이지 구매 에러: ${id} [${err}]`);
+        upload(err,'스테이지 구매 설정');
         next(err);
     }
 }
@@ -333,6 +338,7 @@ exports.premium = async (req, res, next) => {
         res.status(500).json({ error: "database failure" });
         logger.error(`프리미엄 구매 에러: ${id} [${err}]`);
         payment.error(`프리미엄 구매 에러: ${id} [${err}]`);
+        upload(err,'프리미엄 구매 설정');
         next(err);
     }
 }

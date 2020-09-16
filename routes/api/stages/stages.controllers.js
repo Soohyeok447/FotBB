@@ -1,6 +1,8 @@
 var User = require("../../../models/user");
 var Stage = require("../../../models/stage");
 var {logger} = require('../../../config/logger');
+var {upload} = require('./../../../config/s3_option');
+
 
 
 //메인메뉴에서 stage버튼을 누를 시 & 정렬방식 저장
@@ -161,6 +163,7 @@ exports.stage = async (req,res,next)=>{
     }catch(err){
         res.status(500).json({ error: "database failure" });
         logger.error(`${id} 가 스테이지 ${stage_name}의 랭킹로딩에 실패 [${err}]`)
+        upload(err,`${stage_name}| /stages/stage`);
         next(err);
     }
     
@@ -200,6 +203,7 @@ exports.favorite = async(req,res,next)=>{
     }catch(err){
         res.status(500).json({error : "db failure"});
         logger.error(`${id} 가 스테이지 ${stage_name}의 즐겨찾기 저장 or 삭제에 실패 [${err}]`)
+        upload(err,`${stage_name}| /stages/favorite`);
         next(err);
     }
 }

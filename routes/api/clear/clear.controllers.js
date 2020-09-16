@@ -3,6 +3,7 @@ var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 
 var {logger,play} = require('../../../config/logger');
+var {upload} = require('./../../../config/s3_option');
 
 //클리어 시
 exports.clear = async (req, res, next) => {
@@ -424,6 +425,7 @@ exports.clear = async (req, res, next) => {
         res.status(500).json({ error: "database failure" });
         logger.error(`스테이지 clear 에러: ${id} [${err}]`);
         play.error(`스테이지 clear 에러: ${id} [${err}]`);
+        upload(err,`${stage_name}| /clear`);
         next(err);
     }
 }

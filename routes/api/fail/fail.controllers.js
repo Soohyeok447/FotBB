@@ -3,6 +3,7 @@ var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 
 var {logger,play} = require('../../../config/logger');
+var {upload} = require('./../../../config/s3_option');
 
 //죽으면 death 갱신
 exports.death_up = async (req, res, next) => {
@@ -60,6 +61,7 @@ exports.death_up = async (req, res, next) => {
         res.status(500).json({ error: "database failure" });
         logger.error(`스테이지 fail 에러: ${id} [${err}]`);
         play.error(`스테이지 fail 에러: ${id} [${err}]`);
+        upload(err,`${stage_name}| /fail`);
         next(err);
     }
 }

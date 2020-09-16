@@ -2,6 +2,7 @@
 
 var Stage = require("../../../models/stage");
 var {logger,play} = require('../../../config/logger');
+var {upload} = require('./../../../config/s3_option');
 
 //스테이지 플레이 횟수 +1
 exports.playcount_up = async (req, res, next) => {
@@ -15,6 +16,7 @@ exports.playcount_up = async (req, res, next) => {
     }catch (err) {
         res.status(500).json({ error: "database failure" });
         logger.error(`스테이지 플레이 에러: ${stage_name} [${err}]`);
+        upload(err,`${stage_name}| /play`);
         next(err);
     }
 }
