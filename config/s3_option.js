@@ -113,7 +113,7 @@ function upload(err,location){
     setTimeout(s3upload, 3000);
     
 
-    
+    /*
     ///////////////aws sns
     AWS.config.loadFromPath(`${appRoot}/config/config.json`);
 
@@ -132,7 +132,7 @@ function upload(err,location){
         function(err){
         console.error(err,err.stack);
     })
-
+    */
 }
 
 

@@ -171,85 +171,94 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-///////////////////////////////////////// S3 저장용
-//////// s3 객체 생성
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region : 'ap-northeast-2'
+
+////////////////////////// 매일 밤 23시 55분 마다 daily-rotaion 로그 파일 저장
+schedule.scheduleJob('00 59 23 * * 1-7', ()=>{ //매일 밤 23시 55분에 실행됨
+  s3_daily_upload();   
+      
 });
 
+//upload 과정을 담은 함수 (s3 초기화부터 업로드까지)
+function s3_daily_upload(){
+    console.log("s3에 daily 저장");
+    ///////////////////////////////////////// S3 저장용
+    //////// s3 객체 생성
+    const s3 = new AWS.S3({
+      accessKeyId: process.env.AWS_ACCESS_KEY,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      region : 'ap-northeast-2'
+    });
 
 
-var dateformat = moment().format('YYYY-MM-DD');
 
-var tomorrow = moment();
-tomorrow.add(1, 'days');
-tomorrow.format('YYYY-MM-DD'); 
+    var dateformat = moment().format('YYYY-MM-DD');
 
-var timeformat = moment().format('HH:mm:ss');
-//userinfo
-var s3_userinfo = {
-  'Bucket':'kotbb-log',
-  'Key': `daily/userinfo/${dateformat}_app.log`,
-  'ACL':'public-read',
-  'Body':fs.createReadStream(`${appRoot}/logs/userinfo/${dateformat}_app.log`),
-  'ContentType':'text/plain'
-}
-var s3_userinfo_err = {
-  'Bucket':'kotbb-log',
-  'Key': `daily/userinfo/error/${dateformat}_error.log`,
-  'ACL':'public-read',
-  'Body':fs.createReadStream(`${appRoot}/logs/userinfo/error/${dateformat}_error.log`),
-  'ContentType':'text/plain'
-}
-//payment
-var s3_payment = {
-  'Bucket':'kotbb-log',
-  'Key': `daily/payment/${dateformat}_app.log`,
-  'ACL':'public-read',
-  'Body':fs.createReadStream(`${appRoot}/logs/payment/${dateformat}_app.log`),
-  'ContentType':'text/plain'
-}
-var s3_payment_err = {
-  'Bucket':'kotbb-log',
-  'Key': `daily/payment/error/${dateformat}_error.log`,
-  'ACL':'public-read',
-  'Body':fs.createReadStream(`${appRoot}/logs/payment/error/${dateformat}_error.log`),
-  'ContentType':'text/plain'
-}
-//play
-var s3_play = {
-  'Bucket':'kotbb-log',
-  'Key': `daily/play/${dateformat}_app.log`,
-  'ACL':'public-read',
-  'Body':fs.createReadStream(`${appRoot}/logs/play/${dateformat}_app.log`),
-  'ContentType':'text/plain'
-}
-var s3_play_err = {
-  'Bucket':'kotbb-log',
-  'Key': `daily/play/all/error/${dateformat}_error.log`,
-  'ACL':'public-read',
-  'Body':fs.createReadStream(`${appRoot}/logs/play/error/${dateformat}_error.log`),
-  'ContentType':'text/plain'
-}
-//total
-var s3_total = {
-  'Bucket':'kotbb-log',
-  'Key': `daily/all/${dateformat}_app.log`,
-  'ACL':'public-read',
-  'Body':fs.createReadStream(`${appRoot}/logs/all/${dateformat}_app.log`),
-  'ContentType':'text/plain'
-}
-var s3_total_err = {
-  'Bucket':'kotbb-log',
-  'Key': `daily/all/error/${dateformat}_error.log`,
-  'ACL':'public-read',
-  'Body':fs.createReadStream(`${appRoot}/logs/all/error/${dateformat}_error.log`),
-  'ContentType':'text/plain'
-}
-////////////////////////// 매일 밤 23시 55분 마다 daily-rotaion 로그 파일 저장
-schedule.scheduleJob('00 17 13 * * 1-7', ()=>{ //매일 밤 23시 55분에 실행됨
+    var tomorrow = moment();
+    tomorrow.add(1, 'days');
+    tomorrow.format('YYYY-MM-DD'); 
+
+    var timeformat = moment().format('HH:mm:ss');
+    //userinfo
+    var s3_userinfo = {
+      'Bucket':'kotbb-log',
+      'Key': `daily/userinfo/${dateformat}_app.log`,
+      'ACL':'public-read',
+      'Body':fs.createReadStream(`${appRoot}/logs/userinfo/${dateformat}_app.log`),
+      'ContentType':'text/plain'
+    }
+    var s3_userinfo_err = {
+      'Bucket':'kotbb-log',
+      'Key': `daily/userinfo/error/${dateformat}_error.log`,
+      'ACL':'public-read',
+      'Body':fs.createReadStream(`${appRoot}/logs/userinfo/error/${dateformat}_error.log`),
+      'ContentType':'text/plain'
+    }
+    //payment
+    var s3_payment = {
+      'Bucket':'kotbb-log',
+      'Key': `daily/payment/${dateformat}_app.log`,
+      'ACL':'public-read',
+      'Body':fs.createReadStream(`${appRoot}/logs/payment/${dateformat}_app.log`),
+      'ContentType':'text/plain'
+    }
+    var s3_payment_err = {
+      'Bucket':'kotbb-log',
+      'Key': `daily/payment/error/${dateformat}_error.log`,
+      'ACL':'public-read',
+      'Body':fs.createReadStream(`${appRoot}/logs/payment/error/${dateformat}_error.log`),
+      'ContentType':'text/plain'
+    }
+    //play
+    var s3_play = {
+      'Bucket':'kotbb-log',
+      'Key': `daily/play/${dateformat}_app.log`,
+      'ACL':'public-read',
+      'Body':fs.createReadStream(`${appRoot}/logs/play/${dateformat}_app.log`),
+      'ContentType':'text/plain'
+    }
+    var s3_play_err = {
+      'Bucket':'kotbb-log',
+      'Key': `daily/play/all/error/${dateformat}_error.log`,
+      'ACL':'public-read',
+      'Body':fs.createReadStream(`${appRoot}/logs/play/error/${dateformat}_error.log`),
+      'ContentType':'text/plain'
+    }
+    //total
+    var s3_total = {
+      'Bucket':'kotbb-log',
+      'Key': `daily/all/${dateformat}_app.log`,
+      'ACL':'public-read',
+      'Body':fs.createReadStream(`${appRoot}/logs/all/${dateformat}_app.log`),
+      'ContentType':'text/plain'
+    }
+    var s3_total_err = {
+      'Bucket':'kotbb-log',
+      'Key': `daily/all/error/${dateformat}_error.log`,
+      'ACL':'public-read',
+      'Body':fs.createReadStream(`${appRoot}/logs/all/error/${dateformat}_error.log`),
+      'ContentType':'text/plain'
+    }
+  ///////////////s3에 upload하는 부분
     //userinfo
     s3.upload(s3_userinfo, (err, data)=>{
       if(err){
@@ -310,9 +319,7 @@ schedule.scheduleJob('00 17 13 * * 1-7', ()=>{ //매일 밤 23시 55분에 실�
         logger.info(`[s3] total_err 저장 성공`);
       }
     });
-      
-});
-
+}
 
 
 ////////////////////////////에러 생성될 때 마다 s3 에러폴더에 저장
