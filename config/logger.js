@@ -184,7 +184,7 @@ function s3_daily_upload(){
     ///////////////////////////////////////// S3 저장용
     //////// s3 객체 생성
     const s3 = new AWS.S3({
-      accessKeyId: process.env.AWS_ACCESS_KEY,
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       region : 'ap-northeast-2'
     });
@@ -200,14 +200,14 @@ function s3_daily_upload(){
     var timeformat = moment().format('HH:mm:ss');
     //userinfo
     var s3_userinfo = {
-      'Bucket':'kotbb-log',
+      'Bucket':'fotbb-log',
       'Key': `daily/userinfo/${dateformat}_app.log`,
       'ACL':'public-read',
       'Body':fs.createReadStream(`${appRoot}/logs/userinfo/${dateformat}_app.log`),
       'ContentType':'text/plain'
     }
     var s3_userinfo_err = {
-      'Bucket':'kotbb-log',
+      'Bucket':'fotbb-log',
       'Key': `daily/userinfo/error/${dateformat}_error.log`,
       'ACL':'public-read',
       'Body':fs.createReadStream(`${appRoot}/logs/userinfo/error/${dateformat}_error.log`),
@@ -215,14 +215,14 @@ function s3_daily_upload(){
     }
     //payment
     var s3_payment = {
-      'Bucket':'kotbb-log',
+      'Bucket':'fotbb-log',
       'Key': `daily/payment/${dateformat}_app.log`,
       'ACL':'public-read',
       'Body':fs.createReadStream(`${appRoot}/logs/payment/${dateformat}_app.log`),
       'ContentType':'text/plain'
     }
     var s3_payment_err = {
-      'Bucket':'kotbb-log',
+      'Bucket':'fotbb-log',
       'Key': `daily/payment/error/${dateformat}_error.log`,
       'ACL':'public-read',
       'Body':fs.createReadStream(`${appRoot}/logs/payment/error/${dateformat}_error.log`),
@@ -230,14 +230,14 @@ function s3_daily_upload(){
     }
     //play
     var s3_play = {
-      'Bucket':'kotbb-log',
+      'Bucket':'fotbb-log',
       'Key': `daily/play/${dateformat}_app.log`,
       'ACL':'public-read',
       'Body':fs.createReadStream(`${appRoot}/logs/play/${dateformat}_app.log`),
       'ContentType':'text/plain'
     }
     var s3_play_err = {
-      'Bucket':'kotbb-log',
+      'Bucket':'fotbb-log',
       'Key': `daily/play/all/error/${dateformat}_error.log`,
       'ACL':'public-read',
       'Body':fs.createReadStream(`${appRoot}/logs/play/error/${dateformat}_error.log`),
@@ -245,14 +245,14 @@ function s3_daily_upload(){
     }
     //total
     var s3_total = {
-      'Bucket':'kotbb-log',
+      'Bucket':'fotbb-log',
       'Key': `daily/all/${dateformat}_app.log`,
       'ACL':'public-read',
       'Body':fs.createReadStream(`${appRoot}/logs/all/${dateformat}_app.log`),
       'ContentType':'text/plain'
     }
     var s3_total_err = {
-      'Bucket':'kotbb-log',
+      'Bucket':'fotbb-log',
       'Key': `daily/all/error/${dateformat}_error.log`,
       'ACL':'public-read',
       'Body':fs.createReadStream(`${appRoot}/logs/all/error/${dateformat}_error.log`),
