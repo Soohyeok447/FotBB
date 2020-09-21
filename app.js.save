@@ -13,9 +13,10 @@ var Clear_router = require('./routes/api/clear/clear.routes');
 var Fail_router = require("./routes/api/fail/fail.routes");
 var Stage_router = require("./routes/api/stages/stages.routes");
 var Play_router = require("./routes/api/play/play.routes");
-var verifytest = require("./routes/api/middleware/test.js");
 
 var connect = require('./models');
+
+
 
 var app = express();
 connect();  //mongoDB 와 연결
@@ -35,8 +36,6 @@ if(process.env.NODE_ENV === 'production'){ //배포환경
   }))
 }else{ //개발환경
   app.use(morgan('dev'));
-  
-
 }
 //helmet
 app.use(helmet());
@@ -78,9 +77,6 @@ app.use('/api/fail',Fail_router);
 app.use('/api/stages',Stage_router);
 app.use('/api/play',Play_router);
 
-//테스트용
-app.use('/api/middleware/test',verifytest);
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -99,9 +95,7 @@ app.use(function(err, req, res, next) {
 });
 
 app.listen(port, (req,res) => {
-  // console.log(`Example app listening at http://localhost:${port}`)
-  //console.log("얍");
-
+   console.log(`Example app listening at http://localhost:${port}`)
 })
 
 module.exports = app;

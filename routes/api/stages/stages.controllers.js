@@ -1,6 +1,8 @@
 var User = require("../../../models/user");
 var Stage = require("../../../models/stage");
 var {logger} = require('../../../config/logger');
+var {upload} = require('./../../../config/s3_option');
+
 
 
 //메인메뉴에서 stage버튼을 누를 시 & 정렬방식 저장
@@ -153,7 +155,7 @@ exports.stage = async (req,res,next)=>{
             jsonObj.country_Hard_leaderboard = sliced_country_Hard_array;
             jsonObj.country_Hard_ranking = my_country_Hard_ranking;
 
-            res.status(201).json(jsonObj);
+            res.status(200).json(jsonObj);
             logger.info(`${id} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
         }else{ //스테이지를 불러온적이 있을 때,
             res.status(200).send("이미 불러온 적 있습니다.")
@@ -161,6 +163,7 @@ exports.stage = async (req,res,next)=>{
     }catch(err){
         res.status(500).json({ error: "database failure" });
         logger.error(`${id} 가 스테이지 ${stage_name}의 랭킹로딩에 실패 [${err}]`)
+        upload(err,`${stage_name}| /stages/stage`);
         next(err);
     }
     
@@ -185,21 +188,22 @@ exports.favorite = async(req,res,next)=>{
                     if (a.indexOf(b) < 0 ) a.push(b);
                         return a;
                     },[]);
-                res.status(201).json(uniq_composer_array);
+                res.status(200).json(uniq_composer_array);
 
                 break;
             case "remove":
                 console.log("remove");
                 favorite.pull(stage_name); 
                 await user.save({new:true});
-                res.status(201).json(favorite);
+                res.status(200).json(favorite);
 
                 break;
-            default:res.status(201).send("error : 잘못된 update_type 인자");
+            default:res.status(200).send("error : 잘못된 update_type 인자");
         }
     }catch(err){
         res.status(500).json({error : "db failure"});
         logger.error(`${id} 가 스테이지 ${stage_name}의 즐겨찾기 저장 or 삭제에 실패 [${err}]`)
+        upload(err,`${stage_name}| /stages/favorite`);
         next(err);
     }
 }
