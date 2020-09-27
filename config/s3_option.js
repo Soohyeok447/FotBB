@@ -94,7 +94,7 @@ function upload(err,location){
         
         /////// s3 어디에 어떤형식으로 올릴건지 설정
         var s3_error = {
-            'Bucket':'kotbb-log',
+            'Bucket':'fotbb-log',
             'Key': 'error/'+dateformat+`/${now}_error.log`,
             'ACL':'public-read',
             'Body':fs.createReadStream(`${appRoot}/logs/error/${dateformat}/${now}_error.log`),
@@ -113,7 +113,7 @@ function upload(err,location){
     setTimeout(s3upload, 3000);
     
 
-    /*
+    /* 
     ///////////////aws sns
     AWS.config.loadFromPath(`${appRoot}/config/config.json`);
 

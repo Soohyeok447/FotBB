@@ -47,4 +47,6 @@ module.exports = () => {
     require("./leaderboard");
     require("./user_stage");
     require("./user");
+    require("./banned");
+    require("./playing");
 };

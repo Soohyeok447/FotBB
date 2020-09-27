@@ -1,6 +1,8 @@
 require('dotenv').config();
 var {logger} = require('../../../config/logger');
 var {upload} = require('./../../../config/s3_option');
+var User_stage = require("../../../models/user_stage");
+var Stage = require("../../../models/stage");
 
 var express = require("express");
 
@@ -10,63 +12,41 @@ const {OAuth2Client} = require('google-auth-library');
 
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
+var moment = require('moment');
+require('moment-timezone');
+moment.tz.setDefault("Asia/Seoul");
+
+
+
+var day_format = 'YYYY.MM.DD HH:mm:ss';
+var now = moment().format(day_format);
+
+
+
 
 router.post("/", async (req, res, next) => {
-    // const {idToken, id} = req.body //gametype에 따라 구분해야한다면 나중에 수정
+    const {id} = req.body;
+
+    let N_stages = await Stage.find().select( 
+        { "Normal": { $elemMatch: { userid: id } } }
+        )
     
-    // //api를 사용해서 유효성 검사하는거랑 트랜잭션을 통해 유효성검사하는거랑
-    // // 뭐가 더 성능이 좋은지는 모름
-    // try{
-    //     console.log("verify : " + req.body.idToken);
-    //     var option = {
-    //         host: 'www.googleapis.com',
-    //         path: '/oauth2/v3/tokeninfo?id_token=' + req.body.idToken
-    //     }
-    //     https.get(option, (res)=>{
-    //         res.on('data', (chunk)=>{
-    //         console.log(JSON.parse(chunk));
-    //         res.json(JSON.parse(chunk));
-    //         });
-    //     });
-    //    next();
-    // }catch (err) {
-    //     res.status(500).send("유효하지 않은 토큰입니다.");
-    //     logger.error(`토큰 유효성 검사 에러: [${err}]`);
-    //     upload(err,`Token verify error`);
-        
-    // };
-
-
-
-
-    const {token} = req.body
-
-    async function verify() {
-        const ticket = await client.verifyIdToken({
-            idToken: token,
-            audience: process.env.CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
-            // Or, if multiple clients access the backend:
-            //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
-        });
-        const payload = ticket.getPayload();
-        console.log(payload);
-        const userid = payload['sub'];
-        // If request specified a G Suite domain:
-        // const domain = payload['hd'];
-    }
-    var result = verify().catch(console.error);
-    console.log(result);
-    //result가 뭔지 보고 userid 사용하고 next()처리
+    let H_stages = await Stage.find().select(
+        { "Hard": {$elemMatch:{userid:id} } }  
+    )
     
-    if(result){
-        console.log("if문 안으로 진입했습니다.")
-        //next();
-    }else{
-        res.status(403).send("accessToken error");
-        logger.error(`accessToken error`);
-        upload('accessToken error',`accessToken error`);
-        
-    }
+    N_stages.forEach(e=>{
+        let arr = e.Normal;
+        arr[0].terminated = true;
+    })
+    H_stages.forEach(e=>{
+        let arr = e.Hard;
+        arr[0].terminated = true;
+    })
+
+
+    console.log("N_stages:",N_stages);
+    console.log("H_stages:",H_stages);
 
     
     

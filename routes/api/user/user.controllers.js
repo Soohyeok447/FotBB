@@ -8,128 +8,187 @@ var current_version = require("../version").version;
 
 
 
+
+
 require('moment-timezone');
 moment.tz.setDefault("Asia/Seoul");
 
-/*
-//Google auth
-const {OAuth2Client} = require('google-auth-library');
-const client = new OAuth2Client(CLIENT_ID);
-async function verify() {
-  const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
-      // Or, if multiple clients access the backend:
-      //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
-  });
-  const payload = ticket.getPayload();
-  const userid = payload['sub'];
-  // If request specified a G Suite domain:
-  // const domain = payload['hd'];
-}
-verify().catch(console.error);
-*/
 
+
+require('dotenv').config();
+const {OAuth2Client} = require('google-auth-library');
+const client = new OAuth2Client(process.env.CLIENT_ID);
+
+
+async function verify(token) {
+    try{
+        var TokenObj ={}
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
+            // Or, if multiple clients access the backend:
+            //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+        });
+        const payload = ticket.getPayload();
+        
+        const userid = payload['sub'];
+        
+        
+
+        var check_validation = (payload.aud === process.env.CLIENT_ID) ? true : false;
+
+        //토큰 유효성 체크 통과
+        if(check_validation && payload){
+            console.log("aud일치 유효한 토큰입니다.")
+            TokenObj.payload = payload;
+            TokenObj.verified = true;
+            
+            return TokenObj;
+
+        }else if(check_validation){
+            console.log("payload가 없습니다.")
+            TokenObj.verified = false;
+            TokenObj.error = 'no payload';
+            logger.error(`accessToken error`);
+            upload('accessToken error',`accessToken error`);
+            return TokenObj;
+        }else{
+            console.log("페이로드 티켓없음")
+            TokenObj.verified = false;
+            TokenObj.error = 'no ticket';
+            logger.error(`accessToken error`);
+            upload('accessToken error',`accessToken error`);
+            return TokenObj;
+        }
+    }catch(err){
+        console.log("err났습니다.")
+        
+        TokenObj.error = err;
+        TokenObj.verified = false; 
+        logger.error(`accessToken error`);
+        upload('accessToken error',`accessToken error`);
+        return TokenObj;
+    }
+}
   
 //접속 처리 라우터 (클라이언트 접속 시 동기화용)
 exports.user_login =  async (req, res, next) => {
-    const { id ,country} = req.body;
-    const jsonObj = {};
-    var result = await User.exists({ googleid: id });
-    //신규 유저
-    if (result === false) {
-        try {
-            //moment format
-            //var day = new Date();
-            var day_format = 'YYYY.MM.DD HH:mm:ss';
-            var now = moment().format(day_format);
+    const { id ,country,token} = req.body;
+    var result = await verify(token)
 
-            var user = new User({
-                googleid: id,
-                created_date: now,
-                latest_login: now,   //Date.now(),
-                country:country,
-                version: current_version,
-                //crystal: crystal,
-                //...나머지는 default
-            });
-            var user_stage = new User_stage({
-                userid: id,
-                stage: {
-                    stage_name: "startmusic",
-                    N_cleartime: 0, //Normal
-                    H_cleartime: 0, //hard
-                    N_death:0,
-                    H_death:0,
-                },
-            });
-            await Stage.findOneAndUpdate(
-                {stage_name:"startmusic"},
-                {
-                    $addToSet: {
-                        Normal: {
-                            userid: id,
-                            cleartime: 0,
-                            death: 0,
-                            country: country,
-                        },
-                        Hard:{
-                            userid:id,
-                            cleartime: 0,
-                            death: 0,
-                            country: country,
-                        },
+
+    if(result.verified){
+        console.log("진입");
+        const jsonObj = {};
+        var result = await User.exists({ googleid: id });
+        var check_banned = await User.findOne({googleid: id });
+    
+        //신규 유저
+        if (result === false) {
+            try {
+                //moment format
+                //var day = new Date();
+                var day_format = 'YYYY.MM.DD HH:mm:ss';
+                var now = moment().format(day_format);
+    
+                var user = new User({
+                    googleid: id,
+                    created_date: now,
+                    latest_login: now,   //Date.now(),
+                    country:country,
+                    version: current_version,
+                    //crystal: crystal,
+                    //...나머지는 default
+                });
+                var user_stage = new User_stage({
+                    userid: id,
+                    stage: {
+                        stage_name: "startmusic",
+                        N_cleartime: 0, //Normal
+                        H_cleartime: 0, //hard
+                        N_death:0,
+                        H_death:0,
                     },
-                },{new:true}).setOptions({ runValidators: true });
-            await user.save({ new: true });
-            await user_stage.save({ new: true });
-            jsonObj.user = user;
-            jsonObj.user_stage = user_stage;
-            logger.info(`신규 유저 등록 : ${id}`);
-            userinfo.info(`신규 유저 등록 : ${id}`);
-            res.status(200).json(jsonObj);
-        } catch(err) {
-            res.status(500).json({ error: "database failure" });
-            logger.error(`신규 유저 등록 에러: ${id} [${err}]`);
-            userinfo.error(`신규 유저 등록 에러: ${id} [${err}]`);
-            upload(err,'user_login');
-            next(err);
+                });
+                await Stage.findOneAndUpdate(
+                    {stage_name:"startmusic"},
+                    {
+                        $addToSet: {
+                            Normal: {
+                                userid: id,
+                                cleartime: 0,
+                                death: 0,
+                                country: country,
+                            },
+                            Hard:{
+                                userid:id,
+                                cleartime: 0,
+                                death: 0,
+                                country: country,
+                            },
+                        },
+                    },{new:true}).setOptions({ runValidators: true });
+                await user.save({ new: true });
+                await user_stage.save({ new: true });
+                jsonObj.user = user;
+                jsonObj.user_stage = user_stage;
+                logger.info(`신규 유저 등록 : ${id}`);
+                userinfo.info(`신규 유저 등록 : ${id}`);
+                res.status(200).json(jsonObj);
+            } catch(err) {
+                res.status(500).json({ error: "database failure" });
+                logger.error(`신규 유저 등록 에러: ${id} [${err}]`);
+                userinfo.error(`신규 유저 등록 에러: ${id} [${err}]`);
+                upload(err,'user_login');
+                next(err);
+            }
+        } else {
+            //이미 등록된 유저
+            try {
+            //로그인할 때 밴 여부 체크
+                //밴 당한 유저일 때
+                if(check_banned.banned === true){
+                    res.status(200).json({"message":`${id} 는 밴 된 유저입니다`,"banned_at":check_banned.banned_at,"baaned":"true"});
+                //밴 당한 유저가 아닐 떄
+                }else{
+                    //moment format
+                    var day = new Date();
+                    var day_format = 'YYYY.MM.DD HH:mm:ss';
+                    var now = moment(day).format(day_format);
+    
+                    var user = await User.findOneAndUpdate(
+                        {googleid:id},
+                        {stage_checked:[]},
+                        {new:true}).setOptions({ runValidators: true });
+                    
+                    var user_stage = await User_stage.findOne()
+                        .where("userid")
+                        .equals(id);
+    
+                    var user = await User.findOneAndUpdate(
+                        { googleid: id },
+                        { latest_login: now },
+                        { new: true }
+                    ).setOptions({ runValidators: true });
+                    jsonObj.user_stage = user_stage;
+                    jsonObj.user = user;
+                    logger.info(`${id} 가 로그인 했습니다.`);
+                    userinfo.info(`${id} 가 로그인 했습니다.`);
+                    res.status(200).json(jsonObj);
+                }
+            } catch(err) {
+                res.status(500).json({ error: "database failure" });
+                logger.error(`신규 유저 로그인 에러: ${id} [${err}]`);
+                userinfo.error(`신규 유저 로그인 에러: ${id} [${err}]`);
+                upload(err,'user_login');
+                next(err);
+            }
         }
-    } else {
-        //이미 등록된 유저
-        try {
-            //moment format
-            var day = new Date();
-            var day_format = 'YYYY.MM.DD HH:mm:ss';
-            var now = moment(day).format(day_format);
-
-            var user = await User.findOneAndUpdate(
-                {googleid:id},
-                {stage_checked:[]},
-                {new:true}).setOptions({ runValidators: true });
-            
-            var user_stage = await User_stage.findOne()
-                .where("userid")
-                .equals(id);
-
-            var user = await User.findOneAndUpdate(
-                { googleid: id },
-                { latest_login: now },
-                { new: true }
-            ).setOptions({ runValidators: true });
-            jsonObj.user_stage = user_stage;
-            jsonObj.user = user;
-            logger.info(`${id} 가 로그인 했습니다.`);
-            userinfo.info(`${id} 가 로그인 했습니다.`);
-            res.status(200).json(jsonObj);
-        } catch(err) {
-            res.status(500).json({ error: "database failure" });
-            logger.error(`신규 유저 로그인 에러: ${id} [${err}]`);
-            userinfo.error(`신규 유저 로그인 에러: ${id} [${err}]`);
-            upload(err,'user_login');
-            next(err);
-        }
+    }else{
+        console.log("토큰이 이상하거나 verify함수가 이상하거나임",result.error)
+        res.status(500).json({ "message": "Token error" ,"error":`${result.error}`});
     }
+    
 }
 
 //크리스탈 처리 라우터 (크리스탈 구매)

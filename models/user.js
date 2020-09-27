@@ -2,9 +2,6 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 const User = new Schema({
-    //_id 자동으로 생성하되, 구글 연동 id를 파인드해서 거기서 이 _id변수를뽑고
-    //그걸 변수에 담고 그걸로 쿼리작업을해서 다른 스키마 다루면 될 듯
-
     //구글 연동 id
     googleid: {
         type: String,
@@ -89,11 +86,20 @@ const User = new Schema({
         type:String,
         default:"basic",
     },
-    stage_checked :[String]
+    //stages/stage api 호출 할 때 로그인 이후 한번만 호출되도록 체크하는 용도
+    stage_checked :[String],
+
+    //밴 여부, 밴 된 날짜
+    banned: Boolean,
+    banned_at: String,
+
+
+
     },{ 
         versionKey : false 
 });
 
+/*
 //구글아이디로 찾는 메서드 
 User.statics.findByGoogleid = function(userid) {
     return this.findOne({'googleid': userid}); //.exec() 지웠음
@@ -103,5 +109,6 @@ User.methods.addCustomize = function (info) {
     this.customizing.push({customizing: info.customizing},{upsert:true});
     return this.save();
 };
+*/
 
 module.exports = mongoose.model("User", User,"User");

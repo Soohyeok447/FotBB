@@ -49,7 +49,7 @@ const logger = winston.createLogger({
       dirname: logDir + '/all',
       filename: `%DATE%_app.log`,
       maxFiles: 14,  // 14일치 로그 파일 저장
-      zippedArchive: true, 
+      zippedArchive: false, 
     }),
     new winstonDaily({
       level: 'error',
@@ -57,7 +57,7 @@ const logger = winston.createLogger({
       dirname: logDir + '/all' + '/error',  // error.log 파일은 /logs/error 하위에 저장 
       filename: `%DATE%_error.log`,
       maxFiles: 14,
-      zippedArchive: true,
+      zippedArchive: false,
     }),
   ],
 })
@@ -78,7 +78,7 @@ const userinfo = winston.createLogger({
       dirname: logDir + '/userinfo',
       filename: `%DATE%_app.log`,
       maxFiles: 14,  // 14일치 로그 파일 저장
-      zippedArchive: true, 
+      zippedArchive: false, 
     }),
     new winstonDaily({
       level: 'error',
@@ -86,7 +86,7 @@ const userinfo = winston.createLogger({
       dirname: logDir + '/userinfo' + '/error',  // error.log 파일은 /logs/error 하위에 저장 
       filename: `%DATE%_error.log`,
       maxFiles: 14,
-      zippedArchive: true,
+      zippedArchive: false,
     }),
   ],
 })
@@ -107,7 +107,7 @@ const payment = winston.createLogger({
       dirname: logDir + '/payment',
       filename: `%DATE%_app.log`,
       maxFiles: 14,  // 14일치 로그 파일 저장
-      zippedArchive: true, 
+      zippedArchive: false, 
     }),
     new winstonDaily({
       level: 'error',
@@ -115,7 +115,7 @@ const payment = winston.createLogger({
       dirname: logDir + '/payment' + '/error',  // error.log 파일은 /logs/error 하위에 저장 
       filename: `%DATE%_error.log`,
       maxFiles: 14,
-      zippedArchive: true,
+      zippedArchive: false,
     }),
   ],
 })
@@ -136,7 +136,7 @@ const play = winston.createLogger({
       dirname: logDir + '/play',
       filename: `%DATE%_app.log`,
       maxFiles: 14,  // 14일치 로그 파일 저장
-      zippedArchive: true, 
+      zippedArchive: false, 
     }),
     new winstonDaily({
       level: 'error',
@@ -144,7 +144,7 @@ const play = winston.createLogger({
       dirname: logDir + '/play' + '/error',  // error.log 파일은 /logs/error 하위에 저장 
       filename: `%DATE%_error.log`,
       maxFiles: 14,
-      zippedArchive: true,
+      zippedArchive: false,
     }),
   ],
 })
