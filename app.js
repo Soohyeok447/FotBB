@@ -13,7 +13,7 @@ var Clear_router = require('./routes/api/clear/clear.routes');
 var Fail_router = require("./routes/api/fail/fail.routes");
 var Stage_router = require("./routes/api/stages/stages.routes");
 var Play_router = require("./routes/api/play/play.routes");
-var verifytest = require("./routes/api/middleware/test.js");
+var Playing_router = require("./routes/api/playing/playing.routes");
 
 var connect = require('./models');
 
@@ -54,21 +54,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-/*
-var initialize = async(req,res,next)=>{
-  const stages = {startmusic,song1,song2}
-  for(song in stages){
-    let stage = new Stage({
-      stage_name:song,
-    })
-    await stage.save({ new: true });
-  }
-  console.log("진입");
-  next();
-}
-//stage 모델 초기화
-app.use(initialize)
- */
 
 //라우팅
 app.use('/api/version',Version_router);
@@ -77,9 +62,9 @@ app.use('/api/clear',Clear_router);
 app.use('/api/fail',Fail_router);
 app.use('/api/stages',Stage_router);
 app.use('/api/play',Play_router);
+app.use('/api/playing',Playing_router);
 
-//테스트용
-app.use('/api/middleware/test',verifytest);
+
 
 
 // catch 404 and forward to error handler

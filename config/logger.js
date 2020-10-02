@@ -6,17 +6,12 @@ const schedule = require('node-schedule');// 일정 시간마다 이벤트 발�
 
 const AWS = require('aws-sdk');
 
- 
+
 const fs  = require('fs');
 const { transports } = require('winston');
 require('dotenv').config();
 
 
-/*
-s3 윈스턴 로그파일 format수정하고 s3에 연동 (daily, error폴더)
-Docker 인강
-
-*/
 require('moment-timezone');
 moment.tz.setDefault("Asia/Seoul");
 
@@ -28,16 +23,22 @@ const logFormat = printf(info =>{
 return `${info.timestamp} [${info.level}] ${info.message}`;
 });
 
+function set_date(){
+    dateformat = moment().format('YYYY-MM-DD');
+}
 
+
+//로거들을 똑같은 이름으로 함수로 감싸보자
 /*
  * Log Level
  * error: 0, warn: 1, info: 2, http: 3, verbose: 4, debug: 5, silly: 6
  */
 
+
 const logger = winston.createLogger({
   format: combine(
     timestamp({
-      format: moment().format('YYYY-MM-DD HH:mm:ss')
+      format: 'YYYY-MM-DD HH:mm:ss'
     }),
     logFormat,
   ),
@@ -66,7 +67,7 @@ const logger = winston.createLogger({
 const userinfo = winston.createLogger({
   format: combine(
     timestamp({
-      format: moment().format('YYYY-MM-DD HH:mm:ss')
+      format: 'YYYY-MM-DD HH:mm:ss'
     }),
     logFormat,
   ),
@@ -95,7 +96,7 @@ const userinfo = winston.createLogger({
 const payment = winston.createLogger({
   format: combine(
     timestamp({
-      format: moment().format('YYYY-MM-DD HH:mm:ss')
+      format: 'YYYY-MM-DD HH:mm:ss'
     }),
     logFormat,
   ),
@@ -124,7 +125,7 @@ const payment = winston.createLogger({
 const play = winston.createLogger({
   format: combine(
     timestamp({
-      format: moment().format('YYYY-MM-DD HH:mm:ss')
+      format: 'YYYY-MM-DD HH:mm:ss'
     }),
     logFormat,
   ),
@@ -172,10 +173,10 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // '50 59 23 * * 1-7'
-////////////////////////// 매일 밤 23시 59분 50초 마다 daily-rotaion 로그 파일 저장
-schedule.scheduleJob('50 59 23 * * 1-7', ()=>{ //매일 밤 23시 55분에 실행됨
+////////////////////////// 매일 밤 23시 59분 58초 마다 daily-rotaion 로그 파일 저장
+schedule.scheduleJob('58 59 23 * * 1-7', ()=>{ //매일 밤 23시 58분에 실행됨
+  set_date();
   s3_daily_upload();   
-      
 });
 
 //upload 과정을 담은 함수 (s3 초기화부터 업로드까지)
@@ -191,13 +192,6 @@ function s3_daily_upload(){
 
 
 
-    var dateformat = moment().format('YYYY-MM-DD');
-
-    var tomorrow = moment();
-    tomorrow.add(1, 'days');
-    tomorrow.format('YYYY-MM-DD'); 
-
-    var timeformat = moment().format('HH:mm:ss');
     //userinfo
     var s3_userinfo = {
       'Bucket':'fotbb-log',
@@ -262,14 +256,14 @@ function s3_daily_upload(){
     //userinfo
     s3.upload(s3_userinfo, (err, data)=>{
       if(err){
-        logger.error(`[s3] userinfo 저장 실패`);
+        logger.error(`[s3] userinfo 저장 실패 - ${err}`);
       }else{
         logger.info(`[s3] userinfo 저장 성공`);
       }
     });
     s3.upload(s3_userinfo_err, (err, data)=>{
       if(err){
-        logger.error(`[s3] userinfo_err 저장 실패`);
+        logger.error(`[s3] userinfo_err 저장 실패 - ${err}`);
       }else{
         logger.info(`[s3] userinfo_err 저장 성공`);
       }
@@ -277,14 +271,14 @@ function s3_daily_upload(){
     //payment
     s3.upload(s3_payment, (err, data)=>{
       if(err){
-        logger.error(`[s3] payment 저장 실패`);
+        logger.error(`[s3] payment 저장 실패 - ${err}`);
       }else{
         logger.info(`[s3] payment 저장 성공`);
       }
       });
     s3.upload(s3_payment_err, (err, data)=>{
       if(err){
-        logger.error(`[s3] payment_err 저장 실패`);
+        logger.error(`[s3] payment_err 저장 실패 - ${err}`);
       }else{
         logger.info(`[s3] payment_err 저장 성공`);
       }
@@ -292,14 +286,14 @@ function s3_daily_upload(){
     //play
     s3.upload(s3_play, (err, data)=>{
       if(err){
-        logger.error(`[s3] play 저장 실패`);
+        logger.error(`[s3] play 저장 실패 - ${err}`);
       }else{
         logger.info(`[s3] play 저장 성공`);
       }
       });
     s3.upload(s3_play_err, (err, data)=>{
       if(err){
-        logger.error(`[s3] play_err 저장 실패`);
+        logger.error(`[s3] play_err 저장 실패 - ${err}`);
       }else{
         logger.info(`[s3] play_err 저장 성공`);
       }
@@ -307,14 +301,14 @@ function s3_daily_upload(){
     //total
     s3.upload(s3_total, (err, data)=>{
       if(err){
-        logger.error(`[s3] total 저장 실패`);
+        logger.error(`[s3] total 저장 실패 - ${err}`);
       }else{
         logger.info(`[s3] total 저장 성공`);
       }
       });
     s3.upload(s3_total_err, (err, data)=>{
       if(err){
-        logger.error(`[s3] total_err 저장 실패`);
+        logger.error(`[s3] total_err 저장 실패 - ${err}`);
       }else{
         logger.info(`[s3] total_err 저장 성공`);
       }

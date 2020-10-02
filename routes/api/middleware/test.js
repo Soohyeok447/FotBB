@@ -11,10 +11,11 @@ var {logger} = require('../../../config/logger');
 var {upload} = require('./../../../config/s3_option');
 
 
+
 router.post("/", async (req, res, next) => {
-    const {token,username,location} = req.body
+    const {token} = req.body
     
-    async function verify() {
+    async function verify(token) {
 
         try{
             console.log("req.body:  ",req.body);
@@ -33,7 +34,11 @@ router.post("/", async (req, res, next) => {
             console.log("userid : ",userid);
     
             var check_validation = (payload.aud === process.env.CLIENT_ID) ? true : false;
-    
+            if(ticket){
+                console.log("ticket존재 ",ticket)
+            }else{
+                console.log("티켓이 없어요")
+            }
     
             if(check_validation && payload){
                 console.log("aud일치 유효한 토큰입니다.")
@@ -47,23 +52,21 @@ router.post("/", async (req, res, next) => {
             }
         }catch(err){
             res.status(500).json({'message':'verify error'});
+            console.log(err);
         }
 
         
     }
-    var result = verify().catch(console.error);
+    var result = verify(token).catch(console.error);
     console.log(result);
     //result가 뭔지 보고 userid 사용하고 next()처리
 })
 
-exports.isVerified = async (req, res, next) => {
-    const {token,username,location} = req.body
-    
 
-    async function verify() {
-        try{
-                console.log("req.body:  ",req.body);
-            
+
+exports.verifyToken = (token)=>{
+    try{
+        async function verify() {
             const ticket = await client.verifyIdToken({
                 idToken: token,
                 audience: process.env.CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
@@ -73,28 +76,66 @@ exports.isVerified = async (req, res, next) => {
             const payload = ticket.getPayload();
             console.log("paylaod : ",payload);
             const userid = payload['sub'];
-
-            var check_validation = (payload.aud === process.env.CLIENT_ID) ? true : false;
-
-            if(check_validation && payload ){
-                console.log("aud일치 유효한 토큰입니다.")
-                res.status(200).json({'message':'aud일치 유효한 토큰입니다.','payload':payload});
-                next(userid);
-            }else{
-                console.log("유효한 토큰이 아닙니다.")
-                res.status(200).json({'message':'aud 불일치'});
-                
-            }
-        
-            verify().catch(console.error);
-            
-        //result가 뭔지 보고 userid 사용하고 next()처리
-        }catch(err){
-            res.status(500).json({'message':'verify error'});
+            // let check_validation = (payload.aud === process.env.CLIENT_ID) ? true : false;
+    
+            // if(check_validation && payload ){
+            //     console.log("aud일치 유효한 토큰입니다.")
+            //     res.status(200).json({'message':'aud일치 유효한 토큰입니다.'});
+            //     return true;
+            // }else{
+            //     console.log("유효한 토큰이 아닙니다.")
+            //     res.status(200).json({'message':'aud 불일치'});
+            //     return false;
+            // }
+            return payload;
         }
-        
+        var payload = verify().catch(console.error);
+        return payload;
+    }catch(err){
+        return res.status(500).send("유효하지 않은 토큰입니다.")
     }
 }
+
+
+async function isVerified(token) {
+    try{
+    
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
+            // Or, if multiple clients access the backend:
+            //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+        });
+        const payload = ticket.getPayload();
+        //console.log("paylaod : ",payload);
+        const userid = payload['sub'];
+        
+
+        //console.log("userid : ",userid);
+
+        var check_validation = (payload.aud === process.env.CLIENT_ID) ? true : false;
+
+        //토큰 유효성 체크 통과
+        if(check_validation && payload){
+            console.log("aud일치 유효한 토큰입니다.")
+            
+            return payload;
+
+            
+
+
+        }else{
+            console.log("else문 진입")
+            return false;
+            //logger.error(`accessToken error`);
+            //upload('accessToken error',`accessToken error`);
+        }
+    }catch(err){
+        return err
+    }
+}
+
+
 
 /* payload example
 {
@@ -120,4 +161,4 @@ exports.isVerified = async (req, res, next) => {
 */
 
 
-module.exports = router;
+module.exports = router, {isVerified};

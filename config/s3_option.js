@@ -26,29 +26,12 @@ return `${info.timestamp} [${info.level}] ${info.message}`;
 
 var dateformat = moment().format('YYYY-MM-DD');
 
-var tomorrow = moment();
-tomorrow.add(1, 'days');
-tomorrow.format('YYYY-MM-DD'); 
 var timeformat;
 
 //timeformat이 처음에 생성되고 고정되는 것 같으니까 계속 갱신해 줄 필요 있어보임 (5초? 15초? 30초?)
-timer = new EventEmitter();
-
-
-var sec = 1;
-setInterval(function(){
-    timer.emit('tick');
-}, sec*1000);
-//시간 갱신
-timer.on('tick', ()=>{
+function set_time(){
     timeformat = moment().format('HH시mm분ss초');
-});
-
-
-
-
-////////////////////////////
-
+}
 
 //////////////////////s3 sdk 기본설정/////////
 const s3 = new AWS.S3({
@@ -61,17 +44,17 @@ const s3 = new AWS.S3({
 
 
 ////////////////////////////////// 함수 호출 시 upload 
-function upload(err,location){
+function upload(id,location,err){
     console.log("upload 호출됨");
+    set_time();
     
-    var now = timeformat;
     //로거
     let s3_error_logger = winston.createLogger({
         transports:[
             new winston.transports.File({
                 level:'error',
                 //dirname: logDir + '/error/' + dateformat,
-                filename: `${appRoot}/logs/error/${dateformat}/${now}_error.log`, //로그파일을 남길 경로
+                filename: `${appRoot}/logs/error/${dateformat}/${timeformat}_error.log`, //로그파일을 남길 경로
                 handleExceptions: true,
                 json:false,
                 maxsize:5242880, //5MB
@@ -87,7 +70,7 @@ function upload(err,location){
         exitOnError:false,
     });
     
-    s3_error_logger.error(`[${location}]에서 에러발생! | 에러내용 - ${[err]}`);
+    s3_error_logger.error(`${id} - [${location}]에서 에러발생! | 에러내용 - ${[err]}`);
     
     function s3upload(){
         console.log("s3upload 실행됨")
@@ -95,9 +78,9 @@ function upload(err,location){
         /////// s3 어디에 어떤형식으로 올릴건지 설정
         var s3_error = {
             'Bucket':'fotbb-log',
-            'Key': 'error/'+dateformat+`/${now}_error.log`,
+            'Key': 'error/'+dateformat+`/${timeformat}_error.log`,
             'ACL':'public-read',
-            'Body':fs.createReadStream(`${appRoot}/logs/error/${dateformat}/${now}_error.log`),
+            'Body':fs.createReadStream(`${appRoot}/logs/error/${dateformat}/${timeformat}_error.log`),
             'ContentType':'text/plain'
         }
         //업로드 메서드
@@ -109,11 +92,11 @@ function upload(err,location){
             }
         });
     }
-    //3초뒤에 s3에 저장되도록
-    setTimeout(s3upload, 3000);
+    //1초뒤에 s3에 저장되도록
+    setTimeout(s3upload, 1000);
     
 
-    
+    /*
     ///////////////aws sns
     AWS.config.loadFromPath(`${appRoot}/config/config.json`);
 
@@ -132,7 +115,7 @@ function upload(err,location){
         function(err){
         console.error(err,err.stack);
     })
-    
+    */
 }
 
 

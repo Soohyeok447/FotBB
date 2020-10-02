@@ -1,5 +1,3 @@
-//수정 필요
-
 const mongoose = require("mongoose");
 
 //나중에 다시 볼 때 까먹을까봐 적어두는건데
@@ -19,13 +17,16 @@ const Stage = new Schema({
         cleartime: Number,
         death: Number,
         country: String,
+        terminated: Boolean,
     })],
     Hard: [new Schema({
         userid: String,
         cleartime: Number,
         death: Number,
         country: String,
-    })]},{ 
+        terminated: Boolean,
+    })],
+    },{ 
         versionKey : false 
 });
 
