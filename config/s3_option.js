@@ -4,8 +4,6 @@ const appRoot = require('app-root-path'); //app root 가져오기위해 사용
 const fs  = require('fs');
 var moment = require('moment');
 
-var EventEmitter = require('events');
-
 
 require('dotenv').config();
 require('moment-timezone');

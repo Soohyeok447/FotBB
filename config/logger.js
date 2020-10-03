@@ -3,14 +3,14 @@ var winstonDaily = require('winston-daily-rotate-file');
 var moment = require('moment');
 const appRoot = require('app-root-path'); //app root 가져오기위해 사용
 const schedule = require('node-schedule');// 일정 시간마다 이벤트 발생
+const fecha = require("fecha"); //date formmating
 
 const AWS = require('aws-sdk');
 
-
 const fs  = require('fs');
+
 const { transports } = require('winston');
 require('dotenv').config();
-
 
 require('moment-timezone');
 moment.tz.setDefault("Asia/Seoul");
@@ -27,6 +27,10 @@ function set_date(){
     dateformat = moment().format('YYYY-MM-DD');
 }
 
+function TimeStamp(){
+  return moment().format('HH:mm:ss');
+}
+
 
 //로거들을 똑같은 이름으로 함수로 감싸보자
 /*
@@ -38,7 +42,7 @@ function set_date(){
 const logger = winston.createLogger({
   format: combine(
     timestamp({
-      format: 'YYYY-MM-DD HH:mm:ss'
+      format: TimeStamp
     }),
     logFormat,
   ),
@@ -67,7 +71,7 @@ const logger = winston.createLogger({
 const userinfo = winston.createLogger({
   format: combine(
     timestamp({
-      format: 'YYYY-MM-DD HH:mm:ss'
+      format: TimeStamp
     }),
     logFormat,
   ),
@@ -96,7 +100,7 @@ const userinfo = winston.createLogger({
 const payment = winston.createLogger({
   format: combine(
     timestamp({
-      format: 'YYYY-MM-DD HH:mm:ss'
+      format: TimeStamp
     }),
     logFormat,
   ),
@@ -125,7 +129,7 @@ const payment = winston.createLogger({
 const play = winston.createLogger({
   format: combine(
     timestamp({
-      format: 'YYYY-MM-DD HH:mm:ss'
+      format: TimeStamp
     }),
     logFormat,
   ),
