@@ -21,6 +21,12 @@ router.post("/stage",userController.stage);
 //premium 구매 라우터
 router.post("/premium", userController.premium);
 
+//부적절 유저 닉네임 신고 라우터
+router.post("/report", userController.report);
+
+//유저 닉네임 변경
+router.post("/change", userController.id_change);
+
 
 
 module.exports = router;

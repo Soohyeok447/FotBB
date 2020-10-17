@@ -179,7 +179,7 @@ exports.clear = async (req, res, next) => {
                 //처리가 가능하다면 true false 여부만 판단해서 스테이지등록
                 let user_stage = await User_stage.findOne({userid:id});
                 let has_stage = (user_stage.stage.filter(s=>s.stage_name === nextstage));
-                if(has_stage.length===0){  //user_stage 모델에서 해당 스테이지를 찾지 못했을 때
+                if(has_stage.length===0 && user_stage.userid){  //user_stage 모델에서 해당 스테이지를 찾지 못했을 때
                     console.log("클리어한 적이 없는 스테이지 입니다.");
                     //user_stage 모델 배열에 스테이지 추가
                     await User_stage.findOneAndUpdate( 

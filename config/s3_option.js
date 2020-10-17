@@ -28,7 +28,9 @@ var timeformat;
 
 //timeformat이 처음에 생성되고 고정되는 것 같으니까 계속 갱신해 줄 필요 있어보임 (5초? 15초? 30초?)
 function set_time(){
-    timeformat = moment().format('HH시mm분ss초');
+    timeformat = moment().add(3,"m").add(40,"s").format("HH시mm분ss초");
+    console.log(timeformat);
+    return timeformat;
 }
 
 //////////////////////s3 sdk 기본설정/////////
@@ -44,8 +46,8 @@ const s3 = new AWS.S3({
 ////////////////////////////////// 함수 호출 시 upload 
 function upload(id,location,err){
     console.log("upload 호출됨");
-    set_time();
-    
+    timeformat = set_time();
+
     //로거
     let s3_error_logger = winston.createLogger({
         transports:[
@@ -116,10 +118,32 @@ function upload(id,location,err){
     */
 }
 
+function report_notice(id,email,count){
+    
+    
+    //aws sns
+    AWS.config.loadFromPath(`${appRoot}/config/config.json`);
 
+    var params = {
+        Message:`${id} -> ${count}회 : ${email}`,
+        PhoneNumber: '+821089012986',
+    };
+
+    var publishTextPromise = new AWS.SNS({apiVersion: '2010-03-31'}).publish(params).promise();
+
+    //Handle promise's fulfilled/rejected statses
+
+    publishTextPromise.then(
+        function(data){
+        }).catch(
+        function(err){
+        console.error(err,err.stack);
+    })
+    
+}
 
   
 
 
 
-module.exports = {upload};
+module.exports = {upload,report_notice};

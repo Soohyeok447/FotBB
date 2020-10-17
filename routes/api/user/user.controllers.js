@@ -1,9 +1,10 @@
 var moment = require('moment');
 var {logger,payment,userinfo} = require('../../../config/logger');
-var {upload} = require('./../../../config/s3_option');
+var {upload,report_notice} = require('./../../../config/s3_option');
 var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
+var Report = require("../../../models/report_user");
 var current_version = require("../version").version;
 
 require('moment-timezone');
@@ -15,8 +16,16 @@ const {OAuth2Client} = require('google-auth-library');
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
 
-async function verify(token,id) {
+
+async function verify(token,email,id) {
     try{
+        
+        //id가 매개변수로 전달이 안됐을 때 함수의 정상동작을 위한 초기화
+        if (id === undefined){
+            id = "";
+        }
+
+
         var TokenObj ={}
         const ticket = await client.verifyIdToken({
             idToken: token,
@@ -47,7 +56,7 @@ async function verify(token,id) {
             logger.error(`no payload error`);
             upload(id,'',`accessToken error`);
             return TokenObj;
-        }else{
+        }else{ 
             console.log("페이로드 티켓없음")
             TokenObj.verified = false;
             TokenObj.error = 'no ticket';
@@ -75,7 +84,7 @@ async function verify(token,id) {
             TokenObj.verified = false; 
         }
         
-        logger.error(`${id} - ${err}`);
+        logger.error(`${id} - ${email} : ${err}`);
         upload(id,`user`,err);
         return TokenObj;
     }
@@ -89,8 +98,8 @@ exports.user_login =  async (req, res, next) => {
     if(verify_result.verified){
         console.log("진입");
         const jsonObj = {};
-        var result = await User.exists({ googleid: id });
-        var check_banned = await User.findOne({googleid: id });
+        var result = await User.exists({ email: email });
+        var check_banned = await User.findOne({email: email });
         //신규 유저
         if (result === false) {
             try {
@@ -375,6 +384,117 @@ exports.premium = async (req, res, next) => {
             logger.error(`프리미엄 구매 에러: ${id} [${err}]`);
             payment.error(`프리미엄 구매 에러: ${id} [${err}]`);
             upload(id,'프리미엄 구매 설정',err);
+            next(err);
+        }
+    }else{
+        res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
+    }
+}
+
+
+//부적절 닉네임 신고
+exports.report = async (req, res, next) => {
+    const { email, token} = req.body; 
+    var verify_result = await verify(token,email)
+    if(verify_result.verified){
+        try {
+            const limit = 3; 
+            let user = await Report.findOne({email: email}); //비교용 find
+            //만약 유저가 DB에 저장이 안돼있으면 다큐먼트 생성
+            if(user === null){
+                let new_user = new Report({
+                    email:email,
+                    count:0,
+                });
+                await new_user.save({new:true});
+                res.status(200).json({"message":"등록 완료","code":200});
+            }else{
+                //다큐먼트가 존재하면 신고당한 횟수 +1 갱신
+                user.count++;
+                await user.save({new:true});
+   
+                if(user.count>3 && user.count%limit===0){
+                    console.log("진입");
+                    //신고당한 횟수가 3회 이상이면 운영진에게 알림을 주는 시스템이 있으면 좋겠음 (aws sns라든가 이건 뭐 upload가 있으니까 금방가능)
+                    let findUser = await User.findOne({email:email})
+                    logger.info(`${email}의 신고횟수가 ${limit}회를 넘었습니다. 현재 신고횟수 - ${user.count}회 현재 닉네임 - ${findUser.googleid}`);
+                    
+                        //aws sns 연결
+                    report_notice(findUser.googleid,email,user.count);
+                }
+                res.status(200).json({"message":"신고 횟수 갱신 완료","count":user.count,"code":200});
+            }
+            
+            
+        } catch(err) {
+            res.status(500).json({ error: "database failure" });
+            logger.error(`신고 에러: ${email} [${err}]`);
+            payment.error(`신고 에러: ${email} [${err}]`);
+            upload("",`email : ${email} 신고`,err);
+            next(err);
+        }
+    }else{
+        res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
+    }
+}
+
+//닉네임 변경
+exports.id_change = async (req, res, next) => {
+    const {changed_id ,email, token} = req.body; 
+    var verify_result = await verify(token,email)
+    if(verify_result.verified){
+        try {
+            //트림
+            new_id = changed_id.replace(/(\s*)/g,"");
+            //이미 존재하는 닉네임인지 확인
+            if(await User.exists({googleid:new_id})){
+                res.status(200).json({message:"존재하는 닉네임",code:200});
+
+            //존재하지 않는 닉네임일 때
+            }else{
+                    /*  
+                                변경해야 할 DB
+                            <User, User_stage, Stage>
+                        */
+                //먼저 User모델에 email로 find해서 수정되기 전 id를 가지고 옴
+                let user = await User.findOne({email:email})
+                let before_id = user.googleid;
+
+                        //User의 googleid 변경
+                user.googleid = new_id;
+                user.save({new:true});
+
+                        //User_stage의 userid 변경
+                // before_id 로 Stage, User_stage에 있는 모델에 접근
+                let user_stage = await User_stage.findOne({userid:before_id});
+                user_stage.userid = new_id;
+                user_stage.save({new:true});
+
+                        //Stage의 userid 변경 
+                        //이건 조금 까다로운데 Stage모델속에 stage객체배열이 있고 Normal객체배열 속 userid와 Hard 객체배열 속 userid를 바꿔야한다. 
+                let stage = await Stage.find({}); // 모든 다큐먼트 불러오기 (모든 스테이지)
+                stage.forEach(async e => { //e 는 하나의 스테이지 객체 
+                    //해당 유저가 기록된 index 구하기
+                    normal_index = e.Normal.findIndex((s) => s.userid === before_id);
+                    hard_index = e.Hard.findIndex((s) => s.userid === before_id);
+
+                        //만약 기록이 존재하면 닉네임 변경
+                    //구한 index로 해당 유저에 접근하고 userid 변경
+                    if(normal_index!==-1){
+                        e.Normal[normal_index].userid = new_id;
+                    }
+                    if(hard_index!==-1){
+                        e.Hard[hard_index].userid = new_id;
+                    }
+                    await e.save({new:true});
+                });
+                res.status(200).json({message:`닉네임 변경 ${before_id} => ${new_id}`,code:200});
+            }           
+        } catch(err) {
+            res.status(500).json({ error: "database failure" });
+            logger.error(`닉네임 변경 에러: ${email} [${err}]`);
+            payment.error(`닉네임 변경 에러: ${email} [${err}]`);
+            upload("",`email : ${email} 닉네임 변경`,err);
             next(err);
         }
     }else{
