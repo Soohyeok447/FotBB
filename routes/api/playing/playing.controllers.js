@@ -92,68 +92,72 @@ exports.check_modulation = async (req, res, next) => {
     var verify_result = await verify(token)
     if(verify_result.verified){
         try{
-            //만약에 플레이 시작하는 거면
-            if(start){
-                let check_duplicate = await Playing.findOne({userid:id})
-                if(check_duplicate){  // 해킹이나 버그로 start=true가 또 오면
-                    res.status(200).json({message:'이미 플레이 중 입니다.'});
-                }else{  //진짜 첫 플레이이면
-                    let check_exist_user = await User.exists({googleid:id});
-                    let user_stage = await User_stage.findOne({userid:id});
-                    let check_has_stage = user_stage.stage.findIndex(s => s.stage_name === stage_name);
-                    console.log(check_has_stage);
-                    if(!check_exist_user){//만약 존재하지 않는 유저라면
-                        res.status(200).json({error:`없는 유저입니다.`})
-                    }else{//db에 존재하는 유저라면
-                        if(check_has_stage === -1){ //보유중이지 않은 스테이지면
-                            console.log(check_has_stage);
-                            res.status(200).json({error:`보유중이지 않은 스테이지 ${stage_name} playing 시도`})
-                        }else{ //보유중인 스테이지면
-                            console.log("start 진입했어요");
-                            var user_playing = new Playing({
-                                userid: id,
-                                now_time: now_time,
-                            });
-                            //playing모델에 id,now_time 필드 등록
-                            await user_playing.save({ new: true });
-                            res.status(200).json({message:'플레이 시작'})
+            //존재하는 유저 인지 검사
+            if(!await User.exists({googleid:id})){
+                res.status(200).json({message:"존재하지 않는 유저입니다.",code:201});
+            }else{
+                    //만약에 플레이 시작하는 거면
+                if(start){
+                    let check_duplicate = await Playing.findOne({userid:id})
+                    if(check_duplicate){  // 해킹이나 버그로 start=true가 또 오면
+                        res.status(200).json({message:'이미 플레이 중 입니다.'});
+                    }else{  //진짜 첫 플레이이면
+                        let check_exist_user = await User.exists({googleid:id});
+                        let user_stage = await User_stage.findOne({userid:id});
+                        let check_has_stage = user_stage.stage.findIndex(s => s.stage_name === stage_name);
+                        console.log(check_has_stage);
+                        if(!check_exist_user){//만약 존재하지 않는 유저라면
+                            res.status(200).json({error:`없는 유저입니다.`})
+                        }else{//db에 존재하는 유저라면
+                            if(check_has_stage === -1){ //보유중이지 않은 스테이지면
+                                console.log(check_has_stage);
+                                res.status(200).json({error:`보유중이지 않은 스테이지 ${stage_name} playing 시도`})
+                            }else{ //보유중인 스테이지면
+                                console.log("start 진입했어요");
+                                var user_playing = new Playing({
+                                    userid: id,
+                                    now_time: now_time,
+                                });
+                                //playing모델에 id,now_time 필드 등록
+                                await user_playing.save({ new: true });
+                                res.status(200).json({message:'플레이 시작'})
+                            }
                         }
                     }
-                }
-            }else{
-                console.log("이전 기록과 비교를 해야합니다.")
-                //id로 해당 유저 찾고
-                let check = await Playing.findOne({userid:id});
-    
-                //그리고 이전 now_time이랑 비교
-                let check_result = (check.now_time >= now_time) ? true : false;
-                console.log(`저장된 기록: ${check.now_time} vs 현재 기록 : ${now_time}`);
-                console.log(check_result);
-                //만약 저장된 now_time보다 적은 time이면 (사기 기록이면)
-                if(check_result){
-                    console.log("이 사람 사기 친다")
-                    
-                    //밴 , playing 모델에서 필드 삭제
-                    ban(id);
-                    delete_playing(id);
-    
-    
-                    res.status(200).json({"previous_time":check.now_time,"now_time":now_time,"banned":true,"userid":id});  
-                    userinfo.info(`유저 ${id} 밴 됨.`);
-                    logger.info(`유저 ${id} 밴 됨.`);
                 }else{
-                    console.log("유효한 기록이므로 저장합니다.")
-                    //아니면 now_time갱신
-                    await Playing.findOneAndUpdate(
-                        {userid:id},
-                        {now_time:now_time},
-                        { new: true }
-                    ).setOptions({ runValidators: true });
-    
-                    res.status(200).json({"now_time":now_time,"validation":"true"});
+                    console.log("이전 기록과 비교를 해야합니다.")
+                    //id로 해당 유저 찾고
+                    let check = await Playing.findOne({userid:id});
+        
+                    //그리고 이전 now_time이랑 비교
+                    let check_result = (check.now_time >= now_time) ? true : false;
+                    console.log(`저장된 기록: ${check.now_time} vs 현재 기록 : ${now_time}`);
+                    console.log(check_result);
+                    //만약 저장된 now_time보다 적은 time이면 (사기 기록이면)
+                    if(check_result){
+                        console.log("이 사람 사기 친다")
+                        
+                        //밴 , playing 모델에서 필드 삭제
+                        ban(id);
+                        delete_playing(id);
+        
+        
+                        res.status(200).json({"previous_time":check.now_time,"now_time":now_time,"banned":true,"userid":id});  
+                        userinfo.info(`유저 ${id} 밴 됨.`);
+                        logger.info(`유저 ${id} 밴 됨.`);
+                    }else{
+                        console.log("유효한 기록이므로 저장합니다.")
+                        //아니면 now_time갱신
+                        await Playing.findOneAndUpdate(
+                            {userid:id},
+                            {now_time:now_time},
+                            { new: true }
+                        ).setOptions({ runValidators: true });
+        
+                        res.status(200).json({"now_time":now_time,"validation":"true"});
+                    }
                 }
             }
-            
         }catch (err) {
             res.status(500).json({ error: `${err}` });
             logger.error(`유저 밴 에러: ${id} [${err}]`);
