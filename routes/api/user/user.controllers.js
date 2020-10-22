@@ -7,6 +7,10 @@ var Stage = require("../../../models/stage");
 var Report = require("../../../models/report_user");
 var current_version = require("../version").version;
 
+//닉네임 생성기용 obj
+var nick_obj = require("../../../src/nickname_generator.json");
+
+
 require('moment-timezone');
 moment.tz.setDefault("Asia/Seoul");
 
@@ -90,13 +94,57 @@ async function verify(token,email,id) {
     }
 }
 
+//TODO: for문을 돌려서 랜덤 닉네임 조합을 만들어야함
+//TODO: 형용사 + 명사 + 랜덤 숫자
+//닉네임 생성기
+function nickname_generator(){    
+    let adj;
+    let noun;
+    let rand_int;
+    let combined_nickname;
+    const max_int = 1000000;
+
+        //<형용사>
+    //형용사 객체 개수를 length로 구하고
+    let adj_max = nick_obj.adj.length;
+
+    //랜덤으로 객체(형용사)를 정한다.
+    let rand_adj = Math.floor(Math.random()*adj_max);
+    
+
+    //객체 필드 접근으로 형용사를 뽑는다.
+    adj = nick_obj.adj[rand_adj];
+    console.log("형용사",adj);
+
+        //<명사>
+    //명사 객체 개수를 length로 구하고
+    let noun_max = nick_obj.noun.length;
+    
+    //랜덤으로 객체(명사)를 정한다.
+    let rand_noun = Math.floor(Math.random()*noun_max);
+
+    //객체 필드 접근으로 명사를 뽑는다.
+    noun = nick_obj.noun[rand_noun];
+    console.log("명사",noun);
+
+    //랜덤 숫자를 뽑는다/
+    rand_int = Math.floor(Math.random()*max_int);
+    console.log("랜덤숫자",rand_int);
+
+    //닉네임을 조합한다.
+    combined_nickname = adj+noun+rand_int;
+    
+    return combined_nickname//조합된 닉네임 리턴;
+} 
+
+
 //접속 처리 라우터 (클라이언트 접속 시 동기화용)
 exports.user_login =  async (req, res, next) => {
     const { id ,country,email,token} = req.body;
 
     var verify_result = await verify(token,id)
     if(verify_result.verified){
-        console.log("진입");
+        // console.log("진입");
         const jsonObj = {};
         var result = await User.exists({ email: email });
         var check_banned = await User.findOne({email: email });
@@ -440,61 +488,104 @@ exports.report = async (req, res, next) => {
 
 //닉네임 변경
 exports.id_change = async (req, res, next) => {
-    const {changed_id ,email, token} = req.body; 
+    const {changed_id, use_generator, email, token} = req.body; 
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try {
-            //트림
-            new_id = changed_id.replace(/(\s*)/g,"");
-            //이미 존재하는 닉네임인지 확인
-            if(await User.exists({googleid:new_id})){
-                res.status(200).json({message:"존재하는 닉네임",code:200});
+            //먼저 User모델에 email로 find해서 수정되기 전 id를 가지고 옴
+            let user = await User.findOne({email:email})
+            let before_id = user.googleid;
 
-            //존재하지 않는 닉네임일 때
+
+            //만약 닉네임생성기를 이용한다고 치면
+            //new_id에 닉네임생성기함수() 대입
+            if(use_generator){
+                new_id = nickname_generator();
+                validation_check(user,new_id,before_id);
             }else{
-                    /*  
-                                변경해야 할 DB
-                            <User, User_stage, Stage>
-                        */
-                //먼저 User모델에 email로 find해서 수정되기 전 id를 가지고 옴
-                let user = await User.findOne({email:email})
-                let before_id = user.googleid;
-
-                        //User의 googleid 변경
-                user.googleid = new_id;
-                user.save({new:true});
-
-                        //User_stage의 userid 변경
-                // before_id 로 Stage, User_stage에 있는 모델에 접근
-                let user_stage = await User_stage.findOne({userid:before_id});
-                user_stage.userid = new_id;
-                user_stage.save({new:true});
-
-                        //Stage의 userid 변경 
-                        //이건 조금 까다로운데 Stage모델속에 stage객체배열이 있고 Normal객체배열 속 userid와 Hard 객체배열 속 userid를 바꿔야한다. 
-                let stage = await Stage.find({}); // 모든 다큐먼트 불러오기 (모든 스테이지)
-                stage.forEach(async e => { //e 는 하나의 스테이지 객체 
-                    //해당 유저가 기록된 index 구하기
-                    normal_index = e.Normal.findIndex((s) => s.userid === before_id);
-                    hard_index = e.Hard.findIndex((s) => s.userid === before_id);
-
-                        //만약 기록이 존재하면 닉네임 변경
-                    //구한 index로 해당 유저에 접근하고 userid 변경
-                    if(normal_index!==-1){
-                        e.Normal[normal_index].userid = new_id;
-                    }
-                    if(hard_index!==-1){
-                        e.Hard[hard_index].userid = new_id;
-                    }
-                    await e.save({new:true});
-                });
-                res.status(200).json({message:`닉네임 변경 ${before_id} => ${new_id}`,code:200});
-            }           
+                //트림
+                new_id = changed_id.replace(/(\s*)/g,"");
+                //최대길이 13자 체크
+                if(changed_id.length>13){
+                    res.status(200).json({message:"닉네임은 13자를 초과하면 안됩니다.",code:200});
+                }else{
+                    validation_check(user,new_id,before_id);
+                }
+            }
+            
+            
+                     
         } catch(err) {
             res.status(500).json({ error: "database failure" });
             logger.error(`닉네임 변경 에러: ${email} [${err}]`);
             payment.error(`닉네임 변경 에러: ${email} [${err}]`);
             upload("",`email : ${email} 닉네임 변경`,err);
+            next(err);
+        }
+    }else{
+        res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
+    }
+
+
+
+    async function validation_check(user,new_id,before_id){
+        //이미 존재하는 닉네임인지 확인
+        if(await User.exists({googleid:new_id})){
+            res.status(200).json({message:"존재하는 닉네임",code:200});
+
+        //존재하지 않는 닉네임일 때
+        }else{
+                /*  
+                            변경해야 할 DB
+                        <User, User_stage, Stage>
+                    */
+            
+
+                    //User의 googleid 변경
+            user.googleid = new_id;
+            await user.save({new:true});
+
+                    //User_stage의 userid 변경
+            // before_id 로 Stage, User_stage에 있는 모델에 접근
+            let user_stage = await User_stage.findOne({userid:before_id});
+            user_stage.userid = new_id;
+            await user_stage.save({new:true});
+
+                    //Stage의 userid 변경 
+                    //이건 조금 까다로운데 Stage모델속에 stage객체배열이 있고 Normal객체배열 속 userid와 Hard 객체배열 속 userid를 바꿔야한다. 
+            let stage = await Stage.find({}); // 모든 다큐먼트 불러오기 (모든 스테이지)
+            stage.forEach(async e => { //e 는 하나의 스테이지 객체 
+                //해당 유저가 기록된 index 구하기
+                normal_index = e.Normal.findIndex((s) => s.userid === before_id);
+                hard_index = e.Hard.findIndex((s) => s.userid === before_id);
+            
+                    //만약 기록이 존재하면 닉네임 변경
+                //구한 index로 해당 유저에 접근하고 userid 변경
+                if(normal_index!==-1){
+                    e.Normal[normal_index].userid = new_id;
+                }
+                if(hard_index!==-1){
+                    e.Hard[hard_index].userid = new_id;
+                }
+                await e.save({new:true});
+            });
+            res.status(200).json({message:`닉네임 변경 ${before_id} => ${new_id}`,code:200});
+        }  
+    }
+}
+
+//테스트
+exports.test = async (req, res, next) => {
+    const {changed_id ,email, token} = req.body; 
+    var verify_result = await verify(token,email)
+    if(verify_result.verified){
+        try {
+            nickname = nickname_generator();
+            console.log(nickname);
+            
+            res.status(200).json({"nick":nickname});
+        } catch(err) {
+            res.status(500).json({ error: "database failure" });
             next(err);
         }
     }else{
