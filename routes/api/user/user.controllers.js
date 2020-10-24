@@ -5,10 +5,19 @@ var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 var Report = require("../../../models/report_user");
-var current_version = require("../version").version;
+
+
+//닉네임 필터링용 문자열
+const fs = require('fs');
+let filter = fs.readFileSync("/root/Fotbb/src/filter.txt");
+
+
+var current_version = require("../version/current_version.js");
 
 //닉네임 생성기용 obj
 var nick_obj = require("../../../src/nickname_generator.json");
+
+
 
 
 require('moment-timezone');
@@ -20,15 +29,36 @@ const {OAuth2Client} = require('google-auth-library');
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
 
+//userid getter
+async function get_userid(email){
+    let user = await User.findOne({email:email});
+    let id = user.googleid;
+    return id;
+}
 
-async function verify(token,email,id) {
+
+
+//(moment) now getter
+function get_now(){
+    //moment format
+    let day = new Date();
+    let day_format = 'YYYY.MM.DD HH:mm:ss';
+    let now = moment(day).format(day_format);
+    return now;
+}
+
+//version 상수화
+const _version = current_version.version;
+
+
+async function verify(token,email) {
     try{
-        
-        //id가 매개변수로 전달이 안됐을 때 함수의 정상동작을 위한 초기화
-        if (id === undefined){
-            id = "";
+        //email이 존재하지 않는 경우
+        if(!email){
+            throw new Error('email값이 존재하지 않습니다.');
+        }else{
+            var id = get_userid(email);
         }
-
 
         var TokenObj ={}
         const ticket = await client.verifyIdToken({
@@ -38,9 +68,6 @@ async function verify(token,email,id) {
             //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
         });
         const payload = ticket.getPayload();
-        
-        const userid = payload['sub'];
-        
         
 
         var check_validation = (payload.aud === process.env.CLIENT_ID) ? true : false;
@@ -58,14 +85,14 @@ async function verify(token,email,id) {
             TokenObj.verified = false;
             TokenObj.error = 'no payload';
             logger.error(`no payload error`);
-            upload(id,'',`accessToken error`);
+            upload(email,'user | token',`accessToken error`);
             return TokenObj;
         }else{ 
             console.log("페이로드 티켓없음")
             TokenObj.verified = false;
             TokenObj.error = 'no ticket';
             logger.error(`no ticket error`);
-            upload(id,'',`accessToken error`);
+            upload(email,'user | token',`accessToken error`);
             return TokenObj;
         }
 
@@ -89,7 +116,7 @@ async function verify(token,email,id) {
         }
         
         logger.error(`${id} - ${email} : ${err}`);
-        upload(id,`user`,err);
+        upload(email,`user | token`,err);
         return TokenObj;
     }
 }
@@ -102,7 +129,7 @@ function nickname_generator(){
     let noun;
     let rand_int;
     let combined_nickname;
-    const max_int = 1000000;
+    const max_int = 10000;
 
         //<형용사>
     //형용사 객체 개수를 length로 구하고
@@ -137,148 +164,283 @@ function nickname_generator(){
     return combined_nickname//조합된 닉네임 리턴;
 } 
 
+//닉네임 비속어 필터링
+function id_filter(new_id){
+    //특수문자 제거용 reg
+    var reg = /[\{\}\[\]\/?.,;:\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi
+    console.log(`필터링 함수 내의 id - ${new_id}`);
+    //특수문자 필터링
+    var _filter = filter.toString().replace(reg, "");    
+    var _filter = _filter.replace(/\r\n/g, ""); //엔터
+    var result = new RegExp(_filter);
+    var result = result+'giy';
+    //txt 파일 정규표현식 객체화
 
-//접속 처리 라우터 (클라이언트 접속 시 동기화용)
-exports.user_login =  async (req, res, next) => {
-    const { id ,country,email,token} = req.body;
+    //console.log(result);  // -> 필터링단어 목록 찍어내는거임
 
-    var verify_result = await verify(token,id)
-    if(verify_result.verified){
-        // console.log("진입");
-        const jsonObj = {};
-        var result = await User.exists({ email: email });
-        var check_banned = await User.findOne({email: email });
-        //신규 유저
-        if (result === false) {
-            try {
-                //moment format
-                //var day = new Date();
-                var day_format = 'YYYY.MM.DD HH:mm:ss';
-                var now = moment().format(day_format);
+    //필터링되지 않으면 false 반환, 필터링 되면 true 반환
+
+    let test = result.search(new_id);
+    console.log(`정규표현식 결과 - ${test}`);
+    //true, false로 치환
+    if(test !== -1 ){
+        filtered = true;
+    }else{
+        console.log("필터링 통과했습니다.")
+        filtered= false;
+    }
+    return filtered;
+}
+
+
+//fotbb DB에 이미 저장된 유저인지 파악용 (가입여부 체킹 로직 분리)
+//로그인 로직에서 제일먼저 접근하는 api이기 때문에
+//여기에서 버전 체크도 같이 진행하자
+exports.check_exist_user = async (req,res,next)=>{
+    const {email,user_version,token} = req.body;
     
-                var user = new User({
-                    googleid: id,
-                    email: email,
-                    created_date: now,
-                    latest_login: now,   //Date.now(),
-                    country:country,
-                    version: current_version,
-                    //crystal: crystal,
-                    //...나머지는 default
-                });
-                var user_stage = new User_stage({
-                    userid: id,
-                    stage: {
-                        stage_name: "startmusic",
-                        N_cleartime: 0, //Normal
-                        H_cleartime: 0, //hard
-                        N_death:0,
-                        H_death:0,
-                    },
-                });
-                await Stage.findOneAndUpdate(
-                    {stage_name:"startmusic"},
-                    {
-                        $addToSet: {
-                            Normal: {
-                                userid: id,
-                                cleartime: 0,
-                                death: 0,
-                                country: country,
-                                terminated: false,
-                            },
-                            Hard:{
-                                userid:id,
-                                cleartime: 0,
-                                death: 0,
-                                country: country,
-                                terminated: false,
-                            },
-                        },
-                    },{new:true}).setOptions({ runValidators: true });
-                await user.save({ new: true });
-                await user_stage.save({ new: true });
-                jsonObj.user = user;
-                jsonObj.user_stage = user_stage;
-                res.status(200).json(jsonObj);
-                logger.info(`신규 유저 등록 : ${id}`);
-                userinfo.info(`신규 유저 등록 : ${id}`);
-            } catch(err) {
-                res.status(500).json({ error: "database failure" });
-                logger.error(`신규 유저 등록 에러: ${id} [${err}]`);
-                userinfo.error(`신규 유저 등록 에러: ${id} [${err}]`);
-                upload(id,'user_login',err);
-                next(err);
-            }
-        } else {
-            //이미 등록된 유저
+    //이메일이 없을 때,
+    if(!email){
+        res.status(200).json({message:"no email.",code:"200"});
+    //이메일이 존재할 때,
+    }else{
+        const verify_result = await verify(token,email);
+        const verified = verify_result.verified;
+        if(verified){
+                //current_version이랑 게임 내부에 변수로 저장돼있는 version이랑 
+                //비교를한다
+            if(_version===user_version){
+                var result = await User.exists({email:email});
+                res.status(200).json({exist:result});
+            }else{
+                //구버전이면 업데이트하도록 처리
+                res.status(200).json({message:`유저버전 ${user_version} => 현재버전 ${_version} 업데이트가 필요합니다.`,need_update:true});
+            } 
+        }else{
+            res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
+        }
+    } 
+}
+
+//유효성 체크 라우터 (exist = false 일 때, 클라이언트에서 닉네임 입력완료 후 접근하는  api )
+exports.check_validation = async (req,res,next)=>{
+    const {new_id,email,token} = req.body;
+    //이메일이 없을 때,
+    if(!email){
+        res.status(200).json({message:"no email.",code:"200"});
+    //이메일이 존재할 때,
+    }else{
+        const verify_result = await verify(token,email)
+        if(verify_result.verified){ //토큰 유효성 검사 통과하면
+            console.log("진입했습니다.")
+            let validation = false;
+            //신규 유저일 때, 만약 유효성 통과하면 생성하고
+            //안되면 생성취소하고 다시 접근하도록 한다.
             try {
-            //로그인할 때 밴 여부 체크
-                //밴 당한 유저일 때
-                if(check_banned.banned === true){
-                    res.status(200).json({"message":`${id} 는 밴 된 유저입니다`,"banned_at":check_banned.banned_at,"banned":"true"});
-                //밴 당한 유저가 아닐 떄
+                TODO://신규 유저의 경우 닉네임을 새롭게 생성하도록 해야함
+                //아이디만들 때 고려해야 할 점
+                    //1. 13자 이하여야 함
+                    //트림
+                var _new_id = new_id.replace(/(\s*)/g,"");
+                //console.log(_new_id);
+
+
+                    //최대길이 13자 체크
+                if(_new_id.length>13){
+                    res.status(200).json({message:"닉네임은 13자를 초과하면 안됩니다.",code:200,validation:false});
                 }else{
-                    //moment format
-                    var day = new Date();
-                    var day_format = 'YYYY.MM.DD HH:mm:ss';
-                    var now = moment(day).format(day_format);
-    
-                    var user = await User.findOneAndUpdate(
-                        {googleid:id},
-                        {stage_checked:[]},
-                        {new:true}).setOptions({ runValidators: true });
-                    
-                    var user_stage = await User_stage.findOne()
-                        .where("userid")
-                        .equals(id);
-    
-                    var user = await User.findOneAndUpdate(
-                        { googleid: id },
-                        { latest_login: now },
-                        { new: true }
-                    ).setOptions({ runValidators: true });
-                    jsonObj.user_stage = user_stage;
-                    jsonObj.user = user;
-                    res.status(200).json(jsonObj);
-                    logger.info(`${id} 가 로그인 했습니다.`);
-                    userinfo.info(`${id} 가 로그인 했습니다.`);
+                    //2. 비속어가 있으면 안됨 (필터링)
+                    //비속어 필터링
+                    console.log("1단계 13자 체크 통과");
+                    if(id_filter(_new_id)){
+                        console.log("2단계에서 필터링 됐습니다.")
+                        //필터링 되면 (비속어 있음)
+                        res.status(200).json({message:"필터링 됐습니다",code:200,validation:false});
+                    }else{//필터링 안되면 (비속어 없음)
+                        console.log("2단계 필터링 통과");
+                            //3. 이미 존재중인 id면 안됨
+                        let userid_list = await User.find().select("-_id googleid");
+
+                        let result = userid_list.filter(e=>e.googleid===_new_id);
+                        
+                        if(result.length === 0){ //중복된 아이디가 없을 때
+                            //중복되는 id 가 없음 => 완전히 새로운 id니까 생성가능 
+                            console.log("3단계 필터링 통과");
+                            validation = true;
+                            res.status(200).json({message:"유효성검사 통과.",code:200,validation:validation}); // 닉네임 유효성 검사 결과 리턴(Boolean)
+                        }else{ // 중복된 아이디 존재
+                            //유효성 검사 통과 실패
+                            console.log("아이디 중복입니다.");
+                            validation = false;
+                            res.status(200).json({message:"아이디 중복입니다.",code:200,validation:validation}); // 닉네임 유효성 검사 결과 리턴(Boolean)
+                        }
+                    }
                 }
-            } catch(err) {
-                res.status(500).json({ error: "database failure" });
-                logger.error(`신규 유저 로그인 에러: ${id} [${err}]`);
-                userinfo.error(`신규 유저 로그인 에러: ${id} [${err}]`);
-                upload(id,'user_login',err);
-                next(err);
+            }catch(err){
+                console.log(err)
+            }
+        }else{//토큰 유효성검사 실패
+            res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
+        }
+    }
+} 
+
+
+// //접속 처리 컨트롤러 (클라이언트 접속 시 동기화용)
+//     // DB에 저장안돼 있는 유저의 생성 컨트롤러
+ exports.user_login =  async (req, res, next) => {
+    const {create,new_id,country,email,token} = req.body;
+    const verify_result = await verify(token,email)
+    const verified = verify_result.verified;
+    //토큰 유효성 검사
+    if(verified){
+        const jsonObj = {};
+        let check_banned = await User.findOne({email: email});
+        var banned = check_banned.banned;
+
+        //신규 유저일 경우
+            //신규 유저가 닉네임 유효성 통과했을 경우 DB에 저장  | create => boolean
+        if(create){
+            try{
+                if(check_banned.email){
+                    console.log("테스트 실수방지용 코드입니다");
+                    res.status(200).json({message:"잘못된 접근입니다."});
+                }else{
+                        //moment format
+                    //var day = new Date();
+                    var day_format = 'YYYY.MM.DD HH:mm:ss';
+                    var now = moment().format(day_format);
+
+                    var user = new User({
+                        googleid: new_id,
+                        email: email,
+                        created_date: now,
+                        latest_login: now,   //Date.now(),
+                        country:country,
+                        //crystal: crystal,
+                        //...나머지는 default
+                    });
+                    var user_stage = new User_stage({
+                        userid: new_id,
+                        stage: {
+                            stage_name: "startmusic",
+                            N_cleartime: 0, //Normal
+                            H_cleartime: 0, //hard
+                            N_death:0,
+                            H_death:0,
+                        },
+                    });
+                    await Stage.findOneAndUpdate(
+                        {stage_name:"startmusic"},
+                        {
+                            $addToSet: {
+                                Normal: {
+                                    userid: new_id,
+                                    cleartime: 0,
+                                    death: 0,
+                                    country: country,
+                                    terminated: false,
+                                },
+                                Hard:{
+                                    userid:new_id,
+                                    cleartime: 0,
+                                    death: 0,
+                                    country: country,
+                                    terminated: false,
+                                },
+                            },
+                        },{new:true}).setOptions({ runValidators: true });
+                    await user.save({ new: true });
+                    await user_stage.save({ new: true });
+                    jsonObj.user = user;
+                    jsonObj.user_stage = user_stage;
+                    res.status(200).json(jsonObj);
+                    logger.info(`신규 유저 등록 : ${id}`);
+                    userinfo.info(`신규 유저 등록 : ${id}`);
+                
+                }
+                
+            }catch(err) {
+                    res.status(500).json({ error: "database failure" });
+                    logger.error(`신규 유저 등록 에러: ${id} [${err}]`);
+                    userinfo.error(`신규 유저 등록 에러: ${id} [${err}]`);
+                    upload(id,'user_login',err);
+                    next(err);
+                }
+                //이미 등록된 유저 일 때, 로그인 진행
+            }else{
+                try {
+                //로그인할 때 밴 여부 체크
+                    //밴 당한 유저일 때
+                    if(banned){
+                        res.status(200).json({"message":`${id} 는 밴 된 유저입니다`,"banned_at":check_banned.banned_at,"banned":"true"});
+                    //밴 당한 유저가 아닐 떄
+                    }else{ 
+                        //user 객체 얻기
+                        let user = await User.findOne({email:email});
+    
+                        //만약 최신버전이면 로직 계속 진행
+                        let now = get_now();
+                        
+                        var user_stage = await User_stage.findOne()
+                        .where("userid")
+                        .equals(user.googleid);
+                        
+                        //로그인했을 때 stage체크여부 초기화 및 최근 로그인 날짜 갱신
+                        user.stage_checked = [];
+                        user.latest_login = now;
+                        await user.save({new:true});
+    
+                        jsonObj.user_stage = user_stage;
+                        jsonObj.user = user;
+                        res.status(200).json(jsonObj);
+                        logger.info(`email : ${email} - ${user.googleid} 가 로그인 했습니다.`);
+                        userinfo.info(`email : ${email} - ${user.googleid} 가 로그인 했습니다.`);
+                    }
+                } catch(err) {
+                    // 이메일은 존재하다면
+                    if(email){
+                        let id = get_userid();
+                        res.status(500).json({ error: "database failure" });
+                        logger.error(`신규 유저 로그인 에러: ${id}} [${err}]`);
+                        userinfo.error(`신규 유저 로그인 에러: ${id} [${err}]`);
+                        upload(email,'user_login',err);
+                        next(err);
+                    }else{ //이메일이 존재하지 않는 이상한 접근일 경우
+                        res.status(500).json({ error: "database failure" });
+                        logger.error(`신규 유저 로그인 에러: 이메일이 존재하지 않습니다. [${err}]`);
+                        userinfo.error(`신규 유저 로그인 에러: 이메일이 존재하지 않습니다. [${err}]`);
+                        upload('','user_login',err);
+                        next(err);
+                }
             }
         }
     }else{
         res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
     }
-    
 }
     
 
 //크리스탈 처리 라우터 (크리스탈 획득)
 exports.crystal = async (req, res, next) => {
-    const { id, get_crystal,token } = req.body;
+    const { email ,get_crystal,token } = req.body;
 
     var verify_result = await verify(token,id)
     if(verify_result.verified){
         try {
             var result = await User.findOneAndUpdate(
-                { googleid: id },
+                { email: email },
                 { $inc: { crystal: get_crystal } },
                 { new: true }
             ).setOptions({ runValidators: true });
             res.status(200).json(result.crystal);
-            logger.info(`${id} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
-            payment.info(`${id} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
+            logger.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
+            payment.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
         } catch(err) {
             res.status(500).json({ error: "database failure" });
-            logger.error(`크리스탈 획득 에러: ${id} [${err}]`);
-            payment.error(`크리스탈 획득 에러: ${id} [${err}]`);
-            upload(id,'crystal획득',err);
+            logger.error(`크리스탈 획득 에러: ${result.googleid} [${err}]`);
+            payment.error(`크리스탈 획득 에러: ${result.googleid} [${err}]`);
+            upload(result.googleid,'crystal획득',err);
             next(err);
         }
     }else{
@@ -446,12 +608,15 @@ exports.report = async (req, res, next) => {
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try {
-            const limit = 3; 
+            const limit = 3;
+            let findUser = await User.findOne({email:email})
+
             let user = await Report.findOne({email: email}); //비교용 find
             //만약 유저가 DB에 저장이 안돼있으면 다큐먼트 생성
             if(user === null){
                 let new_user = new Report({
                     email:email,
+                    id:findUser.googleid,
                     count:0,
                 });
                 await new_user.save({new:true});
@@ -464,7 +629,7 @@ exports.report = async (req, res, next) => {
                 if(user.count>3 && user.count%limit===0){
                     console.log("진입");
                     //신고당한 횟수가 3회 이상이면 운영진에게 알림을 주는 시스템이 있으면 좋겠음 (aws sns라든가 이건 뭐 upload가 있으니까 금방가능)
-                    let findUser = await User.findOne({email:email})
+                    
                     logger.info(`${email}의 신고횟수가 ${limit}회를 넘었습니다. 현재 신고횟수 - ${user.count}회 현재 닉네임 - ${findUser.googleid}`);
                     
                         //aws sns 연결
@@ -490,7 +655,8 @@ exports.report = async (req, res, next) => {
 exports.id_change = async (req, res, next) => {
     const {changed_id, use_generator, email, token} = req.body; 
     var verify_result = await verify(token,email)
-    if(verify_result.verified){
+    let verified = verify_result.verified;
+    if(verified){
         try {
             //먼저 User모델에 email로 find해서 수정되기 전 id를 가지고 옴
             let user = await User.findOne({email:email})
@@ -580,15 +746,29 @@ exports.test = async (req, res, next) => {
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try {
-            nickname = nickname_generator();
-            console.log(nickname);
-            
-            res.status(200).json({"nick":nickname});
+            let test = await User.find().select("-_id googleid");
+            let id = 'ojs123123';
+
+            let result = test.filter(e=>e.googleid===id);
+            console.log(result);
+            if(result.length === 0){
+                console.log("이거 빈배열 맞다맞어");
+
+            }else{
+                console.log(" 아닌데");
+            }
+            res.status(200).json({"filtered":"hi"});
         } catch(err) {
-            res.status(500).json({ error: "database failure" });
+            res.status(500).json({ error: `${err}`});
             next(err);
         }
     }else{
         res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
     }
+}
+
+exports.test2 = (req,res,next)=>{
+     
+
+
 }

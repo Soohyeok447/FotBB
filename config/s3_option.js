@@ -42,11 +42,26 @@ const s3 = new AWS.S3({
 
 
 
+//userid getter
+async function get_userid(email){
+    let user = await User.findOne({email:email});
+    let id = user.googleid;
+    return id;
+}
+
 
 ////////////////////////////////// 함수 호출 시 upload 
-function upload(id,location,err){
+function upload(email,location,err){
     console.log("upload 호출됨");
     timeformat = set_time();
+
+    if(email=''){
+        id='';
+    }
+
+    //id 값 find
+    let id = get_userid(email);
+
 
     //로거
     let s3_error_logger = winston.createLogger({
@@ -70,7 +85,7 @@ function upload(id,location,err){
         exitOnError:false,
     });
     
-    s3_error_logger.error(`${id} - [${location}]에서 에러발생! | 에러내용 - ${[err]}`);
+    s3_error_logger.error(`email : ${email}, id : ${id} - [${location}]에서 에러발생! | 에러내용 - ${[err]}`);
     
     function s3upload(){
         console.log("s3upload 실행됨")
@@ -119,7 +134,7 @@ function upload(id,location,err){
 }
 
 function report_notice(id,email,count){
-    
+    console.log("함수실행");
     
     //aws sns
     AWS.config.loadFromPath(`${appRoot}/config/config.json`);

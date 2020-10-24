@@ -1,12 +1,13 @@
+let version = require("./current_version.js");
+
 var express = require('express');
 
 
 var router = express.Router();
-var version = '1.0.0';
+var current_version = version;
 
 router.get('/',(req,res,next) =>{
-    res.json({"current_version": `${version}`});
+    res.json({"current_version": `${current_version}`});
 });
 
 module.exports = router;
-exports.version = version;

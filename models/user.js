@@ -43,9 +43,7 @@ const User = new Schema({
     //보유중인 커스터마이징 종류
     customizing: [String],
     //사용자 클라이언트의 버전
-    version: {
-        type: String,
-    },
+    version: String,
     //stages/stage api 호출 할 때 로그인 이후 한번만 호출되도록 체크하는 용도
     stage_checked :[String],
 

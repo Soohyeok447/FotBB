@@ -9,6 +9,12 @@ var userController = require("./user.controllers");
 //접속 처리 라우터 (클라이언트 접속 시 동기화용)
 router.post("/",userController.user_login);
 
+//가입한 유저인지 체크하는 라우터
+router.post("/check",userController.check_exist_user);
+
+//유효성체크 라우터
+router.post("/validation",userController.check_validation)
+
 //크리스탈 처리 라우터 (크리스탈 구매)
 router.post("/crystal",userController.crystal );
 
