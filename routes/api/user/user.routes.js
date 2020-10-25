@@ -12,8 +12,11 @@ router.post("/",userController.user_login);
 //가입한 유저인지 체크하는 라우터
 router.post("/check",userController.check_exist_user);
 
-//유효성체크 라우터
+//닉네임 유효성체크 라우터
 router.post("/validation",userController.check_validation)
+
+//닉네임 생성기 라우터
+router.post("/generator",userController.nickname_generator);
 
 //크리스탈 처리 라우터 (크리스탈 구매)
 router.post("/crystal",userController.crystal );

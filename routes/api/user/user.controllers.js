@@ -121,48 +121,6 @@ async function verify(token,email) {
     }
 }
 
-//TODO: for문을 돌려서 랜덤 닉네임 조합을 만들어야함
-//TODO: 형용사 + 명사 + 랜덤 숫자
-//닉네임 생성기
-function nickname_generator(){    
-    let adj;
-    let noun;
-    let rand_int;
-    let combined_nickname;
-    const max_int = 10000;
-
-        //<형용사>
-    //형용사 객체 개수를 length로 구하고
-    let adj_max = nick_obj.adj.length;
-
-    //랜덤으로 객체(형용사)를 정한다.
-    let rand_adj = Math.floor(Math.random()*adj_max);
-    
-
-    //객체 필드 접근으로 형용사를 뽑는다.
-    adj = nick_obj.adj[rand_adj];
-    console.log("형용사",adj);
-
-        //<명사>
-    //명사 객체 개수를 length로 구하고
-    let noun_max = nick_obj.noun.length;
-    
-    //랜덤으로 객체(명사)를 정한다.
-    let rand_noun = Math.floor(Math.random()*noun_max);
-
-    //객체 필드 접근으로 명사를 뽑는다.
-    noun = nick_obj.noun[rand_noun];
-    console.log("명사",noun);
-
-    //랜덤 숫자를 뽑는다/
-    rand_int = Math.floor(Math.random()*max_int);
-    console.log("랜덤숫자",rand_int);
-
-    //닉네임을 조합한다.
-    combined_nickname = adj+noun+rand_int;
-    
-    return combined_nickname//조합된 닉네임 리턴;
-} 
 
 //닉네임 비속어 필터링
 function id_filter(new_id){
@@ -176,14 +134,13 @@ function id_filter(new_id){
     var result = result+'giy';
     //txt 파일 정규표현식 객체화
 
-    //console.log(result);  // -> 필터링단어 목록 찍어내는거임
+    //console.log(result);  // -> 필터링단어 목록을 찍어낸다
 
     //필터링되지 않으면 false 반환, 필터링 되면 true 반환
-
-    let test = result.search(new_id);
-    console.log(`정규표현식 결과 - ${test}`);
+    let test = result.match(new_id);
+    console.log(`정규표현식 결과 -> ${test}`);
     //true, false로 치환
-    if(test !== -1 ){
+    if(test !== null ){
         filtered = true;
     }else{
         console.log("필터링 통과했습니다.")
@@ -191,6 +148,65 @@ function id_filter(new_id){
     }
     return filtered;
 }
+
+
+
+//TODO: for문을 돌려서 랜덤 닉네임 조합을 만들어야함
+//TODO: 형용사 + 명사 + 랜덤 숫자
+//닉네임 생성기
+exports.nickname_generator = async (req,res,next)=>{  
+    const {email,token} = req.body;
+
+    //이메일이 없을 때,
+    if(!email){
+        res.status(200).json({message:"no email.",code:"200"});
+    //이메일이 존재할 때,
+    }else{
+        const verify_result = await verify(token,email);
+        const verified = verify_result.verified;
+        if(verified){
+            let adj;
+            let noun;
+            let rand_int;
+            let combined_nickname;
+            const max_int = 10000;
+        
+                //<형용사>
+            //형용사 객체 개수를 length로 구하고
+            let adj_max = nick_obj.adj.length;
+        
+            //랜덤으로 객체(형용사)를 정한다.
+            let rand_adj = Math.floor(Math.random()*adj_max);
+            
+        
+            //객체 필드 접근으로 형용사를 뽑는다.
+            adj = nick_obj.adj[rand_adj];
+            console.log("형용사",adj);
+        
+                //<명사>
+            //명사 객체 개수를 length로 구하고
+            let noun_max = nick_obj.noun.length;
+            
+            //랜덤으로 객체(명사)를 정한다.
+            let rand_noun = Math.floor(Math.random()*noun_max);
+        
+            //객체 필드 접근으로 명사를 뽑는다.
+            noun = nick_obj.noun[rand_noun];
+            console.log("명사",noun);
+        
+            //랜덤 숫자를 뽑는다/
+            rand_int = Math.floor(Math.random()*max_int);
+            console.log("랜덤숫자",rand_int);
+        
+            //닉네임을 조합한다.
+            combined_nickname = adj+noun+rand_int;
+            
+            res.status(200).json({generated_nickname:combined_nickname});
+        }else{
+            res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
+        }
+    } 
+} 
 
 
 //fotbb DB에 이미 저장된 유저인지 파악용 (가입여부 체킹 로직 분리)
@@ -231,7 +247,8 @@ exports.check_validation = async (req,res,next)=>{
     //이메일이 존재할 때,
     }else{
         const verify_result = await verify(token,email)
-        if(verify_result.verified){ //토큰 유효성 검사 통과하면
+        let verified = verify_result.verified;
+        if(verified){ //토큰 유효성 검사 통과하면
             console.log("진입했습니다.")
             let validation = false;
             //신규 유저일 때, 만약 유효성 통과하면 생성하고
@@ -288,6 +305,7 @@ exports.check_validation = async (req,res,next)=>{
 
 // //접속 처리 컨트롤러 (클라이언트 접속 시 동기화용)
 //     // DB에 저장안돼 있는 유저의 생성 컨트롤러
+// 유효성검사를 거친 뒤에 접근하는  api 이기 때문에 중복은 일어나지 않는다.
  exports.user_login =  async (req, res, next) => {
     const {create,new_id,country,email,token} = req.body;
     const verify_result = await verify(token,email)
@@ -295,14 +313,13 @@ exports.check_validation = async (req,res,next)=>{
     //토큰 유효성 검사
     if(verified){
         const jsonObj = {};
-        let check_banned = await User.findOne({email: email});
-        var banned = check_banned.banned;
-
+        let check_exist = await User.exists({email:email});
+        
         //신규 유저일 경우
-            //신규 유저가 닉네임 유효성 통과했을 경우 DB에 저장  | create => boolean
+        //신규 유저가 닉네임 유효성 통과했을 경우 DB에 저장  | create => boolean
         if(create){
             try{
-                if(check_banned.email){
+                if(check_exist){
                     console.log("테스트 실수방지용 코드입니다");
                     res.status(200).json({message:"잘못된 접근입니다."});
                 }else{
@@ -370,7 +387,9 @@ exports.check_validation = async (req,res,next)=>{
                 //이미 등록된 유저 일 때, 로그인 진행
             }else{
                 try {
-                //로그인할 때 밴 여부 체크
+                    let check_banned = await User.findOne({email: email});
+                    var banned = check_banned.banned;
+                    //로그인할 때 밴 여부 체크
                     //밴 당한 유저일 때
                     if(banned){
                         res.status(200).json({"message":`${id} 는 밴 된 유저입니다`,"banned_at":check_banned.banned_at,"banned":"true"});
@@ -651,6 +670,8 @@ exports.report = async (req, res, next) => {
     }
 }
 
+//변경하기전에 유효성체크하고 접근해야함
+//changed_id 는 유효성체크( 비속어 필터링, 13자 이하, 중복체크) 통과한 문자열임
 //닉네임 변경
 exports.id_change = async (req, res, next) => {
     const {changed_id, use_generator, email, token} = req.body; 
@@ -665,22 +686,15 @@ exports.id_change = async (req, res, next) => {
 
             //만약 닉네임생성기를 이용한다고 치면
             //new_id에 닉네임생성기함수() 대입
+
+            TODO://여기 생성기를 만들어서 하든 유효성검사를 마친 닉네임문자열이든
+            // change_nickname 함수는 하나만 있으면 괜찮아 보임
             if(use_generator){
-                new_id = nickname_generator();
-                validation_check(user,new_id,before_id);
+                //new_id = nickname_generator();
+                change_nickname(user,changed_id,before_id);
             }else{
-                //트림
-                new_id = changed_id.replace(/(\s*)/g,"");
-                //최대길이 13자 체크
-                if(changed_id.length>13){
-                    res.status(200).json({message:"닉네임은 13자를 초과하면 안됩니다.",code:200});
-                }else{
-                    validation_check(user,new_id,before_id);
-                }
-            }
-            
-            
-                     
+                change_nickname(user,changed_id,before_id);
+            }           
         } catch(err) {
             res.status(500).json({ error: "database failure" });
             logger.error(`닉네임 변경 에러: ${email} [${err}]`);
@@ -694,50 +708,45 @@ exports.id_change = async (req, res, next) => {
 
 
 
-    async function validation_check(user,new_id,before_id){
-        //이미 존재하는 닉네임인지 확인
-        if(await User.exists({googleid:new_id})){
-            res.status(200).json({message:"존재하는 닉네임",code:200});
+    async function change_nickname(user,new_id,before_id){
+    
+            /*  
+                        변경해야 할 DB
+                    <User, User_stage, Stage>
+                */
+        
 
-        //존재하지 않는 닉네임일 때
-        }else{
-                /*  
-                            변경해야 할 DB
-                        <User, User_stage, Stage>
-                    */
-            
+                //User의 googleid 변경
+        user.googleid = new_id;
+        await user.save({new:true});
 
-                    //User의 googleid 변경
-            user.googleid = new_id;
-            await user.save({new:true});
+                //User_stage의 userid 변경
+        // before_id 로 Stage, User_stage에 있는 모델에 접근
+        let user_stage = await User_stage.findOne({userid:before_id});
+        user_stage.userid = new_id;
+        await user_stage.save({new:true});
 
-                    //User_stage의 userid 변경
-            // before_id 로 Stage, User_stage에 있는 모델에 접근
-            let user_stage = await User_stage.findOne({userid:before_id});
-            user_stage.userid = new_id;
-            await user_stage.save({new:true});
-
-                    //Stage의 userid 변경 
-                    //이건 조금 까다로운데 Stage모델속에 stage객체배열이 있고 Normal객체배열 속 userid와 Hard 객체배열 속 userid를 바꿔야한다. 
-            let stage = await Stage.find({}); // 모든 다큐먼트 불러오기 (모든 스테이지)
-            stage.forEach(async e => { //e 는 하나의 스테이지 객체 
-                //해당 유저가 기록된 index 구하기
-                normal_index = e.Normal.findIndex((s) => s.userid === before_id);
-                hard_index = e.Hard.findIndex((s) => s.userid === before_id);
-            
-                    //만약 기록이 존재하면 닉네임 변경
-                //구한 index로 해당 유저에 접근하고 userid 변경
-                if(normal_index!==-1){
-                    e.Normal[normal_index].userid = new_id;
-                }
-                if(hard_index!==-1){
-                    e.Hard[hard_index].userid = new_id;
-                }
-                await e.save({new:true});
-            });
-            res.status(200).json({message:`닉네임 변경 ${before_id} => ${new_id}`,code:200});
-        }  
-    }
+                //Stage의 userid 변경 
+                //이건 조금 까다로운데 Stage모델속에 stage객체배열이 있고 Normal객체배열 속 userid와 Hard 객체배열 속 userid를 바꿔야한다. 
+        let stage = await Stage.find({}); // 모든 다큐먼트 불러오기 (모든 스테이지)
+        stage.forEach(async e => { //e 는 하나의 스테이지 객체 
+            //해당 유저가 기록된 index 구하기
+            normal_index = e.Normal.findIndex((s) => s.userid === before_id);
+            hard_index = e.Hard.findIndex((s) => s.userid === before_id);
+        
+                //만약 기록이 존재하면 닉네임 변경
+            //구한 index로 해당 유저에 접근하고 userid 변경
+            if(normal_index!==-1){
+                e.Normal[normal_index].userid = new_id;
+            }
+            if(hard_index!==-1){
+                e.Hard[hard_index].userid = new_id;
+            }
+            await e.save({new:true});
+        });
+        res.status(200).json({message:`닉네임 변경 ${before_id} => ${new_id}`,code:200});
+    }  
+    
 }
 
 //테스트
