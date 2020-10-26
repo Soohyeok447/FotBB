@@ -8,6 +8,7 @@ var moment = require('moment');
 require('dotenv').config();
 require('moment-timezone');
 
+var {get_userid,get_now} = require("../routes/api/middleware/function");
 
 moment.tz.setDefault("Asia/Seoul");
 const logDir = 'logs';

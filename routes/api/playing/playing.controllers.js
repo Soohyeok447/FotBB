@@ -6,7 +6,7 @@ var Playing = require("../../../models/playing");
 var User_stage = require("../../../models/user_stage");
 var User = require("../../../models/user");
 
-var {ban,delete_playing} = require("../middleware/function");
+var {ban,delete_playing,get_userid,get_now} = require("../middleware/function");
 
 var {logger,userinfo} = require('../../../config/logger');
 var {upload} = require('./../../../config/s3_option');
@@ -19,9 +19,21 @@ const {OAuth2Client} = require('google-auth-library');
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
 
-async function verify(token,id) {
+async function verify(token,email) {
     try{
         var TokenObj ={}
+        
+        //email이 존재하지 않는 경우
+        if(!email){
+            TokenObj.verified = false;
+            TokenObj.error = 'no email';
+            logger.error(`no email`);
+            upload('','user | token',`no email`);
+            return TokenObj;
+        }else{
+            var id = get_userid(email);
+        }
+
         const ticket = await client.verifyIdToken({
             idToken: token,
             audience: process.env.CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
@@ -29,9 +41,6 @@ async function verify(token,id) {
             //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
         });
         const payload = ticket.getPayload();
-        
-        const userid = payload['sub'];
-        
         
 
         var check_validation = (payload.aud === process.env.CLIENT_ID) ? true : false;
@@ -49,16 +58,17 @@ async function verify(token,id) {
             TokenObj.verified = false;
             TokenObj.error = 'no payload';
             logger.error(`no payload error`);
-            upload(id,'',`accessToken error`);
+            upload(email,'user | token',`accessToken error`);
             return TokenObj;
-        }else{
+        }else{ 
             console.log("페이로드 티켓없음")
             TokenObj.verified = false;
             TokenObj.error = 'no ticket';
             logger.error(`no ticket error`);
-            upload(id,'',`accessToken error`);
+            upload(email,'user | token',`accessToken error`);
             return TokenObj;
         }
+
     }catch(err){
         console.log("err났습니다.")
         let check_expiredtoken = /Token used too late/;
@@ -78,8 +88,8 @@ async function verify(token,id) {
             TokenObj.verified = false; 
         }
         
-        logger.error(`${id} - ${err}`);
-        upload(id,`playing`,err);
+        logger.error(`${id} - ${email} : ${err}`);
+        upload(email,`user | token`,err);
         return TokenObj;
     }
 }
@@ -87,23 +97,26 @@ async function verify(token,id) {
 
 //플레이 중 데이터 변조 체크
 exports.check_modulation = async (req, res, next) => {
-    const {id, now_time,start,stage_name,token} = req.body //gametype에 따라 구분해야한다면 나중에 수정
+    const {email, now_time,start,stage_name,token} = req.body //gametype에 따라 구분해야한다면 나중에 수정
 
-    var verify_result = await verify(token)
+    var verify_result = await verify(token,email)
     if(verify_result.verified){
         try{
+            let userid = await get_userid(email);
+            console.log("유저아이디 함수테스트",userid);
+
             //존재하는 유저 인지 검사
-            if(!await User.exists({googleid:id})){
+            if(!await User.exists({email:email})){
                 res.status(200).json({message:"존재하지 않는 유저입니다.",code:201});
             }else{
                     //만약에 플레이 시작하는 거면
                 if(start){
-                    let check_duplicate = await Playing.findOne({userid:id})
+                    let check_duplicate = await Playing.exists({email:email})
                     if(check_duplicate){  // 해킹이나 버그로 start=true가 또 오면
                         res.status(200).json({message:'이미 플레이 중 입니다.'});
                     }else{  //진짜 첫 플레이이면
-                        let check_exist_user = await User.exists({googleid:id});
-                        let user_stage = await User_stage.findOne({userid:id});
+                        let check_exist_user = await User.exists({email:email});
+                        let user_stage = await User_stage.findOne({userid:userid});
                         let check_has_stage = user_stage.stage.findIndex(s => s.stage_name === stage_name);
                         console.log(check_has_stage);
                         if(!check_exist_user){//만약 존재하지 않는 유저라면
@@ -115,8 +128,10 @@ exports.check_modulation = async (req, res, next) => {
                             }else{ //보유중인 스테이지면
                                 console.log("start 진입했어요");
                                 var user_playing = new Playing({
-                                    userid: id,
+                                    userid: userid,
+                                    email:email,
                                     now_time: now_time,
+                                    start_at:get_now()
                                 });
                                 //playing모델에 id,now_time 필드 등록
                                 await user_playing.save({ new: true });
@@ -127,7 +142,7 @@ exports.check_modulation = async (req, res, next) => {
                 }else{
                     console.log("이전 기록과 비교를 해야합니다.")
                     //id로 해당 유저 찾고
-                    let check = await Playing.findOne({userid:id});
+                    let check = await Playing.findOne({email:email});
         
                     //그리고 이전 now_time이랑 비교
                     let check_result = (check.now_time >= now_time) ? true : false;
@@ -138,18 +153,18 @@ exports.check_modulation = async (req, res, next) => {
                         console.log("이 사람 사기 친다")
                         
                         //밴 , playing 모델에서 필드 삭제
-                        ban(id);
-                        delete_playing(id);
+                        ban(userid,'부정기록');
+                        delete_playing(userid);
         
         
-                        res.status(200).json({"previous_time":check.now_time,"now_time":now_time,"banned":true,"userid":id});  
-                        userinfo.info(`유저 ${id} 밴 됨.`);
-                        logger.info(`유저 ${id} 밴 됨.`);
+                        res.status(200).json({"previous_time":check.now_time,"now_time":now_time,"banned":true,"userid":userid});  
+                        userinfo.info(`유저 ${userid} 밴 됨.`);
+                        logger.info(`유저 ${userid} 밴 됨.`);
                     }else{
                         console.log("유효한 기록이므로 저장합니다.")
                         //아니면 now_time갱신
                         await Playing.findOneAndUpdate(
-                            {userid:id},
+                            {email:email},
                             {now_time:now_time},
                             { new: true }
                         ).setOptions({ runValidators: true });
@@ -159,10 +174,11 @@ exports.check_modulation = async (req, res, next) => {
                 }
             }
         }catch (err) {
+            let id = await get_userid(email);
             res.status(500).json({ error: `${err}` });
-            logger.error(`유저 밴 에러: ${id} [${err}]`);
-            userinfo.error(`유저 밴 에러: ${id} [${err}]`);
-            upload(id,'playing',err);
+            logger.error(`유저 밴 에러: ${email} : ${id} [${err}]`);
+            userinfo.error(`유저 밴 에러: ${email} : ${id} [${err}]`);
+            upload(email,'playing',err);
             next(err);
         }
     }else{

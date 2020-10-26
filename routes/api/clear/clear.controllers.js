@@ -147,7 +147,7 @@ exports.clear = async (req, res, next) => {
                     console.log("부정기록입니다 해당 유저를 밴 합니다.")
                     try{
                         //밴    
-                        ban(id)
+                        ban(id,'부정기록')
                         //playing삭제
                         delete_playing(id);
         

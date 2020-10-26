@@ -5,8 +5,9 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const Playing = new Schema({
     userid: String,
+    email:String,
     now_time:Number,
-
+    start_at:String,
     },{ 
         versionKey : false 
 });
