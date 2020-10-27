@@ -28,10 +28,10 @@ async function verify(token,email) {
             TokenObj.verified = false;
             TokenObj.error = 'no email';
             logger.error(`no email`);
-            upload('','user | token',`no email`);
+            upload('','playing | token',`no email`);
             return TokenObj;
         }else{
-            var id = get_userid(email);
+            var id = await get_userid(email);
         }
 
         const ticket = await client.verifyIdToken({
@@ -58,14 +58,14 @@ async function verify(token,email) {
             TokenObj.verified = false;
             TokenObj.error = 'no payload';
             logger.error(`no payload error`);
-            upload(email,'user | token',`accessToken error`);
+            upload(email,'playing | token',`accessToken error`);
             return TokenObj;
         }else{ 
             console.log("페이로드 티켓없음")
             TokenObj.verified = false;
             TokenObj.error = 'no ticket';
             logger.error(`no ticket error`);
-            upload(email,'user | token',`accessToken error`);
+            upload(email,'playing | token',`accessToken error`);
             return TokenObj;
         }
 
@@ -89,7 +89,7 @@ async function verify(token,email) {
         }
         
         logger.error(`${id} - ${email} : ${err}`);
-        upload(email,`user | token`,err);
+        upload(email,`playing | token`,err);
         return TokenObj;
     }
 }
@@ -103,7 +103,7 @@ exports.check_modulation = async (req, res, next) => {
     if(verify_result.verified){
         try{
             let userid = await get_userid(email);
-            console.log("유저아이디 함수테스트",userid);
+            //console.log("유저아이디 함수테스트",userid);
 
             //존재하는 유저 인지 검사
             if(!await User.exists({email:email})){
@@ -139,37 +139,44 @@ exports.check_modulation = async (req, res, next) => {
                             }
                         }
                     }
+                //start 가 false일 때,
                 }else{
-                    console.log("이전 기록과 비교를 해야합니다.")
-                    //id로 해당 유저 찾고
-                    let check = await Playing.findOne({email:email});
-        
-                    //그리고 이전 now_time이랑 비교
-                    let check_result = (check.now_time >= now_time) ? true : false;
-                    console.log(`저장된 기록: ${check.now_time} vs 현재 기록 : ${now_time}`);
-                    console.log(check_result);
-                    //만약 저장된 now_time보다 적은 time이면 (사기 기록이면)
-                    if(check_result){
-                        console.log("이 사람 사기 친다")
-                        
-                        //밴 , playing 모델에서 필드 삭제
-                        ban(userid,'부정기록');
-                        delete_playing(userid);
-        
-        
-                        res.status(200).json({"previous_time":check.now_time,"now_time":now_time,"banned":true,"userid":userid});  
-                        userinfo.info(`유저 ${userid} 밴 됨.`);
-                        logger.info(`유저 ${userid} 밴 됨.`);
+                    //start가 false인데 playing DB에 존재하지 않을 때,
+                    if(!await Playing.exists({email:email})){
+                        res.status(200).json({message:"잘못된 접근입니다."});
+                    //올바른 접근일 때
                     }else{
-                        console.log("유효한 기록이므로 저장합니다.")
-                        //아니면 now_time갱신
-                        await Playing.findOneAndUpdate(
-                            {email:email},
-                            {now_time:now_time},
-                            { new: true }
-                        ).setOptions({ runValidators: true });
-        
-                        res.status(200).json({"now_time":now_time,"validation":"true"});
+                        console.log("이전 기록과 비교를 해야합니다.")
+                        //id로 해당 유저 찾고
+                        let check = await Playing.findOne({email:email});
+            
+                        //그리고 이전 now_time이랑 비교
+                        let check_result = (check.now_time >= now_time) ? true : false;
+                        console.log(`저장된 기록: ${check.now_time} vs 현재 기록 : ${now_time}`);
+                        console.log(check_result);
+                        //만약 저장된 now_time보다 적은 time이면 (사기 기록이면)
+                        if(check_result){
+                            console.log("이 사람 사기 친다")
+                            
+                            //밴 , playing 모델에서 필드 삭제
+                            ban(email,'부정기록');
+                            delete_playing(userid);
+            
+            
+                            res.status(200).json({"previous_time":check.now_time,"now_time":now_time,"banned":true,"userid":userid});  
+                            userinfo.info(`유저 ${userid} 밴 됨.`);
+                            logger.info(`유저 ${userid} 밴 됨.`);
+                        }else{
+                            console.log("유효한 기록이므로 저장합니다.")
+                            //아니면 now_time갱신
+                            await Playing.findOneAndUpdate(
+                                {email:email},
+                                {now_time:now_time},
+                                { new: true }
+                            ).setOptions({ runValidators: true });
+            
+                            res.status(200).json({"now_time":now_time,"validation":"true"});
+                        }
                     }
                 }
             }

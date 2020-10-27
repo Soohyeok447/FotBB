@@ -581,7 +581,7 @@ exports.premium = async (req, res, next) => {
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try {
-            let user = await User.findOne({email:email}); //비교용 find
+            let user = await User.findOne({email:email}); //비교용 getfind
             let now_crystal = user.crystal;//현재 보유중인 크리스탈
             let check_premium = user.premium;
     
