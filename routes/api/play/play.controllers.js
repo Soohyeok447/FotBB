@@ -10,9 +10,21 @@ const {OAuth2Client} = require('google-auth-library');
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
 
-async function verify(token,id) {
+async function verify(token,email) {
     try{
         var TokenObj ={}
+        
+        //email이 존재하지 않는 경우
+        if(!email){
+            TokenObj.verified = false;
+            TokenObj.error = 'no email';
+            logger.error(`no email`);
+            upload('','user | token',`no email`);
+            return TokenObj;
+        }else{
+            var id = await get_userid(email);
+        }
+
         const ticket = await client.verifyIdToken({
             idToken: token,
             audience: process.env.CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
@@ -20,9 +32,6 @@ async function verify(token,id) {
             //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
         });
         const payload = ticket.getPayload();
-        
-        const userid = payload['sub'];
-        
         
 
         var check_validation = (payload.aud === process.env.CLIENT_ID) ? true : false;
@@ -40,16 +49,17 @@ async function verify(token,id) {
             TokenObj.verified = false;
             TokenObj.error = 'no payload';
             logger.error(`no payload error`);
-            upload(id,'play',`no payload error`);
+            upload(email,'play | token',`accessToken error`);
             return TokenObj;
-        }else{
+        }else{ 
             console.log("페이로드 티켓없음")
             TokenObj.verified = false;
             TokenObj.error = 'no ticket';
             logger.error(`no ticket error`);
-            upload(id,'play',`no ticket error`);
+            upload(email,'user | token',`accessToken error`);
             return TokenObj;
         }
+
     }catch(err){
         console.log("err났습니다.")
         let check_expiredtoken = /Token used too late/;
@@ -69,8 +79,8 @@ async function verify(token,id) {
             TokenObj.verified = false; 
         }
         
-        logger.error(`${id} - ${err}`);
-        upload(id,`play`,err);
+        logger.error(`${id} - ${email} : ${err}`);
+        upload(email,`user | token`,err);
         return TokenObj;
     }
 }

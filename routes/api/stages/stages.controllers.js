@@ -3,7 +3,8 @@ var Stage = require("../../../models/stage");
 var {logger} = require('../../../config/logger');
 var {upload} = require('./../../../config/s3_option');
 
-
+//middleware
+var {get_userid,get_now} = require("../middleware/function");
 
                 
 //////////////////verify///////////////////////
@@ -12,9 +13,21 @@ const {OAuth2Client} = require('google-auth-library');
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
 
-async function verify(token,id) {
+async function verify(token,email) {
     try{
         var TokenObj ={}
+        
+        //email이 존재하지 않는 경우
+        if(!email){
+            TokenObj.verified = false;
+            TokenObj.error = 'no email';
+            logger.error(`no email`);
+            upload('','stages | token',`no email`);
+            return TokenObj;
+        }else{
+            var id = await get_userid(email);
+        }
+
         const ticket = await client.verifyIdToken({
             idToken: token,
             audience: process.env.CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
@@ -22,9 +35,6 @@ async function verify(token,id) {
             //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
         });
         const payload = ticket.getPayload();
-        
-        const userid = payload['sub'];
-        
         
 
         var check_validation = (payload.aud === process.env.CLIENT_ID) ? true : false;
@@ -42,16 +52,17 @@ async function verify(token,id) {
             TokenObj.verified = false;
             TokenObj.error = 'no payload';
             logger.error(`no payload error`);
-            upload(id,'',`accessToken error`);
+            upload(email,'stages | token',`accessToken error`);
             return TokenObj;
-        }else{
+        }else{ 
             console.log("페이로드 티켓없음")
             TokenObj.verified = false;
             TokenObj.error = 'no ticket';
             logger.error(`no ticket error`);
-            upload(id,'',`accessToken error`);
+            upload(email,'stages | token',`accessToken error`);
             return TokenObj;
         }
+
     }catch(err){
         console.log("err났습니다.")
         let check_expiredtoken = /Token used too late/;
@@ -71,8 +82,8 @@ async function verify(token,id) {
             TokenObj.verified = false; 
         }
         
-        logger.error(`${id} - ${err}`);
-        upload(id,`stages`,err);
+        logger.error(`${id} - ${email} : ${err}`);
+        upload(email,`stages | token`,err);
         return TokenObj;
     }
 }
@@ -119,38 +130,38 @@ function calculate_leaderboard(array,type){
 
 
 ////////////////////////////////////////////
-
-
-
 //스테이지목록에서 한 스테이지 눌렀을 때 랭킹 받아오기
 exports.stages = async (req,res,next)=>{
-    const {id,stage_name,token} = req.body;
-    var verify_result = await verify(token,id)
+    const {email,stage_name,token} = req.body;
+    var verify_result = await verify(token,email)
     if(verify_result.verified){
         try{
             const jsonObj = {};
             let stage = await Stage.findOne({stage_name:stage_name});
-            let user = await User.findOne({googleid:id});
+            let user = await User.findOne({email:email});
             let country = user.country;
+
+            let userid = await get_userid(email);
+
             //user.stage_checked
             let check_initialized = user.stage_checked.findIndex(s =>s === stage_name);
             if(check_initialized<0){ //스테이지 랭킹 불러온적이 없을 때
                 user.stage_checked.push(stage_name);
                 user.save({new:true});
-                
-    
+
+
                 let sorted_Total_Normal_ranking = calculate_leaderboard(stage,'Normal')
                 let sorted_Total_Hard_ranking = calculate_leaderboard(stage,'Hard')
-                
-    
+
+
                 //1등부터 50등 까지 반환
                 let sliced_Total_Normal_array = sorted_Total_Normal_ranking.slice(0,50);
                 let sliced_Total_Hard_array = sorted_Total_Hard_ranking.slice(0,50);
                 
     
                 //내 등수 불러오기
-                let my_Total_Normal_ranking = sorted_Total_Normal_ranking.findIndex((s) => s.userid === id)+1
-                let my_Total_Hard_ranking = sorted_Total_Hard_ranking.findIndex((s) => s.userid === id)+1
+                let my_Total_Normal_ranking = sorted_Total_Normal_ranking.findIndex((s) => s.userid === userid)+1
+                let my_Total_Hard_ranking = sorted_Total_Hard_ranking.findIndex((s) => s.userid === userid)+1
     
                 jsonObj.Total_Normal_leaderboard = sliced_Total_Normal_array;
                 jsonObj.Total_Normal_ranking = my_Total_Normal_ranking;
@@ -168,8 +179,8 @@ exports.stages = async (req,res,next)=>{
                 let sliced_country_Hard_array = Hard_country_filter.slice(0,50);
                 
                 //내 등수 불러오기
-                let my_country_Normal_ranking = Normal_country_filter.findIndex((s) => s.userid === id)+1
-                let my_country_Hard_ranking = Hard_country_filter.findIndex((s) => s.userid === id)+1
+                let my_country_Normal_ranking = Normal_country_filter.findIndex((s) => s.userid === userid)+1
+                let my_country_Hard_ranking = Hard_country_filter.findIndex((s) => s.userid === userid)+1
     
                 jsonObj.country_Normal_leaderboard = sliced_country_Normal_array;
                 jsonObj.country_Normal_ranking = my_country_Normal_ranking;
@@ -177,14 +188,14 @@ exports.stages = async (req,res,next)=>{
                 jsonObj.country_Hard_ranking = my_country_Hard_ranking;
     
                 res.status(200).json(jsonObj);
-                logger.info(`${id} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
+                logger.info(`${userid} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
             }else{ //스테이지를 불러온적이 있을 때,
                 res.status(200).send("이미 불러온 적 있습니다.")
             }
         }catch(err){
             res.status(500).json({ error: `${err}` });
-            logger.error(`${id} 가 스테이지 ${stage_name}의 랭킹로딩에 실패 [${err}]`)
-            upload(id,'stages',err);
+            logger.error(`${userid} 가 스테이지 ${stage_name}의 랭킹로딩에 실패 [${err}]`)
+            upload(email,'stages',err);
             next(err);
         }
     }else{

@@ -3,7 +3,7 @@ var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 var Playing = require("../../../models/playing");
 
-var {ban,delete_playing,get_userid,now_time} = require("../middleware/function");
+var {ban,delete_playing,get_userid,get_now} = require("../middleware/function");
 
 var {logger,play,userinfo} = require('../../../config/logger');
 var {upload} = require('./../../../config/s3_option');
@@ -223,6 +223,7 @@ exports.clear = async (req, res, next) => {
                                         cleartime: 0,
                                         death: 0,
                                         country: country,
+                                        renewed_at:'',
                                         terminated: false,
                                     },
                                     Hard:{
@@ -230,6 +231,7 @@ exports.clear = async (req, res, next) => {
                                         cleartime: 0,
                                         death: 0,
                                         country: country,
+                                        renewed_at:'',
                                         terminated: false,
                                     },
                                 },
@@ -287,10 +289,8 @@ exports.clear = async (req, res, next) => {
                             //랭킹등록 
                             //let stage = await Stage.findOne( { stage_name: stage_name});
                             userindex = stage.Normal.findIndex((s) => s.userid === userid);
-                            //console.log(stage.Normal[userindex])
                             stage.Normal[userindex].cleartime = cleartime;
-                            //stage.Normal[userindex].death = user_stage.N_death;
-                            
+                            stage.Normal[userindex].renewed_at = get_now();
                             await stage.save({ new: true }); 
         
                             
@@ -334,7 +334,7 @@ exports.clear = async (req, res, next) => {
                                 userindex = stage.Normal.findIndex((s) => s.userid === userid);
                                 //console.log(stage.Normal[userindex])
                                 stage.Normal[userindex].cleartime = cleartime;
-                                
+                                stage.Normal[userindex].renewed_at = get_now();
         
                                 await stage.save({ new: true }); //신기록 갱신
                                 
@@ -419,7 +419,7 @@ exports.clear = async (req, res, next) => {
                             userindex = stage.Hard.findIndex((s) => s.userid === userid);
                             //console.log(stage.Normal[userindex])
                             stage.Hard[userindex].cleartime = cleartime;
-                            //stage.Hard[userindex].death = user_stage.H_death;
+                            stage.Hard[userindex].renewed_at = get_now();
                             
                             await stage.save({ new: true }); 
         
@@ -465,7 +465,7 @@ exports.clear = async (req, res, next) => {
                                 userindex = stage.Hard.findIndex((s) => s.userid === userid);
                                 //console.log(stage.Hard[userindex])
                                 stage.Hard[userindex].cleartime = cleartime;
-                                //stage.Hard[userindex].death = user_stage.H_death;
+                                stage.Hard[userindex].renewed_at = get_now();
                                 await stage.save({ new: true }); //신기록 갱신
                                 
         
@@ -514,9 +514,7 @@ exports.clear = async (req, res, next) => {
                         }
                     }
                 }
-            }
-
-                  
+            }    
         } catch (err) {
             res.status(500).json({ error: `${err}` });
             logger.error(`스테이지 clear 에러: ${email} : ${userid} [${err}]`);

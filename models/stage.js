@@ -17,6 +17,7 @@ const Stage = new Schema({
         cleartime: Number,
         death: Number,
         country: String,
+        renewed_at:String,
         terminated: Boolean,
     })],
     Hard: [new Schema({
@@ -24,6 +25,7 @@ const Stage = new Schema({
         cleartime: Number,
         death: Number,
         country: String,
+        renewed_at:String,
         terminated: Boolean,
     })],
     },{ 

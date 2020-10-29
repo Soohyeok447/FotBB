@@ -8,7 +8,7 @@ var moment = require('moment');
 require('dotenv').config();
 require('moment-timezone');
 
-var {get_userid,get_now} = require("../routes/api/middleware/function");
+var {get_userid} = require("../routes/api/middleware/function");
 
 moment.tz.setDefault("Asia/Seoul");
 const logDir = 'logs';
@@ -112,13 +112,13 @@ function upload(email,location,err){
     setTimeout(s3upload, 1000);
     
 
-    /*
+    
     ///////////////aws sns
     AWS.config.loadFromPath(`${appRoot}/config/config.json`);
 
     var params = {
         Message:`fotbb api error! [${location}]에서 에러발생!`,
-        PhoneNumber: '+821022954231',
+        PhoneNumber: '+821089012986',
     };
 
     var publishTextPromise = new AWS.SNS({apiVersion: '2010-03-31'}).publish(params).promise();
@@ -131,7 +131,7 @@ function upload(email,location,err){
         function(err){
         console.error(err,err.stack);
     })
-    */
+    
 }
 
 function report_notice(id,email,count){

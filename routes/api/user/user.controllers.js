@@ -110,23 +110,22 @@ async function verify(token,email) {
     }
 }
 
-
 //닉네임 비속어 필터링
 function id_filter(new_id){
     //특수문자 제거용 reg
+
     var reg = /[\{\}\[\]\/?.,;:\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi
     console.log(`필터링 함수 내의 id - ${new_id}`);
     //특수문자 필터링
-    var _filter = filter.toString().replace(reg, "");    
-    var _filter = _filter.replace(/\r\n/g, ""); //엔터
+    var _filter = filter.toString().replace(reg, "");
+    var _filter = _filter.toString().replace(/\r\n/g, ""); //엔터
     var result = new RegExp(_filter);
-    var result = result+'giy';
     //txt 파일 정규표현식 객체화
 
-    //console.log(result);  // -> 필터링단어 목록을 찍어낸다
+    console.log(result);  // -> 필터링단어 목록을 찍어낸다
 
     //필터링되지 않으면 false 반환, 필터링 되면 true 반환
-    let test = result.match(new_id);
+    let test = result.exec(new_id);
     console.log(`정규표현식 결과 -> ${test}`);
     //true, false로 치환
     if(test !== null ){
@@ -697,7 +696,7 @@ exports.id_change = async (req, res, next) => {
             res.status(500).json({ error: "database failure" });
             logger.error(`닉네임 변경 에러: ${email} [${err}]`);
             payment.error(`닉네임 변경 에러: ${email} [${err}]`);
-            upload("",`email : ${email} 닉네임 변경`,err);
+            upload(email,`email : ${email} 닉네임 변경`,err);
             next(err);
         }
     }else{
