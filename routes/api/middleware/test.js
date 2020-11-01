@@ -18,7 +18,6 @@ router.post("/", async (req, res, next) => {
     async function verify(token) {
 
         try{
-            console.log("req.body:  ",req.body);
         
             const ticket = await client.verifyIdToken({
                 idToken: token,

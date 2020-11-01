@@ -51,8 +51,8 @@ async function ban(email,reason){
                 let stage = await Stage.findOne({stage_name:e});
                 let banned_user_stage_N = stage.Normal.find(n=> n.userid===userid);
                 let banned_user_stage_H = stage.Hard.find(n=> n.userid===userid);
-                banned_user_stage_N.terminated=false;
-                banned_user_stage_H.terminated=false;
+                banned_user_stage_N.terminated = false;
+                banned_user_stage_H.terminated = false;
                 await stage.save({new:true});
             }catch(err){
                 console.log(err);

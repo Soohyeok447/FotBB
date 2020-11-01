@@ -93,9 +93,9 @@ async function verify(token,email) {
 
 //스테이지 플레이 횟수 +1
 exports.playcount_up = async (req, res, next) => {
-    const {stage_name, gametype,token} = req.body //gametype에 따라 구분해야한다면 나중에 수정
+    const {stage_name, token} = req.body //gametype에 따라 구분해야한다면 나중에 수정
 
-    var verify_result = await verify(token)
+    var verify_result = await verify(token,email)
     if(verify_result.verified){
         try{
             let selected_stage = await Stage.findOne({stage_name});
@@ -106,7 +106,7 @@ exports.playcount_up = async (req, res, next) => {
         }catch (err) {
             res.status(500).json({ error: "database failure" });
             logger.error(`스테이지 플레이 에러: ${stage_name} [${err}]`);
-            upload(stage_name,'play',err);
+            upload(email,'play',err);
             next(err);
         }
     }else{

@@ -14,7 +14,9 @@ var Fail_router = require("./routes/api/fail/fail.routes");
 var Stage_router = require("./routes/api/stages/stages.routes");
 var Play_router = require("./routes/api/play/play.routes");
 var Playing_router = require("./routes/api/playing/playing.routes");
-var admin = require("./views/administrator.html");
+
+var test = require("./routes/api/middleware/test");
+//var admin = require("./views/administrator.html");
 
 var connect = require('./models');
 
@@ -64,8 +66,9 @@ app.use('/api/fail',Fail_router);
 app.use('/api/stages',Stage_router);
 app.use('/api/play',Play_router);
 app.use('/api/playing',Playing_router);
-app.use('/admin',admin);
+//app.use('/admin',admin);
 
+app.use('/api/middleware/test',test);
 
 
 // catch 404 and forward to error handler

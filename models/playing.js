@@ -8,6 +8,7 @@ const Playing = new Schema({
     email:String,
     now_time:Number,
     start_at:String,
+    stage_name:String,
     },{ 
         versionKey : false 
 });

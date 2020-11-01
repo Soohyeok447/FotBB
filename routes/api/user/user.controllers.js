@@ -219,9 +219,11 @@ exports.check_exist_user = async (req,res,next)=>{
             //current_version이랑 게임 내부에 변수로 저장돼있는 version이랑 
             //비교를한다
         if(_version===user_version){
+            console.log("올바른 접근입니다.")
             var result = await User.exists({email:email});
             res.status(200).json({exist:result});
         }else{
+            console.log("업데이트가필요합니다.")
             //구버전이면 업데이트하도록 처리
             res.status(200).json({message:`유저버전 ${user_version} => 현재버전 ${_version} 업데이트가 필요합니다.`,need_update:true});
         } 
@@ -303,7 +305,7 @@ exports.check_validation = async (req,res,next)=>{
     if(verify_result.verified){
         const jsonObj = {};
         let check_exist = await User.exists({email:email});
-        
+
         //신규 유저일 경우
         //신규 유저가 닉네임 유효성 통과했을 경우 DB에 저장  | create => boolean
         if(create){
@@ -460,7 +462,7 @@ exports.crystal = async (req, res, next) => {
 
 //커스터마이징 처리
 exports.customizing = async (req, res, next) => {
-    const { email, customizing,token} = req.body;
+    const { email, reduce_crystal, customizing, token} = req.body;
 
     var verify_result = await verify(token,email)
     if(verify_result.verified){
@@ -468,33 +470,44 @@ exports.customizing = async (req, res, next) => {
             let user = await User.findOne({email:email}); //비교용 find
             let user_cus = user.customizing;
             let has_customizing = (user_cus.find(e => e ===customizing));
+            let holding_crystal = user.crystal;//현재 보유중인 크리스탈
+
             //해당 커스텀을 이미 보유중이면
             if(has_customizing){
-                res.status(200).send("이미 보유중인 커스텀입니다.");
+                res.status(200).json({message:"이미 보유중인 커스텀입니다..",status:'fail'});
             //보유중이지 않은 커스텀이면
             }else{
-                var result = await User.findOneAndUpdate(
-                    {email:email},
-                    {$addToSet:{customizing: customizing}},
-                    {new:true,upsert:true},
-                ).setOptions({ runValidators: true });
-                res.status(200).json(result.customizing);
-                logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
-                userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                if(holding_crystal<reduce_crystal){
+                    res.status(201).json({message:"크리스탈이 부족합니다.",status:'fail'});
+                }else{
+                    var result = await User.findOneAndUpdate(
+                        {email:email},
+                        {
+                            $inc:{crystal: -reduce_crystal},
+                            $addToSet:{customizing: customizing}
+                        },
+                        {new:true,upsert:true},
+                    ).setOptions({ runValidators: true });
+                    res.status(200).json({custom:result.customizing,status:'success'});
+                    logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                    userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                }    
             }
             }catch(err){
+            let id = get_userid(email)
             res.status(500).json({ error: "database failure" });
-            logger.error(`커스텀 구매 에러: ${user.googleid} [${err}]`);
-            payment.error(`커스텀 구매 에러: ${user.googleid} [${err}]`);
+            logger.error(`커스텀 구매 에러: ${id} : ${email} [${err}]`);
+            payment.error(`커스텀 구매 에러: ${id} : ${email} [${err}]`);
             upload(email,'커스텀구매',err);
             next(err);
         }
     }else{
         res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
     }
-
-    
 }
+
+
+
 
 //스테이지 언락
 exports.stage = async (req, res, next) => {
@@ -510,10 +523,10 @@ exports.stage = async (req, res, next) => {
             //유저 country 알 수 있으면 받아오게 수정
             
             if(now_crystal<reduce_crystal){
-                res.status(200).json({code:"1",error:"not enough crystal",message:"크리스탈이 부족합니다."});
+                res.status(200).json({status:'fail',message:"크리스탈이 부족합니다."});
             }else{
                 if(has_stage.length!==0){
-                    res.status(200).json({code:"2",error:`${stage_name} already owned`,message:"이미 보유중입니다."});
+                    res.status(200).json({status:'fail',message:"이미 보유중입니다."});
                 }else{
                     //stage 모델 배열에 유저추가
                     await Stage.findOneAndUpdate(
@@ -553,7 +566,7 @@ exports.stage = async (req, res, next) => {
                         {$inc:{crystal: -reduce_crystal},},
                         {new:true,upsert:true},
                     ).setOptions({ runValidators: true });           
-                    res.status(200).json({message:`${stage_name} 언락완료.`});
+                    res.status(200).json({message:`${stage_name} 언락완료.`,status:'success'});
                     logger.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
                     payment.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
                 } 
@@ -753,29 +766,12 @@ exports.test = async (req, res, next) => {
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try {
-            let test = await User.find().select("-_id googleid");
-            let id = 'ojs123123';
-
-            let result = test.filter(e=>e.googleid===id);
-            console.log(result);
-            if(result.length === 0){
-                console.log("이거 빈배열 맞다맞어");
-
-            }else{
-                console.log(" 아닌데");
-            }
-            res.status(200).json({"filtered":"hi"});
+            
         } catch(err) {
             res.status(500).json({ error: `${err}`});
             next(err);
         }
     }else{
-        res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
+        res.status(500).json({ "message": "Token error" });
     }
-}
-
-exports.test2 = (req,res,next)=>{
-     
-
-
 }

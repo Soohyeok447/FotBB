@@ -130,8 +130,8 @@ function calculate_leaderboard(array,type){
 
 
 ////////////////////////////////////////////
-//스테이지목록에서 한 스테이지 눌렀을 때 랭킹 받아오기
-exports.stages = async (req,res,next)=>{
+//스테이지목록에서 한 스테이지 눌렀을 때 글로벌랭킹 받아오기
+exports.global = async (req,res,next)=>{
     const {email,stage_name,token} = req.body;
     var verify_result = await verify(token,email)
     if(verify_result.verified){
@@ -139,7 +139,7 @@ exports.stages = async (req,res,next)=>{
             const jsonObj = {};
             let stage = await Stage.findOne({stage_name:stage_name});
             let user = await User.findOne({email:email});
-            let country = user.country;
+            
 
             let userid = await get_userid(email);
 
@@ -163,11 +163,65 @@ exports.stages = async (req,res,next)=>{
                 let my_Total_Normal_ranking = sorted_Total_Normal_ranking.findIndex((s) => s.userid === userid)+1
                 let my_Total_Hard_ranking = sorted_Total_Hard_ranking.findIndex((s) => s.userid === userid)+1
     
+
+                jsonObj.status = 'success';
+
+                //playcount,total_death,total_clear도 같이 반환
+                jsonObj.playcount = stage.playcount;
+                jsonObj.total_death = stage.total_death;
+                jsonObj.total_clear = stage.total_clear;
+
+                //랭킹 반환
                 jsonObj.Total_Normal_leaderboard = sliced_Total_Normal_array;
                 jsonObj.Total_Normal_ranking = my_Total_Normal_ranking;
                 jsonObj.Total_Hard_leaderboard = sliced_Total_Hard_array;
                 jsonObj.Total_Hard_ranking = my_Total_Hard_ranking;
-            //국가 랭킹
+            
+            
+                res.status(200).json(jsonObj);
+                logger.info(`${userid} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
+            }else{ //스테이지를 불러온적이 있을 때,
+                res.status(200).json({message:"이미 불러온 적 있습니다.",status:'fail'})
+            }
+        }catch(err){
+            res.status(500).json({ error: `${err}` });
+            logger.error(`${userid} 가 스테이지 ${stage_name}의 랭킹로딩에 실패 [${err}]`)
+            upload(email,'stages',err);
+            next(err);
+        }
+    }else{
+        res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
+    }
+}
+
+
+////////////////////////////////////////////
+//스테이지목록에서 한 스테이지 눌렀을 때 국가랭킹 받아오기
+exports.country = async (req,res,next)=>{
+    const {email,country,stage_name,token} = req.body;
+    var verify_result = await verify(token,email)
+    if(verify_result.verified){
+        try{
+            const jsonObj = {};
+            let stage = await Stage.findOne({stage_name:stage_name});
+            let user = await User.findOne({email:email});
+            
+
+            let userid = await get_userid(email);
+
+            let stage_name_country = `${stage_name}`+'_'+`${country}`;
+            //user.stage_checked
+            let check_initialized = user.stage_checked.findIndex(s =>s === stage_name_country);
+            if(check_initialized<0){ //스테이지 랭킹 불러온적이 없을 때
+                user.stage_checked.push(stage_name_country);
+                user.save({new:true});
+
+
+                let sorted_Total_Normal_ranking = calculate_leaderboard(stage,'Normal')
+                let sorted_Total_Hard_ranking = calculate_leaderboard(stage,'Hard')
+
+
+                //국가 랭킹
     
                 //국가 필터링
                 let Normal_country_filter = sorted_Total_Normal_ranking.filter(it => it.country === country);
@@ -182,16 +236,21 @@ exports.stages = async (req,res,next)=>{
                 let my_country_Normal_ranking = Normal_country_filter.findIndex((s) => s.userid === userid)+1
                 let my_country_Hard_ranking = Hard_country_filter.findIndex((s) => s.userid === userid)+1
     
+                jsonObj.status = 'success';
+
                 jsonObj.country_Normal_leaderboard = sliced_country_Normal_array;
                 jsonObj.country_Normal_ranking = my_country_Normal_ranking;
                 jsonObj.country_Hard_leaderboard = sliced_country_Hard_array;
                 jsonObj.country_Hard_ranking = my_country_Hard_ranking;
-    
+
+
+
                 res.status(200).json(jsonObj);
                 logger.info(`${userid} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
             }else{ //스테이지를 불러온적이 있을 때,
-                res.status(200).send("이미 불러온 적 있습니다.")
+                res.status(200).json({message:"이미 불러온 적 있습니다.",status:'fail'})
             }
+
         }catch(err){
             res.status(500).json({ error: `${err}` });
             logger.error(`${userid} 가 스테이지 ${stage_name}의 랭킹로딩에 실패 [${err}]`)

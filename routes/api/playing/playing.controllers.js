@@ -107,7 +107,7 @@ exports.check_modulation = async (req, res, next) => {
 
             //존재하는 유저 인지 검사
             if(!await User.exists({email:email})){
-                res.status(200).json({message:"존재하지 않는 유저입니다.",code:201});
+                res.status(200).json({message:"존재하지 않는 유저입니다."});
             }else{
                     //만약에 플레이 시작하는 거면
                 if(start){
@@ -131,7 +131,8 @@ exports.check_modulation = async (req, res, next) => {
                                     userid: userid,
                                     email:email,
                                     now_time: now_time,
-                                    start_at:get_now()
+                                    start_at:get_now(),
+                                    stage_name:stage_name
                                 });
                                 //playing모델에 id,now_time 필드 등록
                                 await user_playing.save({ new: true });
@@ -160,7 +161,7 @@ exports.check_modulation = async (req, res, next) => {
                             
                             //밴 , playing 모델에서 필드 삭제
                             ban(email,'부정기록');
-                            delete_playing(userid);
+                            delete_playing(email);
             
             
                             res.status(200).json({"previous_time":check.now_time,"now_time":now_time,"banned":true,"userid":userid});  

@@ -150,7 +150,7 @@ exports.clear = async (req, res, next) => {
         try {
                 //만약 playing을 거치지 않고 clear라우터에 접근 시도 시 db접근 거부
             if(!await Playing.exists({email:email})){
-                res.status(200).json({message:"잘못된 접근입니다.",code:201});
+                res.status(200).json({message:"잘못된 접근입니다.",status:'fail'});
             }else{
                 //userid 불러오기
                 let userid = await get_userid(email);
@@ -167,7 +167,7 @@ exports.clear = async (req, res, next) => {
                         delete_playing(email);
                         
         
-                        res.status(200).json({"now_time":playing.now_time,"cleartime":cleartime,"banned":true,"userid":userid});
+                        res.status(200).json({"now_time":playing.now_time,"cleartime":cleartime,"userid":userid,status:'banned'});
                         userinfo.info(`유저 ${userid} 밴 됨.`);
                         logger.info(`유저 ${userid} 밴 됨.`);
                     }catch(err){
@@ -184,7 +184,7 @@ exports.clear = async (req, res, next) => {
                     delete_playing(email);
         
                         //유저 db 갱신
-                    await User.findOneAndUpdate(
+                    let user = await User.findOneAndUpdate(
                         { email: email },
                         {
                             $inc: {
@@ -299,15 +299,19 @@ exports.clear = async (req, res, next) => {
                             //등수 찾기
                             let ranking = (sorted_ranking.findIndex((s) => s.userid === userid)+1);
                             console.log(cleartime,"초  ",ranking,"등입니다.");
-        
+                            //50등 안이면 stage_checked 초기화 해주기
+                            if(ranking<=50){
+                                reset_stage_checked(user,stage_name,country);
+                            }
+
                             //내 바로 다음 랭커 기록 찾기
                             let compare_with_me = sorted_ranking[ranking-2];
                             //console.log(compare_with_me);
                             if(compare_with_me<0){
                                 console.log("1등입니다.")
-                                res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                                res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear,status:'success'});
                             }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                                res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
                             }
                             logger.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
                             play.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
@@ -344,15 +348,19 @@ exports.clear = async (req, res, next) => {
                                 //등수 찾기
                                 let ranking = (sorted_ranking.findIndex((s) => s.userid === userid)+1);
                                 console.log("기록 갱신  ",cleartime,"초  ",ranking,"등입니다.");
-        
+                                //50등 안이면 stage_checked 초기화 해주기
+                                if(ranking<=50){
+                                    reset_stage_checked(user,stage_name,country);
+                                }
+
                                 //내 바로 다음 랭커 기록 찾기
                                 let compare_with_me = sorted_ranking[ranking-2];
                                 console.log(compare_with_me);
                                 if(compare_with_me<0){
                                     console.log("1등입니다.")
-                                    res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                                    res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear,status:'success'});
                                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                    res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                                    res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
                                 }
                                 logger.info(`${userid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
                                 play.info(`${userid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
@@ -372,9 +380,9 @@ exports.clear = async (req, res, next) => {
                                 console.log(compare_with_me);
                                 if(compare_with_me<0){
                                     console.log("1등입니다.")
-                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
+                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear,status:'success'});
                                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
                                 }
                                 logger.info(`${userid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
                                 play.info(`${userid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
@@ -429,15 +437,18 @@ exports.clear = async (req, res, next) => {
                             //등수 찾기
                             let ranking = (sorted_ranking.findIndex((s) => s.userid === userid)+1);
                             console.log(cleartime,"초  ",ranking,"등입니다.");
-        
+                            //50등 안이면 stage_checked 초기화 해주기
+                            if(ranking<=50){
+                                reset_stage_checked(user,stage_name,country);
+                            }
                             //내 바로 다음 랭커 기록 찾기
                             let compare_with_me = sorted_ranking[ranking-2];
                             console.log(compare_with_me);
                             if(compare_with_me<0){
                                 console.log("1등입니다.")
-                                res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                                res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear,status:'success'});
                             }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                                res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
                             }
                             logger.info(`${userid} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
                             play.info(`${userid} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
@@ -474,14 +485,17 @@ exports.clear = async (req, res, next) => {
                                 //등수 찾기
                                 let ranking = (sorted_ranking.findIndex((s) => s.userid === userid)+1);
                                 console.log("기록 갱신  ",cleartime,"초  ",ranking,"등입니다.");
-        
+                                //50등 안이면 stage_checked 초기화 해주기
+                                if(ranking<=50){
+                                    reset_stage_checked(user,stage_name,country);
+                                }
                                 //내 바로 다음 랭커 기록 찾기
                                 let compare_with_me = (sorted_ranking[ranking-2]);
                                 if((ranking-2)<0){
                                     console.log("1등입니다.")
-                                    res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear});
+                                    res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear,status:'success'});
                                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                    res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                                    res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
                                 }
         
                                 logger.info(`${userid} 가 하드 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
@@ -503,9 +517,9 @@ exports.clear = async (req, res, next) => {
                                 let compare_with_me = (sorted_ranking[ranking-2]);
                                 if((ranking-2)<0){
                                     console.log("1등입니다.")
-                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear});
+                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear,status:'success'});
                                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear});
+                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
                                 }
         
                                 logger.info(`${userid} 가 하드 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
@@ -524,5 +538,27 @@ exports.clear = async (req, res, next) => {
         }
     }else{
         res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
+    }
+
+
+
+
+
+
+    async function reset_stage_checked(user,stage_name,country){
+        console.log(user.stage_checked);
+        let check_arr = user.stage_checked;
+        let stage_str = `${stage_name}`+'_'+`${country}`;
+        // 스테이지가 존재하면
+        if(check_arr.indexOf(stage_name)!==-1){
+            check_arr.splice(check_arr.indexOf(stage_name),1);
+        }
+        if(check_arr.indexOf(stage_str)!==-1){
+            check_arr.splice(check_arr.indexOf(stage_str),1);
+        }
+
+        console.log(check_arr);
+        
+        await user.save({new:true});
     }
 }
