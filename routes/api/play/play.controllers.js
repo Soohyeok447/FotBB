@@ -93,7 +93,7 @@ async function verify(token,email) {
 
 //스테이지 플레이 횟수 +1
 exports.playcount_up = async (req, res, next) => {
-    const {stage_name, token} = req.body //gametype에 따라 구분해야한다면 나중에 수정
+    const {stage_name, email, token} = req.body //gametype에 따라 구분해야한다면 나중에 수정
 
     var verify_result = await verify(token,email)
     if(verify_result.verified){

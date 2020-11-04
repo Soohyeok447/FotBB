@@ -8,10 +8,6 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 
-const stage = new Schema({
-    
-})
-
 const User_stage= new Schema({
     
     //users스키마에서 가져온 id
@@ -28,15 +24,6 @@ const User_stage= new Schema({
     })]},{ 
         versionKey : false 
 });
-    /*  stage 데이터 폼
-        stage_number: Number,
-        unlock: Boolean, (필요없어보여서 우선 제거)
-        N_cleartime: Number, //Normal
-        H_cleartime: Number, //hard
-        death:Number
-    */
-
-    //언락 시 도큐먼트 수정 (stage필드 추가)
 
 
 module.exports = mongoose.model(

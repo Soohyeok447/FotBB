@@ -86,7 +86,7 @@ function upload(email,location,err){
         exitOnError:false,
     });
     
-    s3_error_logger.error(`email : ${email}, id : ${id} - [${location}]에서 에러발생! | 에러내용 - ${[err]}`);
+    s3_error_logger.error(`email : '${email}', id : '${id}' - [${location}]에서 에러발생! | 에러내용 - ${[err]}`);
     
     function s3upload(){
         console.log("s3upload 실행됨")

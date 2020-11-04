@@ -4,7 +4,7 @@ var {logger} = require('../../../config/logger');
 var {upload} = require('./../../../config/s3_option');
 
 //middleware
-var {get_userid,get_now} = require("../middleware/function");
+var {get_userid,get_global_leaderboard,get_country_leaderboard} = require("../middleware/function");
 
                 
 //////////////////verify///////////////////////
@@ -89,44 +89,8 @@ async function verify(token,email) {
 }
 
 
-////////////////////////////////////////////
-function calculate_leaderboard(array,type){
-    let no_0_array;
 
-    //클리어 타임이 0이 아닌 랭킹들 필터링   
-    switch(type){
-        case 'Normal':
-            //console.log("노말입니다잉")
-            no_0_array = array.Normal.filter(it => it.cleartime >0);
-            break;
-        case 'Hard':
-            //console.log("하드입니다잉")
-            no_0_array = array.Hard.filter(it => it.cleartime >0);
-            break;
-        default:
-            //console.log("그럴리는 없겠지만 잘못된 타입이 들어왔습니다.")
-            break;
-    } 
-    
-    
-    
-    //terminated된 기록들 필터링
-    let no_terminated_array = no_0_array.filter(e =>e.terminated === !true);
 
-    // cleartime 기준으로 정렬
-    let sorted_ranking = no_terminated_array.sort((a, b)=>{
-        if (a.cleartime > b.cleartime) {
-        return 1;
-        }
-        if (a.cleartime < b.cleartime) {
-        return -1;
-        }
-        // 동률
-        return 0;
-    });
-
-    return sorted_ranking
-}
 
 
 ////////////////////////////////////////////
@@ -136,12 +100,8 @@ exports.global = async (req,res,next)=>{
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try{
-            const jsonObj = {};
             let stage = await Stage.findOne({stage_name:stage_name});
             let user = await User.findOne({email:email});
-            
-
-            let userid = await get_userid(email);
 
             //user.stage_checked
             let check_initialized = user.stage_checked.findIndex(s =>s === stage_name);
@@ -149,34 +109,7 @@ exports.global = async (req,res,next)=>{
                 user.stage_checked.push(stage_name);
                 user.save({new:true});
 
-
-                let sorted_Total_Normal_ranking = calculate_leaderboard(stage,'Normal')
-                let sorted_Total_Hard_ranking = calculate_leaderboard(stage,'Hard')
-
-
-                //1등부터 50등 까지 반환
-                let sliced_Total_Normal_array = sorted_Total_Normal_ranking.slice(0,50);
-                let sliced_Total_Hard_array = sorted_Total_Hard_ranking.slice(0,50);
-                
-    
-                //내 등수 불러오기
-                let my_Total_Normal_ranking = sorted_Total_Normal_ranking.findIndex((s) => s.userid === userid)+1
-                let my_Total_Hard_ranking = sorted_Total_Hard_ranking.findIndex((s) => s.userid === userid)+1
-    
-
-                jsonObj.status = 'success';
-
-                //playcount,total_death,total_clear도 같이 반환
-                jsonObj.playcount = stage.playcount;
-                jsonObj.total_death = stage.total_death;
-                jsonObj.total_clear = stage.total_clear;
-
-                //랭킹 반환
-                jsonObj.Total_Normal_leaderboard = sliced_Total_Normal_array;
-                jsonObj.Total_Normal_ranking = my_Total_Normal_ranking;
-                jsonObj.Total_Hard_leaderboard = sliced_Total_Hard_array;
-                jsonObj.Total_Hard_ranking = my_Total_Hard_ranking;
-            
+                let jsonObj = get_global_leaderboard(stage,email);
             
                 res.status(200).json(jsonObj);
                 logger.info(`${userid} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
@@ -202,12 +135,10 @@ exports.country = async (req,res,next)=>{
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try{
-            const jsonObj = {};
+
             let stage = await Stage.findOne({stage_name:stage_name});
             let user = await User.findOne({email:email});
             
-
-            let userid = await get_userid(email);
 
             let stage_name_country = `${stage_name}`+'_'+`${country}`;
             //user.stage_checked
@@ -217,31 +148,7 @@ exports.country = async (req,res,next)=>{
                 user.save({new:true});
 
 
-                let sorted_Total_Normal_ranking = calculate_leaderboard(stage,'Normal')
-                let sorted_Total_Hard_ranking = calculate_leaderboard(stage,'Hard')
-
-
-                //국가 랭킹
-    
-                //국가 필터링
-                let Normal_country_filter = sorted_Total_Normal_ranking.filter(it => it.country === country);
-                let Hard_country_filter = sorted_Total_Hard_ranking.filter(it=> it.country === country);
-                    
-    
-                //1등부터 50등 까지 반환
-                let sliced_country_Normal_array = Normal_country_filter.slice(0,50);
-                let sliced_country_Hard_array = Hard_country_filter.slice(0,50);
-                
-                //내 등수 불러오기
-                let my_country_Normal_ranking = Normal_country_filter.findIndex((s) => s.userid === userid)+1
-                let my_country_Hard_ranking = Hard_country_filter.findIndex((s) => s.userid === userid)+1
-    
-                jsonObj.status = 'success';
-
-                jsonObj.country_Normal_leaderboard = sliced_country_Normal_array;
-                jsonObj.country_Normal_ranking = my_country_Normal_ranking;
-                jsonObj.country_Hard_leaderboard = sliced_country_Hard_array;
-                jsonObj.country_Hard_ranking = my_country_Hard_ranking;
+                let jsonObj = get_country_leaderboard(stage,email,country);
 
 
 

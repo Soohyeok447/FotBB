@@ -3,7 +3,7 @@ var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 var Playing = require("../../../models/playing");
 
-var {ban,delete_playing,get_userid,get_now} = require("../middleware/function");
+var {ban,delete_playing,get_userid,get_now,get_country_leaderboard,get_global_leaderboard,get_stage_info} = require("../middleware/function");
 
 var {logger,play,userinfo} = require('../../../config/logger');
 var {upload} = require('./../../../config/s3_option');
@@ -163,7 +163,7 @@ exports.clear = async (req, res, next) => {
                     try{
                         //밴    
                         ban(email,'부정기록')
-                        //playing삭제
+                        //Playing 초기화
                         delete_playing(email);
                         
         
@@ -180,9 +180,7 @@ exports.clear = async (req, res, next) => {
                 //정당한 기록일 시
                 }else{
                     console.log("정당한 기록입니다. 기록을 저장합니다.")
-                    //playing 삭제
-                    delete_playing(email);
-        
+                    await delete_playing(email);
                         //유저 db 갱신
                     let user = await User.findOneAndUpdate(
                         { email: email },
@@ -252,10 +250,7 @@ exports.clear = async (req, res, next) => {
                         let type = 'Normal'
                         //total_clear 갱신
                         stage.total_clear++;
-                        // (death 변수는 user_stage 에서 가져와서 그대로 
-                        // 왜냐하면 업데이트 death는 fail라우터에서 처리할 거기 때문에)
-                        //let user_stage = await User_stage.findOne({ userid: id }); //user_stage 에서 id로 찾기
-                        
+
                         //이전 클리어타임 확인용
                         let stage_select = stage.Normal.filter( //stage_name으로 stage 선택
                             (s) => s.userid === userid
@@ -269,10 +264,7 @@ exports.clear = async (req, res, next) => {
                         //user_stage 모델에 Normal클리어타임 갱신
                         let user_stage = await User_stage.findOne( { userid: userid});
                         let userindex = user_stage.stage.findIndex((s) => s.stage_name === stage_name);
-                        //console.log(stage.Normal[userindex])
-        
-                    
-                        
+            
         
                         //(기본 로직)
                         //랭킹등록 -> 등수와 클리어타임 반환
@@ -292,29 +284,18 @@ exports.clear = async (req, res, next) => {
                             stage.Normal[userindex].cleartime = cleartime;
                             stage.Normal[userindex].renewed_at = get_now();
                             await stage.save({ new: true }); 
-        
-                            
-                            var sorted_ranking = calculate_leaderboard(stage,type);
-        
-                            //등수 찾기
-                            let ranking = (sorted_ranking.findIndex((s) => s.userid === userid)+1);
-                            console.log(cleartime,"초  ",ranking,"등입니다.");
-                            //50등 안이면 stage_checked 초기화 해주기
-                            if(ranking<=50){
-                                reset_stage_checked(user,stage_name,country);
-                            }
 
-                            //내 바로 다음 랭커 기록 찾기
-                            let compare_with_me = sorted_ranking[ranking-2];
-                            //console.log(compare_with_me);
-                            if(compare_with_me<0){
-                                console.log("1등입니다.")
-                                res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear,status:'success'});
-                            }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
-                            }
-                            logger.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
-                            play.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
+
+                            //갱신된 리더보드 불러오기
+                            let global_leaderboard = await get_global_leaderboard(stage,email,'Normal');
+                            let country_leaderboard = await get_country_leaderboard(stage,email,user.country,'Normal');
+                            //스테이지 정보 불러오기
+                            let stage_info = await get_stage_info(stage);
+
+                            await res.status(200).json({"status":"clear_renewal","stage_info":stage_info,"global_leaderboard": global_leaderboard,"country_leaderboard": country_leaderboard});
+                            
+                            logger.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${global_leaderboard.total_Normal_ranking}  기록  : ${cleartime}`);
+                            play.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${global_leaderboard.total_Normal_ranking}  기록  : ${cleartime}`);
                         }else{ //첫 플레이가 아닐경우(기록 존재)
                             console.log("첫플레이가 아닙니다.");
                             //이제 기록 갱신과 갱신이 아닌경우 처리
@@ -342,28 +323,17 @@ exports.clear = async (req, res, next) => {
         
                                 await stage.save({ new: true }); //신기록 갱신
                                 
-        
-                                var sorted_ranking = calculate_leaderboard(stage,type);
+    
+                                //갱신된 리더보드 불러오기
+                                let global_leaderboard = await get_global_leaderboard(stage,email,'Normal');
+                                let country_leaderboard = await get_country_leaderboard(stage,email,user.country,'Normal');
+                                //스테이지 정보 불러오기
+                                let stage_info = await get_stage_info(stage);
 
-                                //등수 찾기
-                                let ranking = (sorted_ranking.findIndex((s) => s.userid === userid)+1);
-                                console.log("기록 갱신  ",cleartime,"초  ",ranking,"등입니다.");
-                                //50등 안이면 stage_checked 초기화 해주기
-                                if(ranking<=50){
-                                    reset_stage_checked(user,stage_name,country);
-                                }
-
-                                //내 바로 다음 랭커 기록 찾기
-                                let compare_with_me = sorted_ranking[ranking-2];
-                                console.log(compare_with_me);
-                                if(compare_with_me<0){
-                                    console.log("1등입니다.")
-                                    res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear,status:'success'});
-                                }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                    res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
-                                }
-                                logger.info(`${userid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
-                                play.info(`${userid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
+                                await res.status(200).json({"status":"clear_renewal","stage_info":stage_info,"global_leaderboard": global_leaderboard,"country_leaderboard": country_leaderboard});
+                                
+                                logger.info(`${userid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${global_leaderboard.total_Normal_ranking}  기록  : ${cleartime}`);
+                                play.info(`${userid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 : ${global_leaderboard.total_Normal_ranking}  기록  : ${cleartime}`);
                             }else{ //기록 갱신 실패했을 경우
                                 console.log("기록갱신 실패했습니다.");
                                 let stage = await Stage.findOne( { stage_name: stage_name});
@@ -378,11 +348,15 @@ exports.clear = async (req, res, next) => {
                                 //내 바로 다음 랭커 기록 찾기
                                 let compare_with_me = sorted_ranking[ranking-2];
                                 console.log(compare_with_me);
+                                //스테이지 정보 불러오기
+                                let stage_info = await get_stage_info(stage);
+
+
                                 if(compare_with_me<0){
                                     console.log("1등입니다.")
-                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear,status:'success'});
+                                    res.status(200).json({"ranking": ranking,"previous_cleartime":previous_cleartime,"stage_info":stage_info,status:'clear'});
                                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
+                                    res.status(200).json({"ranking": ranking,"previous_cleartime":previous_cleartime,"total_Normal_rival":compare_with_me,"stage_info":stage_info,status:'clear'});
                                 }
                                 logger.info(`${userid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
                                 play.info(`${userid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
@@ -432,26 +406,17 @@ exports.clear = async (req, res, next) => {
                             await stage.save({ new: true }); 
         
         
-                            var sorted_ranking = calculate_leaderboard(stage,type);
-        
-                            //등수 찾기
-                            let ranking = (sorted_ranking.findIndex((s) => s.userid === userid)+1);
-                            console.log(cleartime,"초  ",ranking,"등입니다.");
-                            //50등 안이면 stage_checked 초기화 해주기
-                            if(ranking<=50){
-                                reset_stage_checked(user,stage_name,country);
-                            }
-                            //내 바로 다음 랭커 기록 찾기
-                            let compare_with_me = sorted_ranking[ranking-2];
-                            console.log(compare_with_me);
-                            if(compare_with_me<0){
-                                console.log("1등입니다.")
-                                res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear,status:'success'});
-                            }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
-                            }
-                            logger.info(`${userid} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
-                            play.info(`${userid} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}`);
+                            //갱신된 리더보드 불러오기
+                            let global_leaderboard = await get_global_leaderboard(stage,email,'Hard');
+                            let country_leaderboard = await get_country_leaderboard(stage,email,user.country,'Hard');
+                            //스테이지 정보 불러오기
+                            let stage_info = await get_stage_info(stage);
+
+                            
+                            
+                            logger.info(`${userid} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${global_leaderboard.total_hard_ranking}  기록  : ${cleartime}`);
+                            play.info(`${userid} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${global_leaderboard.total_hard_ranking}  기록  : ${cleartime}`);
+                            res.status(200).json({"status":"clear_renewal","stage_info":stage_info,"global_leaderboard": global_leaderboard,"country_leaderboard": country_leaderboard});
                         }else{ //첫 플레이가 아닐경우(기록 존재)
                             console.log("첫플레이가 아닙니다.");
                             //이제 기록 갱신과 갱신이 아닌경우 처리
@@ -480,27 +445,17 @@ exports.clear = async (req, res, next) => {
                                 await stage.save({ new: true }); //신기록 갱신
                                 
         
-                                var sorted_ranking = calculate_leaderboard(stage,type);
+                                //갱신된 리더보드 불러오기
+                                let global_leaderboard = await get_global_leaderboard(stage,email,'Hard');
+                                let country_leaderboard = await get_country_leaderboard(stage,email,user.country,'Hard');
+                                //스테이지 정보 불러오기
+                                let stage_info = await get_stage_info(stage);
 
-                                //등수 찾기
-                                let ranking = (sorted_ranking.findIndex((s) => s.userid === userid)+1);
-                                console.log("기록 갱신  ",cleartime,"초  ",ranking,"등입니다.");
-                                //50등 안이면 stage_checked 초기화 해주기
-                                if(ranking<=50){
-                                    reset_stage_checked(user,stage_name,country);
-                                }
-                                //내 바로 다음 랭커 기록 찾기
-                                let compare_with_me = (sorted_ranking[ranking-2]);
-                                if((ranking-2)<0){
-                                    console.log("1등입니다.")
-                                    res.status(200).json({"ranking": `${ranking}`,"total_clear":stage.total_clear,status:'success'});
-                                }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                    res.status(200).json({"ranking": `${ranking}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
-                                }
-        
-                                logger.info(`${userid} 가 하드 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
-                                play.info(`${userid} 가 하드 ${stage_name} 클리어.(갱신)   랭킹 : ${ranking}  기록  : ${cleartime}`);
-        
+                                
+                                logger.info(`${userid} 가 하드 ${stage_name} 클리어.(갱신)   랭킹 : ${global_leaderboard.total_hard_ranking}  기록  : ${cleartime}`);
+                                play.info(`${userid} 가 하드 ${stage_name} 클리어.(갱신)   랭킹 : ${global_leaderboard.total_hard_ranking}  기록  : ${cleartime}`);
+                                
+                                res.status(200).json({"status":"clear_renewal","stage_info":stage_info,"global_leaderboard": global_leaderboard,"country_leaderboard": country_leaderboard});
                             
                             }else{ //기록 갱신 실패했을 경우
                                 console.log("기록갱신 실패했습니다.");
@@ -515,11 +470,13 @@ exports.clear = async (req, res, next) => {
         
                                 //내 바로 다음 랭커 기록 찾기
                                 let compare_with_me = (sorted_ranking[ranking-2]);
-                                if((ranking-2)<0){
+                                //스테이지 정보 불러오기
+                                let stage_info = await get_stage_info(stage);
+                                if(compare_with_me<0){
                                     console.log("1등입니다.")
-                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"total_clear":stage.total_clear,status:'success'});
+                                    res.status(200).json({"ranking": ranking,"previous_cleartime":previous_cleartime,"stage_info":stage_info,status:'clear'});
                                 }else{ //1등이 아니면 바로 윗 랭크 기록 반환
-                                    res.status(200).json({"ranking": `${ranking}`,"previous_cleartime":`${previous_cleartime}`,"next_user":compare_with_me,"total_clear":stage.total_clear,status:'success'});
+                                    res.status(200).json({"ranking": ranking,"previous_cleartime":previous_cleartime,"total_Hard_rival":compare_with_me,"stage_info":stage_info,status:'clear'});
                                 }
         
                                 logger.info(`${userid} 가 하드 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
@@ -530,7 +487,8 @@ exports.clear = async (req, res, next) => {
                 }
             }    
         } catch (err) {
-            res.status(500).json({ error: `${err}` });
+            let userid = await get_userid(email);
+            res.status(500).json({ error: err });
             logger.error(`스테이지 clear 에러: ${email} : ${userid} [${err}]`);
             play.error(`스테이지 clear 에러: ${email} : ${userid} [${err}]`);
             upload(email,`clear`,err);
@@ -538,27 +496,5 @@ exports.clear = async (req, res, next) => {
         }
     }else{
         res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
-    }
-
-
-
-
-
-
-    async function reset_stage_checked(user,stage_name,country){
-        console.log(user.stage_checked);
-        let check_arr = user.stage_checked;
-        let stage_str = `${stage_name}`+'_'+`${country}`;
-        // 스테이지가 존재하면
-        if(check_arr.indexOf(stage_name)!==-1){
-            check_arr.splice(check_arr.indexOf(stage_name),1);
-        }
-        if(check_arr.indexOf(stage_str)!==-1){
-            check_arr.splice(check_arr.indexOf(stage_str),1);
-        }
-
-        console.log(check_arr);
-        
-        await user.save({new:true});
     }
 }

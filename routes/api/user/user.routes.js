@@ -38,6 +38,8 @@ router.post("/change", userController.id_change);
 
 //테스트
 router.post("/test", userController.test);
+router.post("/test2", userController.test2);
+router.post("/test3", userController.test3);
 
 
 

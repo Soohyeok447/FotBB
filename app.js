@@ -1,22 +1,28 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
+const ejs = require("ejs");
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
 var helmet = require('helmet')
-
-
+      //// 라우터
+//API
 var User_router = require('./routes/api/user/user.routes');
 var Version_router = require('./routes/api/version');
 var Clear_router = require('./routes/api/clear/clear.routes');
 var Fail_router = require("./routes/api/fail/fail.routes");
 var Stage_router = require("./routes/api/stages/stages.routes");
-var Play_router = require("./routes/api/play/play.routes");
 var Playing_router = require("./routes/api/playing/playing.routes");
 
+//API 테스트
 var test = require("./routes/api/middleware/test");
-//var admin = require("./views/administrator.html");
+
+//관리자 페이지
+var adminPage = require("./routes/adminPage/index");
+
+
+
 
 var connect = require('./models');
 
@@ -57,18 +63,20 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-
+// app.get('/admin',function(req,res){
+//   res.render("admin_login",{});
+// })
 //라우팅
 app.use('/api/version',Version_router);
 app.use('/api/user', User_router);
 app.use('/api/clear',Clear_router);
 app.use('/api/fail',Fail_router);
 app.use('/api/stages',Stage_router);
-app.use('/api/play',Play_router);
 app.use('/api/playing',Playing_router);
-//app.use('/admin',admin);
 
 app.use('/api/middleware/test',test);
+
+app.use('/adminPage',adminPage);
 
 
 // catch 404 and forward to error handler

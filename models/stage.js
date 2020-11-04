@@ -38,14 +38,3 @@ module.exports = mongoose.model(
     Stage,
     "Stage"
 );
-
-/*
- Normal or Hard 데이터 폼
- Normal:{
-     userid: Number,
-     cleartime: Number,
-     death: Number,
-     country: String,
- } (그리고 이제 cleartime을 기준으로 sort하고 저장
-    배열형태로 저장)
-*/

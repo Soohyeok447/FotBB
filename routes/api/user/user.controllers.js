@@ -5,10 +5,11 @@ var User = require("../../../models/user");
 var User_stage = require("../../../models/user_stage");
 var Stage = require("../../../models/stage");
 var Report = require("../../../models/report_user");
+var Banned = require("../../../models/banned");
 
 
 //middleware
-var {get_userid,get_now} = require("../middleware/function");
+var {get_userid,get_now,get_country_leaderboard,get_global_leaderboard,get_all_leaderboard} = require("../middleware/function");
 
 //닉네임 필터링용 문자열
 const fs = require('fs');
@@ -293,6 +294,48 @@ exports.check_validation = async (req,res,next)=>{
     
 } 
 
+////////////// 로그인 했을 때 전체리더보드 불러오기 용도
+function calculate_leaderboard(array,type){
+    let no_0_array;
+
+    //클리어 타임이 0이 아닌 랭킹들 필터링   
+    switch(type){
+        case 'Normal':
+            //console.log("노말입니다잉")
+            no_0_array = array.Normal.filter(it => it.cleartime >0);
+            break;
+        case 'Hard':
+            //console.log("하드입니다잉")
+            no_0_array = array.Hard.filter(it => it.cleartime >0);
+            break;
+        default:
+            //console.log("그럴리는 없겠지만 잘못된 타입이 들어왔습니다.")
+            break;
+    } 
+    
+    
+    
+    //terminated된 기록들 필터링
+    let no_terminated_array = no_0_array.filter(e =>e.terminated === !true);
+
+    // cleartime 기준으로 정렬
+    let sorted_ranking = no_terminated_array.sort((a, b)=>{
+        if (a.cleartime > b.cleartime) {
+        return 1;
+        }
+        if (a.cleartime < b.cleartime) {
+        return -1;
+        }
+        // 동률
+        return 0;
+    });
+
+    return sorted_ranking
+}
+
+
+////////////////////////////////////////////
+
 
 // //접속 처리 컨트롤러 (클라이언트 접속 시 동기화용)
 //     // DB에 저장안돼 있는 유저의 생성 컨트롤러
@@ -331,15 +374,15 @@ exports.check_validation = async (req,res,next)=>{
                     var user_stage = new User_stage({
                         userid: new_id,
                         stage: {
-                            stage_name: "startmusic",
+                            stage_name: "바흐시메이저",
                             N_cleartime: 0, //Normal
                             H_cleartime: 0, //hard
                             N_death:0,
                             H_death:0,
                         },
                     });
-                    await Stage.findOneAndUpdate(
-                        {stage_name:"startmusic"},
+                    let stage = await Stage.findOneAndUpdate(
+                        {stage_name:"바흐시메이저"},
                         {
                             $addToSet: {
                                 Normal: {
@@ -347,6 +390,7 @@ exports.check_validation = async (req,res,next)=>{
                                     cleartime: 0,
                                     death: 0,
                                     country: country,
+                                    renewed_at:'',
                                     terminated: false,
                                 },
                                 Hard:{
@@ -354,14 +398,22 @@ exports.check_validation = async (req,res,next)=>{
                                     cleartime: 0,
                                     death: 0,
                                     country: country,
+                                    renewed_at:'',
                                     terminated: false,
                                 },
                             },
                         },{new:true}).setOptions({ runValidators: true });
                     await user.save({ new: true });
                     await user_stage.save({ new: true });
+
+                    
+                 
                     jsonObj.user = user;
                     jsonObj.user_stage = user_stage;
+
+                        //여기서 리더보드도 같이 응답하도록
+                    jsonObj.all_leaderboard = get_all_leaderboard(email);
+
                     res.status(200).json(jsonObj);
                     logger.info(`신규 유저 등록 : ${email} : ${user.googleid}`);
                     userinfo.info(`신규 유저 등록 : ${email} : ${user.googleid}`);
@@ -378,12 +430,12 @@ exports.check_validation = async (req,res,next)=>{
                 //이미 등록된 유저 일 때, 로그인 진행
             }else{
                 try {
-                    let check_banned = await User.findOne({email: email});
-                    var banned = check_banned.banned;
+                    let check_banned = await Banned.findOne({email: email});
                     //로그인할 때 밴 여부 체크
                     //밴 당한 유저일 때
-                    if(banned){
-                        res.status(200).json({"message":`${id} 는 밴 된 유저입니다`,"banned_at":check_banned.banned_at,"banned":"true"});
+                    if(check_banned){
+                        console.log("밴로직 진입");
+                        res.status(200).json({"message":`${check_banned.userid} 는 밴 된 유저입니다`,"banned_at":check_banned.banned_at,"banned":"true"});
                     //밴 당한 유저가 아닐 떄
                     }else{ 
                         //user 객체 얻기
@@ -403,6 +455,12 @@ exports.check_validation = async (req,res,next)=>{
     
                         jsonObj.user_stage = user_stage;
                         jsonObj.user = user;
+
+                            //여기서 리더보드도 같이 응답하도록
+
+
+
+
                         res.status(200).json(jsonObj);
                         logger.info(`email : ${email} - ${user.googleid} 가 로그인 했습니다.`);
                         userinfo.info(`email : ${email} - ${user.googleid} 가 로그인 했습니다.`);
@@ -444,7 +502,7 @@ exports.crystal = async (req, res, next) => {
                 { $inc: { crystal: get_crystal } },
                 { new: true }
             ).setOptions({ runValidators: true });
-            res.status(200).json(result.crystal);
+            res.status(200).json({crystal:result.crystal});
             logger.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
             payment.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
         } catch(err) {
@@ -488,7 +546,7 @@ exports.customizing = async (req, res, next) => {
                         },
                         {new:true,upsert:true},
                     ).setOptions({ runValidators: true });
-                    res.status(200).json({custom:result.customizing,status:'success'});
+                    res.status(200).json({crystal:result.crystal,custom:result.customizing,status:'success'});
                     logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                     userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                 }    
@@ -538,6 +596,7 @@ exports.stage = async (req, res, next) => {
                                     cleartime: 0,
                                     death: 0,
                                     country: user.country,
+                                    renewed_at:'',
                                     terminated: false,
                                 },
                                 Hard:{
@@ -545,12 +604,13 @@ exports.stage = async (req, res, next) => {
                                     cleartime: 0,
                                     death: 0,
                                     country: user.country,
+                                    renewed_at:'',
                                     terminated: false,
                                 },
                             },
                         },{new:true}).setOptions({ runValidators: true });
     
-                    await User_stage.findOneAndUpdate(
+                    let usResult = await User_stage.findOneAndUpdate(
                         {userid:user.googleid},
                         {$addToSet: {stage:{
                             stage_name:stage_name,
@@ -561,12 +621,12 @@ exports.stage = async (req, res, next) => {
                         }}},
                         {new:true}
                         ).setOptions({ runValidators: true });
-                    await User.findOneAndUpdate(
+                    let userResult = await User.findOneAndUpdate(
                         {email:email},
                         {$inc:{crystal: -reduce_crystal},},
                         {new:true,upsert:true},
                     ).setOptions({ runValidators: true });           
-                    res.status(200).json({message:`${stage_name} 언락완료.`,status:'success'});
+                    res.status(200).json({crystal:userResult.crystal,status:'success',message:`${stage_name} 언락완료.`,user_stage:usResult});
                     logger.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
                     payment.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
                 } 
@@ -630,19 +690,20 @@ exports.premium = async (req, res, next) => {
 
 //부적절 닉네임 신고
 exports.report = async (req, res, next) => {
-    const { email, token} = req.body; 
+    const { email, target_id,token} = req.body; 
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try {
             const limit = 3;
-            let findUser = await User.findOne({email:email})
 
-            let user = await Report.findOne({email: email}); //비교용 find
+            let findUser = await User.findOne({googleid:target_id})
+
+            let user = await Report.findOne({email: findUser.email}); //비교용 find
             //만약 유저가 DB에 저장이 안돼있으면 다큐먼트 생성
             if(user === null){
                 let new_user = new Report({
-                    email:email,
-                    id:findUser.googleid,
+                    email:findUser.email,
+                    id:target_id,
                     count:0,
                     changed_id_by_force:0,
                 });
@@ -657,10 +718,10 @@ exports.report = async (req, res, next) => {
                     console.log("진입");
                     //신고당한 횟수가 3회 이상이면 운영진에게 알림을 주는 시스템이 있으면 좋겠음 (aws sns라든가 이건 뭐 upload가 있으니까 금방가능)
                     
-                    logger.info(`${email}의 신고횟수가 ${limit}회를 넘었습니다. 현재 신고횟수 - ${user.count}회 현재 닉네임 - ${findUser.googleid}`);
+                    logger.info(`${user.email}의 신고횟수가 ${limit}회를 넘었습니다. 현재 신고횟수 - ${user.count}회 현재 닉네임 - ${user.id}`);
                     
                         //aws sns 연결 후 운영진에게 sns보내기...?
-                    report_notice(findUser.googleid,email,user.count);
+                    report_notice(user.id,user.email,user.count);
                 }
                 res.status(200).json({"message":"신고 횟수 갱신 완료","count":user.count,"code":200});
             }
@@ -762,16 +823,105 @@ exports.id_change = async (req, res, next) => {
 
 //테스트
 exports.test = async (req, res, next) => {
-    const {changed_id ,email, token} = req.body; 
+    const {email, token} = req.body; 
     var verify_result = await verify(token,email)
     if(verify_result.verified){
-        try {
-            
-        } catch(err) {
-            res.status(500).json({ error: `${err}`});
-            next(err);
+        try{
+            let user = await User.findOne({email:email});
+            let user_stage = await User_stage.findOne({userid:user.googleid});
+            console.log(user_stage.stage,"\n\n");
+            user_stage.stage.forEach(async e=>{
+                
+                if(e.stage_name !== '바흐시메이저'){
+                    console.log("진입");
+                    
+
+                    let stage = await Stage.findOne({stage_name:e.stage_name});
+                    
+                    //해당 유저가 기록된 index 구하기
+                    normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
+                    hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
+                    
+                    stage.Normal.splice(normal_index,1);
+                    stage.Hard.splice(hard_index,1);
+                    stage.save({new:true});
+
+                }else{
+                    console.log("바흐 시메이저입니다.")
+                }
+            })
+            user_stage.stage.splice(1,user_stage.stage.length);
+            user_stage.save({new:true});
+
+
+            res.status(200).send(user_stage.stage);
+        }catch(err){
+            console.log(err);
+            res.status(200).send(err);
         }
     }else{
         res.status(500).json({ "message": "Token error" });
     }
+
+}
+
+exports.test2 = async (req, res, next) => {
+    const {email, crystal,token} = req.body; 
+    var verify_result = await verify(token,email)
+    if(verify_result.verified){
+        try{
+            let user = await User.findOne({email:email});
+            let user_stage = await User_stage.findOne({userid:user.googleid});
+            console.log(user_stage.stage,"\n\n");
+            user_stage.stage.forEach(async e=>{
+                
+                if(e.stage_name !== '바흐시메이저'){
+                    console.log("진입");
+                    
+
+                    let stage = await Stage.findOne({stage_name:e.stage_name});
+                    
+                    //해당 유저가 기록된 index 구하기
+                    normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
+                    hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
+                    
+                    stage.Normal.splice(normal_index,1);
+                    stage.Hard.splice(hard_index,1);
+                    stage.save({new:true});
+
+                }else{
+                    console.log("바흐 시메이저입니다.")
+                }
+            })
+            user_stage.stage.splice(1,user_stage.stage.length);
+            user_stage.save({new:true});
+
+
+            res.status(200).send(user_stage.stage);
+        }catch(err){
+            console.log(err);
+            res.status(200).send(err);
+        }
+    }else{
+        res.status(500).json({ "message": "Token error" });
+    }
+
+}
+
+exports.test3 = async (req, res, next) => {
+    const {email,token} = req.body; 
+    var verify_result = await verify(token,email)
+    if(verify_result.verified){
+        try{
+            // let all_leaderboard = await get_all_leaderboard(email);
+
+            res.status(200).json(await get_all_leaderboard(email));
+        }catch(err){
+            console.log(err);
+            res.status(200).send(err);
+        }
+    }else{
+        res.status(500).json({ "message": "Token error" });
+    }
+
 }
