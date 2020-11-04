@@ -242,14 +242,32 @@ async function get_global_leaderboard(stage, email, type) {
         let my_total_Normal_ranking = sorted_Total_Normal_ranking.findIndex((s) => s.userid === userid) + 1
         let my_total_Hard_ranking = sorted_Total_Hard_ranking.findIndex((s) => s.userid === userid) + 1
 
+        //내 라이벌 등수 불러오기 (노말)
+        if (my_total_Normal_ranking === 0) { //내가 1등이면
+            var my_rival_Normal = null;
+        } else {//1등이 아니면
+            let my_rival_Normal_index = sorted_Total_Normal_ranking.findIndex((s) => s.userid === userid);
+            var my_rival_Normal = sorted_Total_Normal_ranking[my_rival_Normal_index - 1];
+        }
+
+        //내 라이벌 등수 불러오기 (하드)
+        if (my_total_Hard_ranking === 0) { //내가 1등이면
+            var my_rival_Hard = null;
+        } else {//1등이 아니면
+            let my_rival_Hard_index = sorted_Total_Hard_ranking.findIndex((s) => s.userid === userid);
+            var my_rival_Hard = sorted_Total_Hard_ranking[my_rival_Hard_index - 1];
+
+        }
+
+
 
 
         jsonObj.total_Normal_leaderboard = sliced_total_Normal_array;
         jsonObj.total_Normal_ranking = my_total_Normal_ranking;
-        jsonObj.total_Normal_rival = sorted_Total_Normal_ranking[my_total_Normal_ranking - 2];
+        jsonObj.total_Normal_rival = my_rival_Normal;
         jsonObj.total_Hard_leaderboard = sliced_total_Hard_array;
         jsonObj.total_Hard_ranking = my_total_Hard_ranking;
-        jsonObj.total_Hard_rival = sorted_Total_Hard_ranking[my_total_Hard_ranking - 2];
+        jsonObj.total_Hard_rival = my_rival_Hard;
 
 
         return jsonObj;
@@ -344,12 +362,31 @@ async function get_country_leaderboard(stage, email, country, type) {
         let my_country_Hard_ranking = Hard_country_filter.findIndex((s) => s.userid === userid) + 1
 
 
+        //내 라이벌 등수 불러오기 (노말)
+        if (my_country_Normal_ranking === 0) { //내가 1등이면
+            var my_rival_Normal = null;
+        } else {//1등이 아니면
+            let my_rival_Normal_index = Normal_country_filter.findIndex((s) => s.userid === userid);
+            var my_rival_Normal = Normal_country_filter[my_rival_Normal_index - 1];
+        }
+
+        //내 라이벌 등수 불러오기 (하드)
+        if (my_country_Hard_ranking === 0) { //내가 1등이면
+            var my_rival_Hard = null;
+        } else {//1등이 아니면
+            let my_rival_Hard_index = Hard_country_filter.findIndex((s) => s.userid === userid);
+            var my_rival_Hard = Hard_country_filter[my_rival_Hard_index - 1];
+
+        }       
+
+
+
         jsonObj.country_Normal_leaderboard = sliced_country_Normal_array;
         jsonObj.country_Normal_ranking = my_country_Normal_ranking;
-        jsonObj.country_Normal_rival = Normal_country_filter[my_country_Normal_ranking - 2];
+        jsonObj.country_Normal_rival = my_rival_Normal;
         jsonObj.country_Hard_leaderboard = sliced_country_Hard_array;
         jsonObj.country_Hard_ranking = my_country_Hard_ranking;
-        jsonObj.country_Hard_rival = Hard_country_filter[my_country_Hard_ranking - 2];
+        jsonObj.country_Hard_rival = my_rival_Hard;
 
         return jsonObj;
     }

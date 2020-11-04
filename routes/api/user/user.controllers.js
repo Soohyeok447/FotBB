@@ -9,7 +9,7 @@ var Banned = require("../../../models/banned");
 
 
 //middleware
-var {get_userid,get_now,get_country_leaderboard,get_global_leaderboard,get_all_leaderboard} = require("../middleware/function");
+var {get_userid,get_now,get_country_leaderboard,get_global_leaderboard,get_all_leaderboard,get_stage_info} = require("../middleware/function");
 
 //닉네임 필터링용 문자열
 const fs = require('fs');
@@ -635,6 +635,8 @@ exports.stage = async (req, res, next) => {
                     stageObj.country_Normal = await get_country_leaderboard(stage,email,user.country,"Normal");
                     stageObj.country_Hard = await get_country_leaderboard(stage,email,user.country,"Hard");
 
+                    stageObj.stage_info = get_stage_info(stage);
+
                     res.status(200).json({message:`${stage_name} 언락완료.`,crystal:userResult.crystal,status:'success',user_stage:usResult,leaderboard:stageObj});
                     logger.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
                     payment.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
@@ -838,7 +840,7 @@ exports.test = async (req, res, next) => {
         try{
             let user = await User.findOne({email:email});
             let user_stage = await User_stage.findOne({userid:user.googleid});
-            console.log(user_stage.stage,"\n\n");
+
             user_stage.stage.forEach(async e=>{
                 
                 if(e.stage_name !== '바흐시메이저'){
@@ -853,14 +855,14 @@ exports.test = async (req, res, next) => {
                     
                     stage.Normal.splice(normal_index,1);
                     stage.Hard.splice(hard_index,1);
-                    stage.save({new:true});
+                    await stage.save({new:true});
 
                 }else{
                     console.log("바흐 시메이저입니다.")
                 }
             })
             user_stage.stage.splice(1,user_stage.stage.length);
-            user_stage.save({new:true});
+            await user_stage.save({new:true});
 
 
             res.status(200).send(user_stage.stage);
