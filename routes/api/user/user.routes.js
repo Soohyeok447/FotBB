@@ -36,6 +36,7 @@ router.post("/report", userController.report);
 //유저 닉네임 변경
 router.post("/change", userController.id_change);
 
+
 //테스트
 router.post("/test", userController.test);
 router.post("/test2", userController.test2);

@@ -10,7 +10,7 @@ var helmet = require('helmet')
 //API
 var User_router = require('./routes/api/user/user.routes');
 var Version_router = require('./routes/api/version');
-var Clear_router = require('./routes/api/clear/clear.routes');
+var Result_router = require('./routes/api/result/result.routes');
 var Fail_router = require("./routes/api/fail/fail.routes");
 var Stage_router = require("./routes/api/stages/stages.routes");
 var Playing_router = require("./routes/api/playing/playing.routes");
@@ -69,7 +69,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //라우팅
 app.use('/api/version',Version_router);
 app.use('/api/user', User_router);
-app.use('/api/clear',Clear_router);
+app.use('/api/result',Result_router);
 app.use('/api/fail',Fail_router);
 app.use('/api/stages',Stage_router);
 app.use('/api/playing',Playing_router);

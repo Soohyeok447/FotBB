@@ -587,7 +587,7 @@ exports.stage = async (req, res, next) => {
                     res.status(200).json({status:'fail',message:"이미 보유중입니다."});
                 }else{
                     //stage 모델 배열에 유저추가
-                    await Stage.findOneAndUpdate(
+                    let stage = await Stage.findOneAndUpdate(
                         {stage_name:stage_name},
                         {
                             $addToSet: {
@@ -625,8 +625,17 @@ exports.stage = async (req, res, next) => {
                         {email:email},
                         {$inc:{crystal: -reduce_crystal},},
                         {new:true,upsert:true},
-                    ).setOptions({ runValidators: true });           
-                    res.status(200).json({crystal:userResult.crystal,status:'success',message:`${stage_name} 언락완료.`,user_stage:usResult});
+                    ).setOptions({ runValidators: true });    
+                    
+                        //언락 후 해당 스테이지 리더보드 동기화
+                    let stageObj ={};
+                    stageObj.global_Normal = await get_global_leaderboard(stage,email,"Normal");
+                    stageObj.global_Hard = await get_global_leaderboard(stage,email,"Hard");
+
+                    stageObj.country_Normal = await get_country_leaderboard(stage,email,user.country,"Normal");
+                    stageObj.country_Hard = await get_country_leaderboard(stage,email,user.country,"Hard");
+
+                    res.status(200).json({message:`${stage_name} 언락완료.`,crystal:userResult.crystal,status:'success',user_stage:usResult,leaderboard:stageObj});
                     logger.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
                     payment.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
                 } 

@@ -3,8 +3,8 @@ var express = require("express");
 
 const router = express.Router();
 
-var clearController = require("./clear.controllers");
+var resultController = require("./result.controllers");
 
 //클리어 시
-router.post("/", clearController.clear);
+router.post("/", resultController.result);
 module.exports = router;
