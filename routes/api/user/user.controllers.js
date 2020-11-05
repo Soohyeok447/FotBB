@@ -924,9 +924,43 @@ exports.test3 = async (req, res, next) => {
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try{
-            // let all_leaderboard = await get_all_leaderboard(email);
+            let jsonObj = {};
+            let resultObj ={};
+            console.log("함수 실행")
+            //유저가 보유중인 스테이지의 목록을 얻는다.
+            let userid = await get_userid(email);
+            let user_stage = await User_stage.findOne({ userid: userid });
+            // 스테이지마다 돌면서 글로벌 리더보드와 정보를 뽑는다.
 
-            res.status(200).json(await get_all_leaderboard(email));
+            // user_stage.stage.forEach(async s => { //s.stage_name이 유저가 보유중인 스테이지 명
+            //     let stage = await Stage.findOne({stage_name:s.stage_name});
+            //     jsonObj[s.stage_name+"_stage_info"] = await return_stage_info(stage);
+            //     jsonObj[s.stage_name+"_global_Normal"] = await return_global_Normal(stage,email);
+            //     jsonObj[s.stage_name+"_global_Hard"] = await return_global_Normal(stage, email);
+            //     //console.log(jsonObj);
+            // })
+            // for(i=0;i<user_stage.stage.length;i++){
+            //     let stage = await Stage.findOne({stage_name:user_stage.stage[i].stage_name});
+            //     jsonObj[user_stage.stage[i].stage_name] = '';
+            // }
+            
+            for(i=0;i<user_stage.stage.length;i++){
+                let stage = await Stage.findOne({stage_name:user_stage.stage[i].stage_name});
+                //checked_jsonObj = jsonObj[user_stage.stage[i].stage_name];
+                var stage_name = user_stage.stage[i].stage_name;
+
+                jsonObj[user_stage.stage[i].stage_name+"_stage_info"] = await get_stage_info(stage);
+                jsonObj[user_stage.stage[i].stage_name+"_global_Normal"] = await get_global_leaderboard(stage,email,"Normal");
+                jsonObj[user_stage.stage[i].stage_name+"_global_Hard"] = await get_global_leaderboard(stage,email,"Hard")
+            }
+
+            if(i===user_stage.stage.length){
+                console.log("다끝나고나서",jsonObj);
+                res.status(200).json(jsonObj);
+            }else{
+                res.status(200).json({tlqkf:"?"});
+            }
+            
         }catch(err){
             console.log(err);
             res.status(200).send(err);
@@ -934,5 +968,20 @@ exports.test3 = async (req, res, next) => {
     }else{
         res.status(500).json({ "message": "Token error" });
     }
+
+
+    async function add_obj(user_stage,jsonObj,email,stage_name){
+        const obj ={};
+        //유저가 보유중인 스테이지를 참조하여 스테이지 객체를 얻는다.
+        let stage = await Stage.findOne({stage_name:user_stage.stage[i].stage_name});
+        
+        jsonObj["stage_info"] = await get_stage_info(stage);
+        jsonObj["global_Normal"] = await get_global_leaderboard(stage,email,"Normal");
+        jsonObj["global_Hard"] = await get_global_leaderboard(stage,email,"Hard");
+        
+        obj[stage_name]=jsonObj;
+        //console.log(obj);
+        return obj;
+    };
 
 }

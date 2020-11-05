@@ -104,18 +104,18 @@ function get_now() {
     리더보드 관련
 */
 ////////////////////////////////////////////
-function calculate_leaderboard(array, type) {
+function calculate_leaderboard(stage, type) {
     let no_0_array;
 
     //클리어 타임이 0이 아닌 랭킹들 필터링   
     switch (type) {
         case 'Normal':
             //console.log("노말입니다잉")
-            no_0_array = array.Normal.filter(it => it.cleartime > 0);
+            no_0_array = stage.Normal.filter(it => it.cleartime > 0);
             break;
         case 'Hard':
             //console.log("하드입니다잉")
-            no_0_array = array.Hard.filter(it => it.cleartime > 0);
+            no_0_array = stage.Hard.filter(it => it.cleartime > 0);
             break;
         default:
             //console.log("그럴리는 없겠지만 잘못된 타입이 들어왔습니다.")
@@ -396,7 +396,7 @@ async function get_country_leaderboard(stage, email, country, type) {
 
 }
 
-function get_stage_info(stage) {
+async function get_stage_info(stage) {
     const jsonObj = {};
     jsonObj.playcount = stage.playcount;
     jsonObj.total_death = stage.total_death;
@@ -408,66 +408,48 @@ function get_stage_info(stage) {
 
 async function get_all_leaderboard(email) {
     let jsonObj = {};
-    // let language = [
-    //     Arabic,
-    //     Basque,
-    //     Belarusian,
-    //     Bulgarian,
-    //     Catalan,
-    //     Chinese,
-    //     Czech,
-    //     Danish,
-    //     Dutch,
-    //     English ,
-    //     Estonian ,
-    //     Faroese ,
-    //     Finnish ,
-    //     French ,
-    //     German ,
-    //     Greek ,
-    //     Hebrew ,
-    //     Hungarian ,
-    //     Hugarian ,
-    //     Icelandic ,
-    //     Indonesian ,
-    //     Italian ,
-    //     Japanese ,
-    //     Korean ,
-    //     Latvian ,
-    //     Lithuanian ,
-    //     Norwegian ,
-    //     Polish ,
-    //     Portuguese ,
-    //     Romanian ,
-    //     Russian ,
-    //     SerboCroatian ,
-    //     Slovak ,
-    //     Slovenian ,
-    //     Spanish ,
-    //     Swedish ,
-    //     Thai ,
-    //     Turkish ,
-    //     Ukrainian ,
-    //     Vietnamese ,
-    //     Unknown ,
-    // ]
+
+    let result = {};
+    console.log("함수 실행")
+    //유저가 보유중인 스테이지의 목록을 얻는다.
     let userid = await get_userid(email);
     let user_stage = await User_stage.findOne({ userid: userid });
+    // 스테이지마다 돌면서 글로벌 리더보드와 정보를 뽑는다.
 
-
-    user_stage.stage.forEach(async s => {
-        let stage_name = s.stage_name;
-        jsonObj = await get_global_leaderboard(stage_name, email, "Normal");
-        jsonObj = await get_global_leaderboard(stage_name, email, "Hard");
-        console.log(jsonObj);
-        // language.forEach(async s =>{
-        //     jsonObj = get_country_leaderboard(stage_name,email,s,Normal);
-        //     jsonObj = get_country_leaderboard(stage_name,email,s,Hard);
-        // })
+    user_stage.stage.forEach( s => { //s.stage_name이 유저가 보유중인 스테이지 명
+        result[s.stage_name] = add_obj(jsonObj,s,email);
     })
-    return jsonObj;
+    
+    return result;
 }
 
+async function add_obj(jsonObj,s,email){
+    const obj ={};
+    //유저가 보유중인 스테이지를 참조하여 스테이지 객체를 얻는다.
+    console.log(`forEach문 도는중 현재 ${s.stage_name}`);
+    let stage = await Stage.findOne({stage_name:s.stage_name});
+    
+    jsonObj["_stage_info"] = return_stage_info(stage);
+    jsonObj["_global_Normal"] = return_global_Normal(stage,email);
+    jsonObj["_global_Hard"] = return_global_Normal(stage, email);
+    
+    obj[s.stage_name]=jsonObj;
+    console.log(obj);
+    return obj;
+};
+
+async function return_stage_info(stage){
+    let result = await get_stage_info(stage);
+    return result;
+}
+async function return_global_Normal(stage,email){
+    let result = await get_global_leaderboard(stage,email,"Normal");
+    return result;
+}
+async function return_stage_info(stage,email){
+    let result = await get_global_leaderboard(stage,email,"Hard");
+    return result;
+}
 
 
 
