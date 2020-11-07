@@ -15,6 +15,10 @@ const Stage = new Schema({
     Normal: [new Schema({
         userid: String,
         cleartime: Number,
+        ranking:{
+            type:Number,
+            default: '',
+        },
         death: Number,
         country: String,
         renewed_at:String,
@@ -23,6 +27,10 @@ const Stage = new Schema({
     Hard: [new Schema({
         userid: String,
         cleartime: Number,
+        ranking:{
+            type:Number,
+            default: '',
+        },
         death: Number,
         country: String,
         renewed_at:String,

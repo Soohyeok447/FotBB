@@ -200,7 +200,7 @@ exports.result = async (req, res, next) => {
                         let user_stage = await User_stage.findOne({ userid: userid });
                         let has_stage = (user_stage.stage.filter(s => s.stage_name === nextstage));
                         if (has_stage.length === 0 && user_stage.userid) {  //user_stage 모델에서 해당 스테이지를 찾지 못했을 때
-                            console.log("클리어한 적이 없는 스테이지 입니다.");
+                            console.log("없는 스테이지 입니다.");
                             //user_stage 모델 배열에 스테이지 추가
                             await User_stage.findOneAndUpdate(
                                 { userid: userid },
@@ -243,10 +243,15 @@ exports.result = async (req, res, next) => {
                                 }, { new: true }).setOptions({ runValidators: true });
                             
                             
-                            var nextstageObj ={};
-                            nextstageObj.nextstage_global_leaderboard = await get_global_leaderboard(next_stage,email);
-                            nextstageObj.nextstage_country_leaderboard = await get_country_leaderboard(next_stage,email,country);
-                            nextstageObj.nextstage_info = await get_stage_info(next_stage);
+                               //언락 후 해당 스테이지 리더보드 동기화
+                                var stageObj ={};
+                                stageObj.global_Normal = await get_global_leaderboard(next_stage,email,"Normal");
+                                stageObj.global_Hard = await get_global_leaderboard(next_stage,email,"Hard");
+
+                                stageObj.country_Normal = await get_country_leaderboard(next_stage,email,user.country,"Normal");
+                                stageObj.country_Hard = await get_country_leaderboard(next_stage,email,user.country,"Hard");
+
+                                stageObj.stage_info = await get_stage_info(next_stage);
                         } else {
                             console.log("있는 스테이지 거나 보유중인 스테이지가 아닙니다.");
                         }
@@ -304,7 +309,7 @@ exports.result = async (req, res, next) => {
                                 //스테이지 정보 불러오기
                                 let stage_info = await get_stage_info(stage);
 
-                                await res.status(200).json({ "status": "clear_renewal", "stage_info": stage_info, "global_leaderboard": global_leaderboard, "country_leaderboard": country_leaderboard , "nextstage_leaderboard":nextstageObj});
+                                await res.status(200).json({ "status": "clear_renewal", "stage_info": stage_info, "global_leaderboard": global_leaderboard, "country_leaderboard": country_leaderboard , "nextstage_leaderboard":stageObj});
 
                                 logger.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${global_leaderboard.total_Normal_ranking}  기록  : ${cleartime}`);
                                 play.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 : ${global_leaderboard.total_Normal_ranking}  기록  : ${cleartime}`);
@@ -368,7 +373,7 @@ exports.result = async (req, res, next) => {
                                         console.log("1등입니다.")
                                         res.status(200).json({ "ranking": ranking, "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     } else { //1등이 아니면 바로 윗 랭크 기록 반환
-                                        res.status(200).json({ "ranking": ranking, "previous_cleartime": previous_cleartime, "total_Normal_rival": compare_with_me, "stage_info": stage_info, status: 'clear' });
+                                        res.status(200).json({ "ranking": ranking, "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     }
                                     logger.info(`${userid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
                                     play.info(`${userid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
@@ -428,7 +433,7 @@ exports.result = async (req, res, next) => {
 
                                 logger.info(`${userid} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${global_leaderboard.total_hard_ranking}  기록  : ${cleartime}`);
                                 play.info(`${userid} 가 하드 ${stage_name} 첫 클리어.   랭킹 : ${global_leaderboard.total_hard_ranking}  기록  : ${cleartime}`);
-                                res.status(200).json({ "status": "clear_renewal", "stage_info": stage_info, "global_leaderboard": global_leaderboard, "country_leaderboard": country_leaderboard ,"nextstage_leaderboard":nextstageObj });
+                                res.status(200).json({ "status": "clear_renewal", "stage_info": stage_info, "global_leaderboard": global_leaderboard, "country_leaderboard": country_leaderboard ,"nextstage_leaderboard":stageObj });
                             } else { //첫 플레이가 아닐경우(기록 존재)
                                 console.log("첫플레이가 아닙니다.");
                                 //이제 기록 갱신과 갱신이 아닌경우 처리
@@ -488,7 +493,7 @@ exports.result = async (req, res, next) => {
                                         console.log("1등입니다.")
                                         res.status(200).json({ "ranking": ranking, "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     } else { //1등이 아니면 바로 윗 랭크 기록 반환
-                                        res.status(200).json({ "ranking": ranking, "previous_cleartime": previous_cleartime, "total_Hard_rival": compare_with_me, "stage_info": stage_info, status: 'clear' });
+                                        res.status(200).json({ "ranking": ranking, "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     }
 
                                     logger.info(`${userid} 가 하드 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);

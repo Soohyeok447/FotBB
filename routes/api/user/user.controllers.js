@@ -30,6 +30,7 @@ moment.tz.setDefault("Asia/Seoul");
 
 require('dotenv').config();
 const {OAuth2Client} = require('google-auth-library');
+const { resolve } = require('path');
 const client = new OAuth2Client(process.env.CLIENT_ID);
 
 
@@ -635,7 +636,7 @@ exports.stage = async (req, res, next) => {
                     stageObj.country_Normal = await get_country_leaderboard(stage,email,user.country,"Normal");
                     stageObj.country_Hard = await get_country_leaderboard(stage,email,user.country,"Hard");
 
-                    stageObj.stage_info = get_stage_info(stage);
+                    stageObj.stage_info = await get_stage_info(stage);
 
                     res.status(200).json({message:`${stage_name} 언락완료.`,crystal:userResult.crystal,status:'success',user_stage:usResult,leaderboard:stageObj});
                     logger.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
@@ -643,9 +644,10 @@ exports.stage = async (req, res, next) => {
                 } 
             }      
         }catch(err){
+            let userid = await get_userid(email);
             res.status(500).json({ error: "database failure" });
-            logger.error(`스테이지 구매 에러: ${email} : ${user.googleid}[${err}]`);
-            payment.error(`스테이지 구매 에러: ${email} : ${user.googleid}[${err}]`);
+            logger.error(`스테이지 구매 에러: ${email} : ${userid}[${err}]`);
+            payment.error(`스테이지 구매 에러: ${email} : ${userid}[${err}]`);
             upload(email,'스테이지 구매 에러',err);
             next(err);
         }
@@ -840,14 +842,15 @@ exports.test = async (req, res, next) => {
         try{
             let user = await User.findOne({email:email});
             let user_stage = await User_stage.findOne({userid:user.googleid});
+            let all_stage = await Stage.find({});
 
-            user_stage.stage.forEach(async e=>{
+            all_stage.forEach(async e=>{
                 
                 if(e.stage_name !== '바흐시메이저'){
                     console.log("진입");
                     
 
-                    let stage = await Stage.findOne({stage_name:e.stage_name});
+                    var stage = await Stage.findOne({stage_name:e.stage_name});
                     
                     //해당 유저가 기록된 index 구하기
                     normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
@@ -855,13 +858,16 @@ exports.test = async (req, res, next) => {
                     
                     stage.Normal.splice(normal_index,1);
                     stage.Hard.splice(hard_index,1);
+                    
                     await stage.save({new:true});
+                    console.log(stage);
 
                 }else{
                     console.log("바흐 시메이저입니다.")
                 }
             })
             user_stage.stage.splice(1,user_stage.stage.length);
+            
             await user_stage.save({new:true});
 
 
@@ -924,43 +930,34 @@ exports.test3 = async (req, res, next) => {
     var verify_result = await verify(token,email)
     if(verify_result.verified){
         try{
-            let jsonObj = {};
-            let resultObj ={};
+            let resultarr =[[]];
             console.log("함수 실행")
             //유저가 보유중인 스테이지의 목록을 얻는다.
             let userid = await get_userid(email);
             let user_stage = await User_stage.findOne({ userid: userid });
             // 스테이지마다 돌면서 글로벌 리더보드와 정보를 뽑는다.
 
-            // user_stage.stage.forEach(async s => { //s.stage_name이 유저가 보유중인 스테이지 명
-            //     let stage = await Stage.findOne({stage_name:s.stage_name});
-            //     jsonObj[s.stage_name+"_stage_info"] = await return_stage_info(stage);
-            //     jsonObj[s.stage_name+"_global_Normal"] = await return_global_Normal(stage,email);
-            //     jsonObj[s.stage_name+"_global_Hard"] = await return_global_Normal(stage, email);
-            //     //console.log(jsonObj);
-            // })
-            // for(i=0;i<user_stage.stage.length;i++){
-            //     let stage = await Stage.findOne({stage_name:user_stage.stage[i].stage_name});
-            //     jsonObj[user_stage.stage[i].stage_name] = '';
-            // }
-            
             for(i=0;i<user_stage.stage.length;i++){
+                
                 let stage = await Stage.findOne({stage_name:user_stage.stage[i].stage_name});
-                //checked_jsonObj = jsonObj[user_stage.stage[i].stage_name];
-                var stage_name = user_stage.stage[i].stage_name;
+                console.log(`지금 ${stage.stage_name} 저장 중`);
+                add_obj(stage.stage_name,email).then((Obj)=>{
+                    //console.log(Obj);
+                    // resultarr[i][0] = Obj.stage_info;
+                    // resultarr[i][1] = Obj.global_Normal;
+                    // resultarr[i][2] = Obj.global_Hard;
 
-                jsonObj[user_stage.stage[i].stage_name+"_stage_info"] = await get_stage_info(stage);
-                jsonObj[user_stage.stage[i].stage_name+"_global_Normal"] = await get_global_leaderboard(stage,email,"Normal");
-                jsonObj[user_stage.stage[i].stage_name+"_global_Hard"] = await get_global_leaderboard(stage,email,"Hard")
+                })
+                
+                
             }
+            console.log(resultarr);
 
             if(i===user_stage.stage.length){
-                console.log("다끝나고나서",jsonObj);
-                res.status(200).json(jsonObj);
+                res.status(200).json(resultarr);
             }else{
-                res.status(200).json({tlqkf:"?"});
+                res.status(200).json({tlqkf:"tlqkf"});
             }
-            
         }catch(err){
             console.log(err);
             res.status(200).send(err);
@@ -969,19 +966,18 @@ exports.test3 = async (req, res, next) => {
         res.status(500).json({ "message": "Token error" });
     }
 
-
-    async function add_obj(user_stage,jsonObj,email,stage_name){
-        const obj ={};
+    async function add_obj(stage_name,email){
+        const jsonObj ={};
         //유저가 보유중인 스테이지를 참조하여 스테이지 객체를 얻는다.
-        let stage = await Stage.findOne({stage_name:user_stage.stage[i].stage_name});
+        let stage = await Stage.findOne({stage_name:stage_name});
         
-        jsonObj["stage_info"] = await get_stage_info(stage);
-        jsonObj["global_Normal"] = await get_global_leaderboard(stage,email,"Normal");
-        jsonObj["global_Hard"] = await get_global_leaderboard(stage,email,"Hard");
-        
-        obj[stage_name]=jsonObj;
-        //console.log(obj);
-        return obj;
+        return new Promise(async (resolve,rejected)=>{
+            jsonObj["stage_info"] = await get_stage_info(stage);
+            jsonObj["global_Normal"] = await get_global_leaderboard(stage,email,"Normal");
+            jsonObj["global_Hard"] = await get_global_leaderboard(stage,email,"Hard");
+            console.log('프로미스내부',jsonObj);
+            resolve(jsonObj);
+        })
     };
-
+    
 }
