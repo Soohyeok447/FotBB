@@ -504,51 +504,51 @@ async function get_stage_info(stage) {
 	return jsonObj;
 }
 
-async function get_all_leaderboard(email) {
-	let jsonObj = {};
+// async function get_all_leaderboard(email) {
+// 	let jsonObj = {};
 
-	let result = {};
-	console.log("함수 실행");
-	//유저가 보유중인 스테이지의 목록을 얻는다.
-	let userid = await get_userid(email);
-	let user_stage = await User_stage.findOne({ userid: userid });
-	// 스테이지마다 돌면서 글로벌 리더보드와 정보를 뽑는다.
+// 	let result = {};
+// 	console.log("함수 실행");
+// 	//유저가 보유중인 스테이지의 목록을 얻는다.
+// 	let userid = await get_userid(email);
+// 	let user_stage = await User_stage.findOne({ userid: userid });
+// 	// 스테이지마다 돌면서 글로벌 리더보드와 정보를 뽑는다.
 
-	user_stage.stage.forEach((s) => {
-		//s.stage_name이 유저가 보유중인 스테이지 명
-		result[s.stage_name] = add_obj(jsonObj, s, email);
-	});
+// 	user_stage.stage.forEach((s) => {
+// 		//s.stage_name이 유저가 보유중인 스테이지 명
+// 		result[s.stage_name] = add_obj(jsonObj, s, email);
+// 	});
 
-	return result;
-}
+// 	return result;
+// }
 
-async function add_obj(jsonObj, s, email) {
-	const obj = {};
-	//유저가 보유중인 스테이지를 참조하여 스테이지 객체를 얻는다.
-	console.log(`forEach문 도는중 현재 ${s.stage_name}`);
-	let stage = await Stage.findOne({ stage_name: s.stage_name });
+// async function add_obj(jsonObj, s, email) {
+// 	const obj = {};
+// 	//유저가 보유중인 스테이지를 참조하여 스테이지 객체를 얻는다.
+// 	console.log(`forEach문 도는중 현재 ${s.stage_name}`);
+// 	let stage = await Stage.findOne({ stage_name: s.stage_name });
 
-	jsonObj["_stage_info"] = return_stage_info(stage);
-	jsonObj["_global_Normal"] = return_global_Normal(stage, email);
-	jsonObj["_global_Hard"] = return_global_Normal(stage, email);
+// 	jsonObj["_stage_info"] = return_stage_info(stage);
+// 	jsonObj["_global_Normal"] = return_global_Normal(stage, email);
+// 	jsonObj["_global_Hard"] = return_global_Normal(stage, email);
 
-	obj[s.stage_name] = jsonObj;
-	console.log(obj);
-	return obj;
-}
+// 	obj[s.stage_name] = jsonObj;
+// 	console.log(obj);
+// 	return obj;
+// }
 
-async function return_stage_info(stage) {
-	let result = await get_stage_info(stage);
-	return result;
-}
-async function return_global_Normal(stage, email) {
-	let result = await get_global_leaderboard(stage, email, "Normal");
-	return result;
-}
-async function return_stage_info(stage, email) {
-	let result = await get_global_leaderboard(stage, email, "Hard");
-	return result;
-}
+// async function return_stage_info(stage) {
+// 	let result = await get_stage_info(stage);
+// 	return result;
+// }
+// async function return_global_Normal(stage, email) {
+// 	let result = await get_global_leaderboard(stage, email, "Normal");
+// 	return result;
+// }
+// async function return_stage_info(stage, email) {
+// 	let result = await get_global_leaderboard(stage, email, "Hard");
+// 	return result;
+// }
 
 exports.get_now = get_now;
 exports.get_userid = get_userid;
@@ -558,4 +558,3 @@ exports.calculate_leaderboard = calculate_leaderboard;
 exports.get_global_leaderboard = get_global_leaderboard;
 exports.get_country_leaderboard = get_country_leaderboard;
 exports.get_stage_info = get_stage_info;
-exports.get_all_leaderboard = get_all_leaderboard;

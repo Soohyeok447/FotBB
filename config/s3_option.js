@@ -52,7 +52,7 @@ async function get_userid(email){
 
 
 ////////////////////////////////// 함수 호출 시 upload 
-function upload(email,location,err){
+async function upload(email,location,err){
     console.log("upload 호출됨");
     timeformat = set_time();
 
@@ -61,7 +61,7 @@ function upload(email,location,err){
     }
 
     //id 값 find
-    let id = get_userid(email);
+    let id = await get_userid(email);
 
 
     //로거
