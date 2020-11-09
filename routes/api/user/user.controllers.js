@@ -65,21 +65,21 @@ async function verify(token, email) {
 
         //토큰 유효성 체크 통과
         if (check_validation && payload) {
-            console.log("aud일치 유효한 토큰입니다.")
+            //console.log("aud일치 유효한 토큰입니다.")
             TokenObj.payload = payload;
             TokenObj.verified = true;
 
             return TokenObj;
 
         } else if (check_validation) {
-            console.log("payload가 없습니다.")
+            //console.log("payload가 없습니다.")
             TokenObj.verified = false;
             TokenObj.error = 'no payload';
             logger.error(`no payload error`);
             upload(email, 'user | token', `accessToken error`);
             return TokenObj;
         } else {
-            console.log("페이로드 티켓없음")
+            //console.log("페이로드 티켓없음")
             TokenObj.verified = false;
             TokenObj.error = 'no ticket';
             logger.error(`no ticket error`);
@@ -88,7 +88,7 @@ async function verify(token, email) {
         }
 
     } catch (err) {
-        console.log("err났습니다.")
+        //console.log("err났습니다.")
         let check_expiredtoken = /Token used too late/;
 
         let error = err.toString();
@@ -307,40 +307,34 @@ async function get_all_leaderboard(email){
     let user_stage = await User_stage.findOne({ userid: userid });
     // 스테이지마다 돌면서 글로벌 리더보드와 정보를 뽑는다.
 
-    console.log("===============함수 실행===============")
-    console.log(`user_stage.stage.length(유저의 스테이지 개수) = ${user_stage.stage.length}\n\n\n`);
-    for (; j < user_stage.stage.length;) {
 
+    // console.log("===============함수 실행===============")
+    // console.log(`user_stage.stage.length(유저의 스테이지 개수) = ${user_stage.stage.length}\n\n\n`);
+    for (j in user_stage.stage) {
         let stage = await Stage.findOne({ stage_name: user_stage.stage[j].stage_name });
 
-        await add_obj(stage, email).then((Obj) => {
-            //console.log(`\n\n\n현재 j=${j} stage.stage_name = ${stage.stage_name} 저장 중\n\n\n`);
+        await add_obj(stage, email,userid).then((Obj) => {
             resultArr.push(Obj);
-            //stage_list.push(user_stage.stage[j].stage_name);
-            j++;
         })
     }
 
-    if (j === user_stage.stage.length) {
-        // totalObj.leaderboard = resultObj;
-        // totalObj.stage_list = stage_list;
-        return resultArr;
-    } else {
-        return "뭐고이거"
-    }
+    // if (j === user_stage.stage.length) {
+    //     return resultArr;
+    // } else {
+    //     return "뭐고이거"
+    // }
+    return resultArr;
 
 
 
-
-    function add_obj(stage, email) {
+    function add_obj(stage, email,userid) {
         const jsonObj = {};
         //유저가 보유중인 스테이지를 참조하여 스테이지 객체를 얻는다.
 
         return new Promise(async (resolve, rejected) => {
             jsonObj["stage_info"] = await get_stage_info(stage);
-            jsonObj["global_Normal"] = await get_global_leaderboard(stage, email, "Normal");
-            jsonObj["global_Hard"] = await get_global_leaderboard(stage, email, "Hard");
-            //console.log('프로미스내부',jsonObj);
+            jsonObj["global_Normal"] = await get_global_leaderboard(stage, email, "Normal",userid);
+            jsonObj["global_Hard"] = await get_global_leaderboard(stage, email, "Hard",userid);
             resolve(jsonObj);
         })
     };
@@ -646,17 +640,18 @@ exports.stage = async (req, res, next) => {
                     ).setOptions({ runValidators: true });
 
                     //언락 후 해당 스테이지 리더보드 동기화
+                    let stageArr = [];
                     let stageObj = {};
                     stageObj.stage_info = await get_stage_info(stage);
 
-                    stageObj.global_Normal = await get_global_leaderboard(stage, email, "Normal");
-                    stageObj.global_Hard = await get_global_leaderboard(stage, email, "Hard");
+                    stageObj.global_Normal = await get_global_leaderboard(stage, email, "Normal",user.googleid);
+                    stageObj.global_Hard = await get_global_leaderboard(stage, email, "Hard",user.googleid);
 
-                    stageObj.country_Normal = await get_country_leaderboard(stage, email, user.country, "Normal");
-                    stageObj.country_Hard = await get_country_leaderboard(stage, email, user.country, "Hard");
+                    stageObj.country_Normal = await get_country_leaderboard(stage, email, user.country, "Normal",user.googleid);
+                    stageObj.country_Hard = await get_country_leaderboard(stage, email, user.country, "Hard",user.googleid);
+                    stageArr.push(stageObj);
 
-
-                    res.status(200).json({ message: `${stage_name} 언락완료.`, crystal: userResult.crystal, status: 'success', user_stage: usResult, leaderboard: stageObj });
+                    res.status(200).json({ message: `${stage_name} 언락완료.`, crystal: userResult.crystal, status: 'success', user_stage: usResult, leaderboard: stageArr });
                     logger.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
                     payment.info(`${email} : ${user.googleid} 가 스테이지 ${stage_name}을(를) 언락완료.`);
                 }
@@ -948,8 +943,16 @@ exports.test3 = async (req, res, next) => {
     var verify_result = await verify(token, email)
     if (verify_result.verified) {
         try {
-            let result = await get_all_leaderboard(email);
-            res.status(200).json(result);
+            //유저가 보유중인 스테이지의 목록을 얻는다.
+            let userid = await get_userid(email);
+            let user_stage = await User_stage.findOne({ userid: userid });
+            let testArr;
+
+            // 스테이지마다 돌면서 글로벌 리더보드와 정보를 뽑는다.
+
+            let stage_list = await Stage.find({});
+            testArr = stage_list.map(x=> x.stage_name);
+            res.status(200).json(testArr);
         } catch (err) {
             console.log(err);
             res.status(200).send(err);

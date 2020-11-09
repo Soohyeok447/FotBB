@@ -47,9 +47,13 @@ if(process.env.NODE_ENV === 'production'){ //배포환경
   
 
 }
+app.use(express.static(path.join(__dirname, 'public')));
 //helmet
 app.use(helmet());
-
+app.use(function(req, res, next) {
+  res.setHeader("Content-Security-Policy", "script-src 'self' https://apis.google.com 'unsafe-inline'"); //구글 API 이용하기 위한 헤더
+  return next();
+});
 //내장된 body-parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -60,7 +64,6 @@ app.use(bodyParser.text());
 //cookie-parser
 app.use(cookieParser());
 //path
-app.use(express.static(path.join(__dirname, 'public')));
 
 
 // app.get('/admin',function(req,res){

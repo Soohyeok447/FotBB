@@ -186,11 +186,12 @@ exports.leaderboard = async (req, res, next) => {
                 user.stage_checked.push(stage_name_country);
                 await user.save({ new: true });
 
+                let jsonArr = [];
                 jsonObj.stage_info = await get_stage_info(stage);
-                jsonObj.country_Normal = await get_country_leaderboard(stage, email, country, "Normal");
-                jsonObj.country_Hard = await get_country_leaderboard(stage, email, country, "Hard");
-
-                res.status(200).json({ status: 'success', leaderboard: jsonObj });
+                jsonObj.country_Normal = await get_country_leaderboard(stage, email, country, "Normal",user.googleid);
+                jsonObj.country_Hard = await get_country_leaderboard(stage, email, country, "Hard",user.googleid);
+                jsonArr.push(jsonObj);
+                res.status(200).json({ status: 'success', leaderboard: jsonArr });
                 //logger.info(`${userid} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
             } else { //스테이지를 불러온적이 있을 때,
                 res.status(200).json({ message: "이미 불러온 적 있습니다.", status: 'fail' })

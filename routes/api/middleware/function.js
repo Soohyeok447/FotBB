@@ -126,40 +126,11 @@ function calculate_leaderboard(stage, type) {
 	return sorted_ranking;
 }
 
-async function check_record(stage, email, type) {
-	let userid = await get_userid(email);
-	switch (type) {
-		case "Normal": {
-			let user_index = stage.Normal.findIndex((s) => s.userid === userid) + 1;
-			if (stage.Normal[user_index].cleartime === 0) {
-				//플레이기록이 있으면
-				console.log("플레이 기록이 없습니다.");
-				return false;
-			} else {
-				//플레이 기록이 없으면
-				console.log("플레이 기록이 있습니다.");
-				return true;
-			}
-		}
-		case "Hard": {
-			let user_index = stage.Hard.findIndex((s) => s.userid === userid) + 1;
-			if (stage.Hard[user_index].cleartime === 0) {
-				//플레이기록이 있으면
-				return false;
-			} else {
-				//플레이 기록이 없으면
-				return true;
-			}
-		}
-		default:
-			return false;
-	}
-}
 
-async function get_global_leaderboard(stage, email, type) {
+async function get_global_leaderboard(stage, email, type,userid) {
 	const jsonObj = {};
 	let leaderboard_arr = [];
-	var userid = await get_userid(email);
+	//var userid = await get_userid(email);
 
 	if (type) {
 		//clear API에서 사용
@@ -210,7 +181,6 @@ async function get_global_leaderboard(stage, email, type) {
 				// jsonObj.my_ranking = my_total_Normal_ranking;
 				// jsonObj.rival = my_rival_Normal;
 				// console.log("51번째",leaderboard_arr[51]);
-				console.log(leaderboard_arr[50])
 				return leaderboard_arr;
 			}
 			case "Hard": {
@@ -259,7 +229,6 @@ async function get_global_leaderboard(stage, email, type) {
 				// jsonObj.my_ranking = my_total_Normal_ranking;
 				// jsonObj.rival = my_rival_Normal;
 				// console.log("51번째",leaderboard_arr[51]);
-				console.log(leaderboard_arr[50])
 				return leaderboard_arr;
 			}
 			default:
@@ -316,10 +285,10 @@ async function get_global_leaderboard(stage, email, type) {
 	}
 }
 
-async function get_country_leaderboard(stage, email, country, type) {
+async function get_country_leaderboard(stage, email, country, type,userid) {
 	const jsonObj = {};
 	let leaderboard_arr = [];
-	let userid = await get_userid(email);
+	//let userid = await get_userid(email);
 
 	if (type) {
 		//clear API에서 사용
@@ -375,7 +344,6 @@ async function get_country_leaderboard(stage, email, country, type) {
 				// jsonObj.my_ranking = my_total_Normal_ranking;
 				// jsonObj.rival = my_rival_Normal;
 				// console.log("51번째",leaderboard_arr[51]);
-				console.log(leaderboard_arr[50])
 				return leaderboard_arr;
 			}
 			case "Hard": {
@@ -430,7 +398,7 @@ async function get_country_leaderboard(stage, email, country, type) {
 				// jsonObj.my_ranking = my_total_Normal_ranking;
 				// jsonObj.rival = my_rival_Normal;
 				// console.log("51번째",leaderboard_arr[51]);
-				console.log(leaderboard_arr[50])
+				
 				return leaderboard_arr;
 			}
 		}
