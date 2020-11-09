@@ -884,7 +884,7 @@ exports.test = async (req, res, next) => {
             await user_stage.save({ new: true });
 
 
-            res.status(200).send(user_stage.stage);
+            res.status(200).send();
         } catch (err) {
             console.log(err);
             res.status(200).send(err);
