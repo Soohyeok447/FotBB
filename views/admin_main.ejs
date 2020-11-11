@@ -4,41 +4,46 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>왕벌의 비행 관리자</title>
-    <link
-			rel="stylesheet"
-			href="https://spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css"
-			rel="stylesheet"
-			type="text/css"
-		/>
-    <link rel="stylesheet" href="./../public/stylesheets/style.css" />
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
+		<link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/stylesheets/style_main.css" type="text/css"/>
+    <meta name = "google-signin-client_id"content = "12613827067-rmalng0o61d47jradh8d1vjsm6pk9l5c.apps.googleusercontent.com">
   </head>
   <body>
-    <!-- 필요한거 -->
-    <!-- 
-      로그인버튼,  어드민용 디비관리페이지 ㅡ> 최대한 안꾸미고 실용적이게
-      (로그인하려면 이메일,(토큰) 이 필요하고 어드민 설정을 해둬야 함) 그리고 세션유지를 위해 redis나 memcache적용ㅡ 유저정보(검색, 수정)
-      ㅡ 스테이지 관리(스테이지 추가 , 수정, 클리어율, 시도횟수, 랭킹)
-    ㅡ 밴유저목록(검색 , 밴, 밴해제)
-    ㅡ 이메일발송(상황에 따른 템플릿 존재)
-    ㅡ 필터링단어 관리(추가, 삭제) 오 이거 쫌 까다로워보이는데
-    ㅡ 신고많이당한 유저목록(강제닉변버튼, 신고횟수, 밴 버튼, 목록에서 삭제버튼 , 강제닉변횟수 )
-    로그도 볼 수 있게 하고 싶지만 s3에 접근해야 해서 사용량을 더는 늘릴 수 없을 것 같아 제외-->
     
-    <h1>왕벌의 비행 Administrator</h1>
-    <button class="logout">로그아웃</button>
-    <strong><%= nickname %>님 어서오세요</strong>
+    <h1>왕벌의 비행 관리자</h1>
+    <a href="/adminpage/" onclick="signOut();">로그아웃</a>
+    <strong><%= admin %>님 어서오세요</strong>
+    <strong id="now_email"><%= admin_email%></strong>
+    <div class="g-signin2" data-onsuccess="onSignIn"></div>
     <div id="menu">
-    <button id="user_management">유저 관리</button>
-    <button id="stage_management">스테이지 관리</button>
-    <button id="bannedUser_management">밴 유저 목록</button>
-    <button id="reported_management">신고 많이 당한 유저 목록</button>
-    <button id="sendEmail_management">이메일 발송</button>
-    <button id="filteringDB_management">필터링단어 관리</button>
-    <button id="serverLog_management">서버 로그(할지 안 할지 모름)</button>
+      <button id="user">유저 관리</button>
+      <button id="stage">스테이지 관리</button>
+      <button id="ban">밴 유저 목록</button>
+      <button id="report">신고 많이 당한 유저 목록</button>
+      <button id="sendemail">이메일 발송</button>
+      <button id="filteringDB">필터링단어 관리</button>
+      <button id="log">서버 로그(할지 안 할지 모름)</button>
     </div>
-
-
-
     
+    <script src="/js/admin_main.js"></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
   </body>
-</html>
+  </html>
+
+
+
+
+  
+  
+  
+  <!-- 필요한거 -->
+  <!-- 
+    로그인버튼,  어드민용 디비관리페이지 ㅡ> 최대한 안꾸미고 실용적이게
+    (로그인하려면 이메일,(토큰) 이 필요하고 어드민 설정을 해둬야 함) 그리고 세션유지를 위해 redis나 memcache적용ㅡ 유저정보(검색, 수정)
+    ㅡ 스테이지 관리(스테이지 추가 , 수정, 클리어율, 시도횟수, 랭킹)
+  ㅡ 밴유저목록(검색 , 밴, 밴해제)
+  ㅡ 이메일발송(상황에 따른 템플릿 존재)
+  ㅡ 필터링단어 관리(추가, 삭제) 오 이거 쫌 까다로워보이는데
+  ㅡ 신고많이당한 유저목록(강제닉변버튼, 신고횟수, 밴 버튼, 목록에서 삭제버튼 , 강제닉변횟수 )
+  로그도 볼 수 있게 하고 싶지만 s3에 접근해야 해서 사용량을 더는 늘릴 수 없을 것 같아 제외-->

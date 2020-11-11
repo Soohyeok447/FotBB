@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>왕벌의 비행 관리자</title>
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
+		<link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/stylesheets/style_public.css" type="text/css"/>
+    <meta name = "google-signin-client_id"content = "12613827067-rmalng0o61d47jradh8d1vjsm6pk9l5c.apps.googleusercontent.com">
+  </head>
+  <body>
+    <% include ./admin_main.ejs %>
+
+
+    <% for(stage of stages){ %>
+        <div id="stagebox">
+        <h3><%=stage.stage_name %></h3>
+        <strong><%=stage.composer %></strong>
+  
+        <div id="stage_margin">
+        <table id="stage-list">
+          <thead>
+            <tr id="stage_title">
+              <th>플레이횟수</th>
+              <th>토탈데스</th>
+              <th>토탈클리어</th>
+              <th>클리어율</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><%=stage.playcount%></td>
+              <td><%=stage.total_death%></td>
+              <td><%=stage.total_clear%></td>
+              <td><%=(stage.playcount/stage.total_clear).toFixed(2)*10 %> %</td>
+            </tr>
+            </tbody>
+        </table>
+      </div>
+      </div>
+      <% }%>
+    
+    
+    
+    <script src="/js/admin_stage.js"></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+  </body>
+  </html>

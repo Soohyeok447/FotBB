@@ -375,6 +375,7 @@ exports.user_login = async (req, res, next) => {
                         created_date: now,
                         latest_login: now,   //Date.now(),
                         country: country,
+                        customizing:"왕벌"
                         //crystal: crystal,
                         //...나머지는 default
                     });
@@ -873,7 +874,7 @@ exports.test = async (req, res, next) => {
                     stage.Hard.splice(hard_index, 1);
 
                     await stage.save({ new: true });
-                    console.log(stage);
+                    //console.log(stage);
 
                 } else {
                     console.log("바흐 시메이저입니다.")

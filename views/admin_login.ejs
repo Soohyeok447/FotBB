@@ -3,18 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>왕벌의 비행 관리자</title>
-    <!-- <link
-			rel="stylesheet"
-			href="https://spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css"
-			rel="stylesheet"
-			type="text/css"
-		/> -->
-    <!-- <link rel="stylesheet" href="./../public/stylesheets/style.css" /> -->
-    
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
+		<link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/stylesheets/style_login.css" type="text/css"/>
     <meta name = "google-signin-client_id"content = "12613827067-rmalng0o61d47jradh8d1vjsm6pk9l5c.apps.googleusercontent.com">
-    
   </head>
   <body>
     
@@ -30,10 +23,22 @@
     </form>
     
     <div class="g-signin2" data-onsuccess="onSignIn"></div>
+    <% if( error ==='forbidden'){ %>
+      <p>당신 누구야!</p>
     
-    <a href="#" onclick="signOut();">Sign out</a>
+    <% } %>
+    <% if( error ==='nouser'){ %>
+      <p>당신 누구야! 디비에 존재하지 않아</p>
+    
+    <% } %>
+    <% if( error ==='noadmin'){ %>
+      <p>당신 누구야! 어드민이 아니야</p>
+    
+    <% } %>
+    
+    
     <div id="hi"></div>
-    <script src="/js/admin.js"></script>
+    <script src="/js/admin_login.js"></script>
     <script src="https://apis.google.com/js/platform.js" async defer></script>
   </body>
   </html>

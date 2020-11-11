@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>왕벌의 비행 관리자</title>
+    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
+		<link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/stylesheets/style_public.css" type="text/css"/>
+    <meta name = "google-signin-client_id"content = "12613827067-rmalng0o61d47jradh8d1vjsm6pk9l5c.apps.googleusercontent.com">
+  </head>
+  <body>
+    <% include ./admin_main.ejs %>
+    
+    <input type="text" id="search_user" placeholder="이메일">
+    <button id="search_button">검색</button>
+    <table id="user-list">
+      <thead>
+        <tr>
+          <th>닉네임</th>
+          <th>이메일</th>
+          <th>신고횟수</th>
+          <th>강제닉변횟수</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for(user of reported){ %>
+        <tr>
+          <td><%=user.id%></td>
+          <td><%=user.email%></td>
+          <td><%=user.count%></td>
+          <td><%=user.changed_id_by_force%></td>
+          <td><button id="change_id">강제 닉변</button></td>
+          <td><button id="ban">밴</button></td>
+        </tr>
+        <% }%>
+        </tbody>
+    </table>
+    
+    
+    <script src="/js/admin_ban.js"></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+  </body>
+  </html>
