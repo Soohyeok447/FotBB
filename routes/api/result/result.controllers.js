@@ -191,15 +191,8 @@ exports.result = async (req, res, next) => {
                         console.log("정당한 기록입니다. 기록을 저장합니다.")
                         await delete_playing(email);
                         //유저 db 갱신
-                        let user = await User.findOneAndUpdate(
-                            { email: email },
-                            {
-                                $inc: {
-                                    crystal: get_crystal,
-                                },
-                            },
-                            { new: true }
-                        ).setOptions({ runValidators: true });
+                        let user = await User.findOne({ email: email });
+
 
                         //다음 스테이지 언락  (유니티에서 처리 가능해보임) 
                         //처리가 가능하다면 true false 여부만 판단해서 스테이지등록
@@ -276,9 +269,8 @@ exports.result = async (req, res, next) => {
                             console.log("Normal 진입");
                             let type = 'Normal'
                             //total_clear 갱신
-                            stage.total_clear++;
-                            
-
+                            await up_crystal(user,'Normal');
+                            await user.save({new:true});
                             //이전 클리어타임 확인용
                             let stage_select = stage.Normal.filter( //stage_name으로 stage 선택
                                 (s) => s.userid === userid
@@ -421,8 +413,10 @@ exports.result = async (req, res, next) => {
 
                             //total_clear 갱신
                             stage.total_clear++;
-                            //let user_stage = await User_stage.findOne({ userid: id }); //user_stage 에서 id로 찾기
 
+                            await up_crystal(user,'Hard');
+
+                            
                             //stage 모델에 Hard 클리어 타임 갱신
                             let stage_select = stage.Hard.filter( //stage_name으로 stage 선택
                                 (s) => s.userid === userid
@@ -648,6 +642,18 @@ exports.result = async (req, res, next) => {
         }catch(err){
             console.log(err);
             return err;
+        }
+    }
+
+
+
+    async function up_crystal(user,type){
+        if(type==='Normal'){
+            user.crystal += get_crystal; //유저 로얄크리스탈 증가
+            await user.save({new:true});
+        }else{
+            user.royal_crystal += get_crystal; //유저 로얄크리스탈 증가
+            await user.save({new:true});
         }
     }
 }

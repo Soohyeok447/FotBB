@@ -19,6 +19,12 @@ const User = new Schema({
         type:Boolean,
         default:false,
     },
+     //로얄 크리스탈
+    royal_crystal: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
     //크리스탈
     crystal: {
         type: Number,

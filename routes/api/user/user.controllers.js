@@ -500,19 +500,32 @@ exports.user_login = async (req, res, next) => {
 
 //크리스탈 처리 라우터 (크리스탈 획득)
 exports.crystal = async (req, res, next) => {
-    const { email, get_crystal, token } = req.body;
+    const { email,crystal_type ,get_crystal, token } = req.body;
 
     var verify_result = await verify(token, email)
     if (verify_result.verified) {
         try {
-            var result = await User.findOneAndUpdate(
-                { email: email },
-                { $inc: { crystal: get_crystal } },
-                { new: true }
-            ).setOptions({ runValidators: true });
-            res.status(200).json({ crystal: result.crystal });
-            logger.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
-            payment.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
+            if(crystal_type === 'normal'){ //일반 크리스탈이면
+                var result = await User.findOneAndUpdate(
+                    { email: email },
+                    { $inc: { crystal: get_crystal } },
+                    { new: true }
+                ).setOptions({ runValidators: true });
+                res.status(200).json({ crystal: result.crystal });
+                logger.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
+                payment.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
+            }else if(crystal_type ==='royal'){ //로얄 크리스탈이면
+                var result = await User.findOneAndUpdate(
+                    { email: email },
+                    { $inc: { royal_crystal: get_crystal } },
+                    { new: true }
+                ).setOptions({ runValidators: true });
+                res.status(200).json({ royal_crystal: result.royal_crystal });
+                logger.info(`${result.googleid} 가 로얄 크리스탈 ${get_crystal}개를 획득했습니다.`);
+                payment.info(`${result.googleid} 가 로얄 크리스탈 ${get_crystal}개를 획득했습니다.`);
+            }else{
+                res.status(200).json({ message:"잘못된 입력", status: 'fail' });
+            }
         } catch (err) {
             res.status(500).json({ error: "database failure" });
             logger.error(`크리스탈 획득 에러: ${result.googleid} [${err}]`);
@@ -528,7 +541,7 @@ exports.crystal = async (req, res, next) => {
 
 //커스터마이징 처리
 exports.customizing = async (req, res, next) => {
-    const { email, reduce_crystal, customizing, token } = req.body;
+    const { email, custom_type  ,reduce_crystal, customizing, token } = req.body;
 
     var verify_result = await verify(token, email)
     if (verify_result.verified) {
@@ -539,26 +552,48 @@ exports.customizing = async (req, res, next) => {
             let has_customizing = (user_cus.find(e => e === customizing));
             console.log(has_customizing);
             let holding_crystal = user.crystal;//현재 보유중인 크리스탈
+            let holding_royal_crystal = user.crystal;//현재 보유중인 로얄 크리스탈
             
             //해당 커스텀을 이미 보유중이면
             if (has_customizing || has_customizing===0 ) { //0은 false라서 따로 추가
                 res.status(200).json({ message: "이미 보유중인 커스텀입니다..", status: 'fail' });
                 //보유중이지 않은 커스텀이면
             } else {
-                if (holding_crystal < reduce_crystal) {
-                    res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
-                } else {
-                    var result = await User.findOneAndUpdate(
-                        { email: email },
-                        {
-                            $inc: { crystal: -reduce_crystal },
-                            $addToSet: { customizing: customizing }
-                        },
-                        { new: true, upsert: true },
-                    ).setOptions({ runValidators: true });
-                    res.status(200).json({ user:result, status: 'success' });
-                    logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
-                    userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                if(custom_type==='royal'){ //로얄 커스텀이면
+                    if (holding_royal_crystal < reduce_crystal) {
+                        res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
+                    } else {
+                        var result = await User.findOneAndUpdate(
+                            { email: email },
+                            {
+                                $inc: { royal_crystal: -reduce_crystal },
+                                $addToSet: { customizing: customizing }
+                            },
+                            { new: true, upsert: true },
+                        ).setOptions({ runValidators: true });
+                        res.status(200).json({ user:result, status: 'success' });
+                        logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                        userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                    }
+                }else if(custom_type ==='normal'){  // 일반 커스텀이면
+                    if (holding_crystal < reduce_crystal) {
+                        res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
+                    } else {
+                        var result = await User.findOneAndUpdate(
+                            { email: email },
+                            {
+                                $inc: { crystal: -reduce_crystal },
+                                $addToSet: { customizing: customizing }
+                            },
+                            { new: true, upsert: true },
+                        ).setOptions({ runValidators: true });
+                        res.status(200).json({ user:result, status: 'success' });
+                        logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                        userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                
+                    }
+                }else{ //잘못된 입력
+                    res.status(200).json({ message:"잘못된 입력", status: 'fail' });
                 }
             }
         } catch (err) {
