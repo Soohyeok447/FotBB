@@ -33,7 +33,7 @@
               <td><%=stage.playcount%></td>
               <td><%=stage.total_death%></td>
               <td><%=stage.total_clear%></td>
-              <td><%=(stage.playcount/stage.total_clear).toFixed(2)*10 %> %</td>
+              <td><%=((stage.total_clear * 100) /stage.playcount).toFixed(2)%> %</td>
             </tr>
             </tbody>
         </table>

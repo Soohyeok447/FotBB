@@ -857,7 +857,11 @@ exports.test = async (req, res, next) => {
             let user = await User.findOne({ email: email });
             let user_stage = await User_stage.findOne({ userid: user.googleid });
             let all_stage = await Stage.find({});
-
+            console.log(user_stage);
+            user_stage.stage[0].N_cleartime = 0;
+            user_stage.stage[0].H_cleartime = 0;
+            user_stage.stage[0].N_death = 0;
+            user_stage.stage[0].H_death = 0;
             all_stage.forEach(async e => {
 
                 if (e.stage_name !== '바흐시메이저') {
@@ -867,8 +871,8 @@ exports.test = async (req, res, next) => {
                     var stage = await Stage.findOne({ stage_name: e.stage_name });
 
                     //해당 유저가 기록된 index 구하기
-                    normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
-                    hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
+                    let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
+                    let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
 
                     stage.Normal.splice(normal_index, 1);
                     stage.Hard.splice(hard_index, 1);
@@ -878,6 +882,20 @@ exports.test = async (req, res, next) => {
 
                 } else {
                     console.log("바흐 시메이저입니다.")
+                    var stage = await Stage.findOne({ stage_name: e.stage_name });
+                    //해당 유저가 기록된 index 구하기
+                    let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
+                    let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
+
+                    stage.Normal[normal_index].cleartime =0;
+                    stage.Normal[normal_index].renewed_at ='';
+                    stage.Normal[normal_index].death =0;
+                    stage.Hard[hard_index].cleartime =0;
+                    stage.Hard[hard_index].renewed_at ='';
+                    stage.Hard[hard_index].death =0;
+
+
+                    await stage.save({ new: true });
                 }
             })
             user_stage.stage.splice(1, user_stage.stage.length);
@@ -885,7 +903,7 @@ exports.test = async (req, res, next) => {
             await user_stage.save({ new: true });
 
 
-            res.status(200).send();
+            res.status(200).send('초기화 완료');
         } catch (err) {
             console.log(err);
             res.status(200).send(err);
