@@ -146,6 +146,7 @@ exports.result = async (req, res, next) => {
         country,
         nextstage,
         result_type,
+        used_custom,
     } = req.body;
 
     //유효한 토큰이면 api 이용
@@ -233,6 +234,7 @@ exports.result = async (req, res, next) => {
                                             cleartime: 0,
                                             death: 0,
                                             country: country,
+                                            used_custom:'',
                                             renewed_at: '',
                                             terminated: false,
                                         },
@@ -241,6 +243,7 @@ exports.result = async (req, res, next) => {
                                             cleartime: 0,
                                             death: 0,
                                             country: country,
+                                            used_custom:'',
                                             renewed_at: '',
                                             terminated: false,
                                         },
@@ -308,6 +311,7 @@ exports.result = async (req, res, next) => {
                                 userindex = stage.Normal.findIndex((s) => s.userid === userid);
                                 stage.Normal[userindex].cleartime = cleartime;
                                 stage.Normal[userindex].renewed_at = get_now();
+                                stage.Normal[userindex].used_custom = used_custom;
                                 await stage.save({ new: true });
 
 
@@ -357,6 +361,7 @@ exports.result = async (req, res, next) => {
                                     //console.log(stage.Normal[userindex])
                                     stage.Normal[userindex].cleartime = cleartime;
                                     stage.Normal[userindex].renewed_at = get_now();
+                                    stage.Normal[userindex].used_custom = used_custom;
 
                                     await stage.save({ new: true }); //신기록 갱신
 
@@ -450,6 +455,7 @@ exports.result = async (req, res, next) => {
                                 //console.log(stage.Normal[userindex])
                                 stage.Hard[userindex].cleartime = cleartime;
                                 stage.Hard[userindex].renewed_at = get_now();
+                                stage.Hard[userindex].used_custom = used_custom;
 
                                 await stage.save({ new: true });
 
@@ -486,6 +492,7 @@ exports.result = async (req, res, next) => {
                                     //console.log(stage.Hard[userindex])
                                     stage.Hard[userindex].cleartime = cleartime;
                                     stage.Hard[userindex].renewed_at = get_now();
+                                    stage.Hard[userindex].used_custom = used_custom;
                                     await stage.save({ new: true }); //신기록 갱신
 
 

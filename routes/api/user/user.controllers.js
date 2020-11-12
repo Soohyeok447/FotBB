@@ -45,11 +45,10 @@ async function verify(token, email) {
         if (!email) {
             TokenObj.verified = false;
             TokenObj.error = 'no email';
-            logger.error(`no email`);
             upload('', 'user | token', `no email`);
             return TokenObj;
         } else {
-            var id = await get_userid(email);
+            
         }
 
         const ticket = await client.verifyIdToken({
@@ -88,11 +87,11 @@ async function verify(token, email) {
         }
 
     } catch (err) {
+        let id = await get_userid(email);
         //console.log("err났습니다.")
         let check_expiredtoken = /Token used too late/;
 
         let error = err.toString();
-
 
         let check = error.match(check_expiredtoken);
 
@@ -605,6 +604,7 @@ exports.stage = async (req, res, next) => {
                                     cleartime: 0,
                                     death: 0,
                                     country: user.country,
+                                    used_custom:'',
                                     renewed_at: '',
                                     terminated: false,
                                 },
@@ -613,6 +613,7 @@ exports.stage = async (req, res, next) => {
                                     cleartime: 0,
                                     death: 0,
                                     country: user.country,
+                                    used_custom:'',
                                     renewed_at: '',
                                     terminated: false,
                                 },

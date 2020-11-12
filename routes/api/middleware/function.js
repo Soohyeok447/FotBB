@@ -67,7 +67,7 @@ async function delete_playing(email) {
 async function get_userid(email) {
 	let user = await User.findOne({ email: email });
 	if (user === null) {
-		console.log("이메일이 없습니다.");
+		console.log("DB에 없는 유저입니다.");
 		return null;
 	} else {
 		let id = user.googleid;
