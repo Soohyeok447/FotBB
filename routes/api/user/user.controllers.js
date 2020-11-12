@@ -535,11 +535,13 @@ exports.customizing = async (req, res, next) => {
         try {
             let user = await User.findOne({ email: email }); //비교용 find
             let user_cus = user.customizing;
+            console.log(`user_cus => ${user_cus}`);
             let has_customizing = (user_cus.find(e => e === customizing));
+            console.log(has_customizing);
             let holding_crystal = user.crystal;//현재 보유중인 크리스탈
-
+            
             //해당 커스텀을 이미 보유중이면
-            if (has_customizing) {
+            if (has_customizing || has_customizing===0 ) { //0은 false라서 따로 추가
                 res.status(200).json({ message: "이미 보유중인 커스텀입니다..", status: 'fail' });
                 //보유중이지 않은 커스텀이면
             } else {
@@ -554,7 +556,7 @@ exports.customizing = async (req, res, next) => {
                         },
                         { new: true, upsert: true },
                     ).setOptions({ runValidators: true });
-                    res.status(200).json({ crystal: result.crystal, custom: result.customizing, status: 'success' });
+                    res.status(200).json({ user:result, status: 'success' });
                     logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                     userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                 }
@@ -646,11 +648,11 @@ exports.stage = async (req, res, next) => {
                     let stageObj = {};
                     stageObj.stage_info = await get_stage_info(stage);
 
-                    stageObj.global_Normal = await get_global_leaderboard(stage, email, "Normal",user.googleid);
-                    stageObj.global_Hard = await get_global_leaderboard(stage, email, "Hard",user.googleid);
+                    stageObj.global_Normal = await get_global_leaderboard(stage, "Normal",user.googleid);
+                    stageObj.global_Hard = await get_global_leaderboard(stage, "Hard",user.googleid);
 
-                    stageObj.country_Normal = await get_country_leaderboard(stage, email, user.country, "Normal",user.googleid);
-                    stageObj.country_Hard = await get_country_leaderboard(stage, email, user.country, "Hard",user.googleid);
+                    stageObj.country_Normal = await get_country_leaderboard(stage, user.country, "Normal",user.googleid);
+                    stageObj.country_Hard = await get_country_leaderboard(stage, user.country, "Hard",user.googleid);
                     stageArr.push(stageObj);
 
                     res.status(200).json({ message: `${stage_name} 언락완료.`, crystal: userResult.crystal, status: 'success', user_stage: usResult, leaderboard: stageArr });
