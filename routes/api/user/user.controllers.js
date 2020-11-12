@@ -374,7 +374,7 @@ exports.user_login = async (req, res, next) => {
                         created_date: now,
                         latest_login: now,   //Date.now(),
                         country: country,
-                        customizing:"왕벌"
+                        customizing:0
                         //crystal: crystal,
                         //...나머지는 default
                     });
