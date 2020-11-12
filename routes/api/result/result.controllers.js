@@ -256,11 +256,11 @@ exports.result = async (req, res, next) => {
                                 var stageArr = [];
                                 stageObj.stage_info = await get_stage_info(next_stage);
                                 
-                                stageObj.global_Normal = await get_global_leaderboard(next_stage,email,"Normal",userid);
-                                stageObj.global_Hard = await get_global_leaderboard(next_stage,email,"Hard",userid);
+                                stageObj.global_Normal = await get_global_leaderboard(next_stage,"Normal",userid);
+                                stageObj.global_Hard = await get_global_leaderboard(next_stage,"Hard",userid);
 
-                                stageObj.country_Normal = await get_country_leaderboard(next_stage,email,user.country,"Normal",userid);
-                                stageObj.country_Hard = await get_country_leaderboard(next_stage,email,user.country,"Hard",userid);
+                                stageObj.country_Normal = await get_country_leaderboard(next_stage,user.country,"Normal",userid);
+                                stageObj.country_Hard = await get_country_leaderboard(next_stage,user.country,"Hard",userid);
                                 stageArr.push(stageObj);
                         } else {
                             console.log("있는 스테이지 거나 보유중인 스테이지가 아닙니다.");
@@ -385,7 +385,7 @@ exports.result = async (req, res, next) => {
                                     let compare_with_me = sorted_ranking[ranking - 2];
                                     console.log(compare_with_me);
                                     //스테이지 정보 불러오기
-                                    var stage_info = await get_stage_info(stage);
+                                    var stage_info = await get_stage_info(stage,'Normal');
 
 
                                     // if (compare_with_me < 0) {
@@ -518,7 +518,7 @@ exports.result = async (req, res, next) => {
                                     //내 바로 다음 랭커 기록 찾기
                                     let compare_with_me = (sorted_ranking[ranking - 2]);
                                     //스테이지 정보 불러오기
-                                    var stage_info = await get_stage_info(stage);
+                                    var stage_info = await get_stage_info(stage,'Hard');
                                     
                                     //res.status(200).json({ "ranking": ranking, "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     
@@ -630,18 +630,18 @@ exports.result = async (req, res, next) => {
             if(type==='Normal'){
                 console.log("노말함수")
                 //스테이지 정보 불러오기
-                leaderboardObj.stage_info = await get_stage_info(stage);
+                leaderboardObj.stage_info = await get_stage_info(stage,'Normal');
                 //갱신된 리더보드 불러오기
-                leaderboardObj.global_Normal = await get_global_leaderboard(stage, email,'Normal',userid);
-                leaderboardObj.country_Normal = await get_country_leaderboard(stage, email, country,'Normal',userid);
+                leaderboardObj.global_Normal = await get_global_leaderboard(stage,'Normal',userid);
+                leaderboardObj.country_Normal = await get_country_leaderboard(stage, country,'Normal',userid);
                 leaderboardArr.push(leaderboardObj);
             }else{
                 console.log("하드함수");
                 //스테이지 정보 불러오기
-                leaderboardObj.stage_info = await get_stage_info(stage);
+                leaderboardObj.stage_info = await get_stage_info(stage,'Hard');
                 //갱신된 리더보드 불러오기
-                leaderboardObj.global_Hard = await get_global_leaderboard(stage, email,'Hard',userid);
-                leaderboardObj.country_Hard = await get_country_leaderboard(stage, email, country,'Hard',userid);
+                leaderboardObj.global_Hard = await get_global_leaderboard(stage,'Hard',userid);
+                leaderboardObj.country_Hard = await get_country_leaderboard(stage, country,'Hard',userid);
                 leaderboardArr.push(leaderboardObj);
             }
             return leaderboardArr;
