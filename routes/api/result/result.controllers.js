@@ -165,7 +165,7 @@ exports.result = async (req, res, next) => {
                 var status;
 
                 //커스텀,뱃지 유효성 체크
-                let validation_result = await custom_badge_validation(used_custom,used_badge,user,email);
+                let validation_result = await custom_badge_validation(used_bee_custom,used_badge,user,email);
                 //클리어일 경우
                 if (result_type === 'clear') {
                     let playing = await Playing.findOne({ email: email });
@@ -312,17 +312,17 @@ exports.result = async (req, res, next) => {
 
                             switch(status){
                                 case 'first_clear':{
-                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "status": "clear_renewal",user:user ,leaderboard: leaderboardArr});
                                     break;
                                 }
                                 case 'renewal':{
-                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "status": "clear_renewal", user:user , leaderboard: leaderboardArr });
                                     break;
                                 }
                                 case 'clear':{
-                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "ranking": ranking, user:user,  "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     break;
                                 }
@@ -448,17 +448,17 @@ exports.result = async (req, res, next) => {
                             console.log(status);
                             switch(status){
                                 case 'first_clear':{
-                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "status": "clear_renewal",user:user,leaderboard: leaderboardArr});
                                     break;
                                 }
                                 case 'renewal':{
-                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "status": "clear_renewal", user:user, leaderboard: leaderboardArr });
                                     break;
                                 }
                                 case 'clear':{
-                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "ranking": ranking, user:user , "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     break;
                                 }

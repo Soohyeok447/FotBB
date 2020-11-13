@@ -395,7 +395,7 @@ exports.user_login = async (req, res, next) => {
                                     death: 0,
                                     country: country,
                                     renewed_at: '',
-                                    user_badge:0,
+                                    used_badge:0,
                                     used_bee_custom:0,
                                     //탄커스텀정보도 필요하면 저장
                                     //used_shot_custom:0,
@@ -407,7 +407,7 @@ exports.user_login = async (req, res, next) => {
                                     death: 0,
                                     country: country,
                                     renewed_at: '',
-                                    user_badge:0,
+                                    used_badge:0,
                                     used_bee_custom:0,
                                     //탄커스텀정보도 필요하면 저장
                                     //used_shot_custom:0,
@@ -568,7 +568,7 @@ exports.customizing = async (req, res, next) => {
                 } else {
                     if(crystal_type==='royal'){ //로얄 커스텀이면
                         if (holding_royal_crystal < reduce_crystal) {
-                            res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
+                            res.status(201).json({ message: "로얄 크리스탈이 부족합니다.", status: 'fail' });
                         } else {
                             var result = await User.findOneAndUpdate(
                                 { email: email },
@@ -614,7 +614,7 @@ exports.customizing = async (req, res, next) => {
                 } else {
                     if(crystal_type==='royal'){ //로얄 커스텀이면
                         if (holding_royal_crystal < reduce_crystal) {
-                            res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
+                            res.status(201).json({ message: "로얄 크리스탈이 부족합니다.", status: 'fail' });
                         } else {
                             var result = await User.findOneAndUpdate(
                                 { email: email },
