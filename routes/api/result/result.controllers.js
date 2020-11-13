@@ -158,9 +158,13 @@ exports.result = async (req, res, next) => {
             } else {
                 //userid 불러오기
                 let userid = await get_userid(email);
+                //유저 db 갱신
+                let user = await User.findOne({ email: email });
 
                 var status;
 
+                //커스텀,뱃지 유효성 체크
+                let validation_result = await custom_badge_validation(used_custom,used_badge,user,email);
                 //클리어일 경우
                 if (result_type === 'clear') {
                     let playing = await Playing.findOne({ email: email });
@@ -170,9 +174,9 @@ exports.result = async (req, res, next) => {
                         console.log("부정기록입니다 해당 유저를 밴 합니다.")
                         try {
                             //밴    
-                            ban(email, '부정기록')
+                            await ban(email, '부정기록')
                             //Playing 초기화
-                            delete_playing(email);
+                            await delete_playing(email);
 
 
                             res.status(200).json({ "now_time": playing.now_time, "cleartime": cleartime, "userid": userid, status: 'banned' });
@@ -185,18 +189,17 @@ exports.result = async (req, res, next) => {
                             upload(email, `clear`, err);
                         }
 
-                        //정당한 기록일 시
-                    } else {
+                        //정당한 기록일 시, 유효한 뱃지나 커스텀일 때
+                    } else if(validation_result){
                         console.log("정당한 기록입니다. 기록을 저장합니다.")
                         await delete_playing(email);
-                        //유저 db 갱신
-                        let user = await User.findOne({ email: email });
+                        
 
 
                         //유저 stage db , stage 모델 갱신
                         let stage = await Stage.findOne({ stage_name: stage_name });
 
-
+                        
 
                         if (gametype === "Normal") {
                             console.log("Normal 진입");
@@ -303,17 +306,20 @@ exports.result = async (req, res, next) => {
                                 }
                                 
                             }
-                            console.log(status);
+
                             switch(status){
                                 case 'first_clear':{
+                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "status": "clear_renewal",user:user ,leaderboard: leaderboardArr});
                                     break;
                                 }
                                 case 'renewal':{
+                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "status": "clear_renewal", user:user , leaderboard: leaderboardArr });
                                     break;
                                 }
                                 case 'clear':{
+                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "ranking": ranking, user:user,  "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     break;
                                 }
@@ -437,24 +443,30 @@ exports.result = async (req, res, next) => {
                             console.log(status);
                             switch(status){
                                 case 'first_clear':{
+                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "status": "clear_renewal",user:user,leaderboard: leaderboardArr});
                                     break;
                                 }
                                 case 'renewal':{
+                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "status": "clear_renewal", user:user, leaderboard: leaderboardArr });
                                     break;
                                 }
                                 case 'clear':{
+                                    await renew_stageDB(used_custom,used_badge,user,user_stage);
                                     res.status(200).json({ "ranking": ranking, user:user , "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     break;
                                 }
                                 default:break;
                             }
                         }
+                    }else{
+                        console.log('커스텀 뱃지 사기입니다. 유저 밴')
+                        res.status(200).json({message:'유효하지 않은 커스텀, 뱃지',status:banned});
                     }
                 } else { //fail
                     try {
-                        delete_playing(email);
+                        await delete_playing(email);
                         //User 모델의 death, playtime 갱신
                         let user = await User.findOneAndUpdate(
                             { email: email },
@@ -567,4 +579,75 @@ exports.result = async (req, res, next) => {
             await user.save({new:true});
         }
     }
+
+
+    //2가지 함수가 더 필요함 
+    //  1. 커스텀, 뱃지 유효성 체크
+    async function custom_badge_validation(custom,badge,user,email){
+        if(user.customizing.includes(custom) && user.badge.includes(badge)){
+            console.log('뱃지랑 커스텀 모두 보유중입니다.');
+            return true;
+        }else{
+            console.log('뱃지랑 커스텀 중 보유중인게 없습니다.')
+            await ban(email,'뱃지커스텀 사기');
+            return false;
+        }
+    }
+
+//  2. 클리어 할 때 유저가 보유중인 모든 스테이지 used_custom, used_badge 갱신하는 함수
+    async function renew_stageDB(custom,badge,user,user_stage){
+        let all_stage = await Stage.find({});
+
+        // //reduce가 잘 동작하면 이거  사용
+        // let result = user_stage.stage.reduce((acc, cur,i) => {
+        //     if (cur === user_stage.stage[i].stage_name) acc.push(cur);
+        //     return acc;
+        //   }, []);
+
+          
+        // all_stage.forEach(async e => {
+        //     if(result.includes(e.stage_name)){
+        //         var stage = await Stage.findOne({ stage_name: e.stage_name });
+        //         //해당 유저가 기록된 index 구하기
+        //         let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
+        //         let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
+    
+        //         stage.Normal[normal_index].used_custom =custom;
+        //         stage.Normal[normal_index].used_badge =badge;
+        //         stage.Hard[hard_index].used_custom =custom;
+        //         stage.Hard[hard_index].used_badge =badge;
+    
+    
+        //         await stage.save({ new: true });
+        //     }
+        // });
+
+
+            //reduce안되면 이용
+
+        let user_stage_arr = [];
+        
+        for(i=0;i<user_stage.stage.length;i++){
+            user_stage_arr.push(user_stage.stage[i].stage_name);
+        }
+
+
+        all_stage.forEach(async e => {
+            if(user_stage_arr.includes(e.stage_name)){
+                var stage = await Stage.findOne({ stage_name: e.stage_name });
+                //해당 유저가 기록된 index 구하기
+                let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
+                let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
+    
+                stage.Normal[normal_index].used_custom =custom;
+                stage.Normal[normal_index].used_badge =badge;
+                stage.Hard[hard_index].used_custom =custom;
+                stage.Hard[hard_index].used_badge =badge;
+    
+    
+                await stage.save({ new: true });
+            }
+        });
+    }
 }
+
