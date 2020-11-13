@@ -145,6 +145,7 @@ exports.result = async (req, res, next) => {
         stage_name,
         result_type,
         used_custom,
+        used_badge,
     } = req.body;
 
     //유효한 토큰이면 api 이용
@@ -235,6 +236,7 @@ exports.result = async (req, res, next) => {
                                 stage.Normal[userindex].cleartime = cleartime;
                                 stage.Normal[userindex].renewed_at = get_now();
                                 stage.Normal[userindex].used_custom = used_custom;
+                                stage.Normal[userindex].used_badge = used_badge;
                                 await stage.save({ new: true });
 
 
@@ -270,6 +272,7 @@ exports.result = async (req, res, next) => {
                                     stage.Normal[userindex].cleartime = cleartime;
                                     stage.Normal[userindex].renewed_at = get_now();
                                     stage.Normal[userindex].used_custom = used_custom;
+                                    stage.Normal[userindex].used_badge = used_badge;
 
                                     await stage.save({ new: true }); //신기록 갱신
 
@@ -359,7 +362,7 @@ exports.result = async (req, res, next) => {
                                 stage.Hard[userindex].cleartime = cleartime;
                                 stage.Hard[userindex].renewed_at = get_now();
                                 stage.Hard[userindex].used_custom = used_custom;
-
+                                stage.Hard[userindex].used_badge = used_badge;
                                 await stage.save({ new: true });
 
 
@@ -396,6 +399,7 @@ exports.result = async (req, res, next) => {
                                     stage.Hard[userindex].cleartime = cleartime;
                                     stage.Hard[userindex].renewed_at = get_now();
                                     stage.Hard[userindex].used_custom = used_custom;
+                                    stage.Hard[userindex].used_badge = used_badge;
                                     await stage.save({ new: true }); //신기록 갱신
 
 
