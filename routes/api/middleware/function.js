@@ -238,7 +238,7 @@ async function get_global_leaderboard(stage, type,userid) {
 					}
 				} else if (i === 50) {
 					//라이벌 저장
-					if (my_rival_Normal) {
+					if (my_rival_Hard) {
 						if (my_total_Hard_ranking > 50) {
 							leaderboard_arr[i] = sorted_Total_Hard_ranking[my_total_Hard_ranking - 2];
 							leaderboard_arr[i].ranking = my_total_Hard_ranking - 1;

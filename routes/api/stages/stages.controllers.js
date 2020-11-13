@@ -188,8 +188,8 @@ exports.leaderboard = async (req, res, next) => {
 
                 let jsonArr = [];
                 jsonObj.stage_info = await get_stage_info(stage);
-                jsonObj.country_Normal = await get_country_leaderboard(stage, email, country, "Normal",user.googleid);
-                jsonObj.country_Hard = await get_country_leaderboard(stage, email, country, "Hard",user.googleid);
+                jsonObj.country_Normal = await get_country_leaderboard(stage, country, "Normal",user.googleid);
+                jsonObj.country_Hard = await get_country_leaderboard(stage, country, "Hard",user.googleid);
                 jsonArr.push(jsonObj);
                 res.status(200).json({ status: 'success', leaderboard: jsonArr });
                 //logger.info(`${userid} 가 스테이지 ${stage_name}의 랭킹을 로딩`)

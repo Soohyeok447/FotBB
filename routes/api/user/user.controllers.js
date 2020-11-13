@@ -317,11 +317,6 @@ async function get_all_leaderboard(email){
         })
     }
 
-    // if (j === user_stage.stage.length) {
-    //     return resultArr;
-    // } else {
-    //     return "뭐고이거"
-    // }
     return resultArr;
 
 
@@ -332,8 +327,8 @@ async function get_all_leaderboard(email){
 
         return new Promise(async (resolve, rejected) => {
             jsonObj["stage_info"] = await get_stage_info(stage);
-            jsonObj["global_Normal"] = await get_global_leaderboard(stage, email, "Normal",userid);
-            jsonObj["global_Hard"] = await get_global_leaderboard(stage, email, "Hard",userid);
+            jsonObj["global_Normal"] = await get_global_leaderboard(stage, "Normal",userid);
+            jsonObj["global_Hard"] = await get_global_leaderboard(stage, "Hard",userid);
             resolve(jsonObj);
         })
     };
@@ -374,7 +369,9 @@ exports.user_login = async (req, res, next) => {
                         created_date: now,
                         latest_login: now,   //Date.now(),
                         country: country,
-                        customizing:0
+                        bee_custom:0,
+                        shot_custom:0,
+                        badge:0,
                         //crystal: crystal,
                         //...나머지는 default
                     });
@@ -398,6 +395,10 @@ exports.user_login = async (req, res, next) => {
                                     death: 0,
                                     country: country,
                                     renewed_at: '',
+                                    user_badge:0,
+                                    used_bee_custom:0,
+                                    //탄커스텀정보도 필요하면 저장
+                                    //used_shot_custom:0,
                                     terminated: false,
                                 },
                                 Hard: {
@@ -406,6 +407,10 @@ exports.user_login = async (req, res, next) => {
                                     death: 0,
                                     country: country,
                                     renewed_at: '',
+                                    user_badge:0,
+                                    used_bee_custom:0,
+                                    //탄커스텀정보도 필요하면 저장
+                                    //used_shot_custom:0,
                                     terminated: false,
                                 },
                             },
@@ -541,61 +546,113 @@ exports.crystal = async (req, res, next) => {
 
 //커스터마이징 처리
 exports.customizing = async (req, res, next) => {
-    const { email, custom_type  ,reduce_crystal, customizing, token } = req.body;
+    const { email, custom_type, crystal_type ,reduce_crystal, customizing, token } = req.body;
 
     var verify_result = await verify(token, email)
     if (verify_result.verified) {
         try {
             let user = await User.findOne({ email: email }); //비교용 find
-            let user_cus = user.customizing;
-            console.log(`user_cus => ${user_cus}`);
-            let has_customizing = (user_cus.find(e => e === customizing));
-            console.log(has_customizing);
+            let bee_custom = user.bee_custom;
+            let shot_custom = user.shot_custom;
             let holding_crystal = user.crystal;//현재 보유중인 크리스탈
-            let holding_royal_crystal = user.crystal;//현재 보유중인 로얄 크리스탈
-            
-            //해당 커스텀을 이미 보유중이면
-            if (has_customizing || has_customizing===0 ) { //0은 false라서 따로 추가
-                res.status(200).json({ message: "이미 보유중인 커스텀입니다..", status: 'fail' });
-                //보유중이지 않은 커스텀이면
-            } else {
-                if(custom_type==='royal'){ //로얄 커스텀이면
-                    if (holding_royal_crystal < reduce_crystal) {
-                        res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
-                    } else {
-                        var result = await User.findOneAndUpdate(
-                            { email: email },
-                            {
-                                $inc: { royal_crystal: -reduce_crystal },
-                                $addToSet: { customizing: customizing }
-                            },
-                            { new: true, upsert: true },
-                        ).setOptions({ runValidators: true });
-                        res.status(200).json({ user:result, status: 'success' });
-                        logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
-                        userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+            let holding_royal_crystal = user.royal_crystal;//현재 보유중인 로얄 크리스탈
+
+            //벌 커스텀, 샷 커스텀 분기
+            if(custom_type === 'bee'){
+                let has_bee_custom = (bee_custom.find(e => e === customizing));
+
+                //해당 벌 커스텀을 이미 보유중이면
+                if (has_bee_custom || has_bee_custom===0 ) { //0은 false라서 따로 추가
+                    res.status(200).json({ message: "이미 보유중인 벌 커스텀입니다..", status: 'fail' });
+                    //보유중이지 않은 벌 커스텀이면
+                } else {
+                    if(crystal_type==='royal'){ //로얄 커스텀이면
+                        if (holding_royal_crystal < reduce_crystal) {
+                            res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
+                        } else {
+                            var result = await User.findOneAndUpdate(
+                                { email: email },
+                                {
+                                    $inc: { royal_crystal: -reduce_crystal },
+                                    $addToSet: { bee_custom: customizing }
+                                },
+                                { new: true, upsert: true },
+                            ).setOptions({ runValidators: true });
+                            res.status(200).json({ user:result, status: 'success' });
+                            logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                            userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                        }
+                    }else if(crystal_type ==='normal'){  // 일반 커스텀이면
+                        if (holding_crystal < reduce_crystal) {
+                            res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
+                        } else {
+                            var result = await User.findOneAndUpdate(
+                                { email: email },
+                                {
+                                    $inc: { crystal: -reduce_crystal },
+                                    $addToSet: { bee_custom: customizing }
+                                },
+                                { new: true, upsert: true },
+                            ).setOptions({ runValidators: true });
+                            res.status(200).json({ user:result, status: 'success' });
+                            logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                            userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                    
+                        }
+                    }else{ //잘못된 입력
+                        res.status(200).json({ message:"잘못된 입력", status: 'fail' });
                     }
-                }else if(custom_type ==='normal'){  // 일반 커스텀이면
-                    if (holding_crystal < reduce_crystal) {
-                        res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
-                    } else {
-                        var result = await User.findOneAndUpdate(
-                            { email: email },
-                            {
-                                $inc: { crystal: -reduce_crystal },
-                                $addToSet: { customizing: customizing }
-                            },
-                            { new: true, upsert: true },
-                        ).setOptions({ runValidators: true });
-                        res.status(200).json({ user:result, status: 'success' });
-                        logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
-                        userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
-                
-                    }
-                }else{ //잘못된 입력
-                    res.status(200).json({ message:"잘못된 입력", status: 'fail' });
                 }
+
+            }else if(custom_type ==='shot'){
+                let has_shot_custom = (shot_custom.find(e => e === customizing));
+
+                //해당 샷 커스텀을 이미 보유중이면
+                if (has_shot_custom || has_shot_custom===0 ) { //0은 false라서 따로 추가
+                    res.status(200).json({ message: "이미 보유중인 벌 커스텀입니다..", status: 'fail' });
+                    //보유중이지 않은 샷 커스텀이면
+                } else {
+                    if(crystal_type==='royal'){ //로얄 커스텀이면
+                        if (holding_royal_crystal < reduce_crystal) {
+                            res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
+                        } else {
+                            var result = await User.findOneAndUpdate(
+                                { email: email },
+                                {
+                                    $inc: { royal_crystal: -reduce_crystal },
+                                    $addToSet: { shot_custom: customizing }
+                                },
+                                { new: true, upsert: true },
+                            ).setOptions({ runValidators: true });
+                            res.status(200).json({ user:result, status: 'success' });
+                            logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                            userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                        }
+                    }else if(crystal_type ==='normal'){  // 일반 커스텀이면
+                        if (holding_crystal < reduce_crystal) {
+                            res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
+                        } else {
+                            var result = await User.findOneAndUpdate(
+                                { email: email },
+                                {
+                                    $inc: { crystal: -reduce_crystal },
+                                    $addToSet: { shot_custom: customizing }
+                                },
+                                { new: true, upsert: true },
+                            ).setOptions({ runValidators: true });
+                            res.status(200).json({ user:result, status: 'success' });
+                            logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                            userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
+                    
+                        }
+                    }else{ //잘못된 입력
+                        res.status(200).json({ message:"잘못된 크리스탈 타입 입력", status: 'fail' });
+                    }
+                }
+            }else{
+                res.status(200).json({ message:"잘못된 커스텁 타입 입력", status: 'fail' });
             }
+            
         } catch (err) {
             let id = get_userid(email)
             res.status(500).json({ error: "database failure" });
@@ -625,6 +682,9 @@ exports.stage = async (req, res, next) => {
             let now_crystal = user.crystal;//현재 보유중인 크리스탈
             //유저 country 알 수 있으면 받아오게 수정
 
+            let user_bee_custom = user_stage.stage[0].user_bee_custom;
+            let user_badge = user_stage.stage[0].user_badge;
+
             if (now_crystal < reduce_crystal) {
                 res.status(200).json({ status: 'fail', message: "크리스탈이 부족합니다." });
             } else {
@@ -641,7 +701,8 @@ exports.stage = async (req, res, next) => {
                                     cleartime: 0,
                                     death: 0,
                                     country: user.country,
-                                    used_custom:'',
+                                    used_bee_custom:user_bee_custom,
+                                    user_badge:user_badge,
                                     renewed_at: '',
                                     terminated: false,
                                 },
@@ -650,7 +711,8 @@ exports.stage = async (req, res, next) => {
                                     cleartime: 0,
                                     death: 0,
                                     country: user.country,
-                                    used_custom:'',
+                                    used_bee_custom:user_bee_custom,
+                                    user_badge:user_badge,
                                     renewed_at: '',
                                     terminated: false,
                                 },

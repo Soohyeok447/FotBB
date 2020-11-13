@@ -46,8 +46,10 @@ const User = new Schema({
         default: false,
     },
     country:String,
-    //보유중인 커스터마이징 종류
-    customizing: [Number],
+    //보유중인 벌 커스터마이징 종류
+    bee_custom: [Number],
+    //보유중인 벌의 탄 커스터마이징 종류
+    shot_custom: [Number],
     //보유중인 뱃지 종류
     badge: [Number],
 

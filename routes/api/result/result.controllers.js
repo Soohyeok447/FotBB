@@ -144,7 +144,8 @@ exports.result = async (req, res, next) => {
         token,
         stage_name,
         result_type,
-        used_custom,
+        used_bee_custom,
+        //used_shot_custom, 넣으라고 하면 삽입
         used_badge,
     } = req.body;
 
@@ -238,7 +239,8 @@ exports.result = async (req, res, next) => {
                                 userindex = stage.Normal.findIndex((s) => s.userid === userid);
                                 stage.Normal[userindex].cleartime = cleartime;
                                 stage.Normal[userindex].renewed_at = get_now();
-                                stage.Normal[userindex].used_custom = used_custom;
+                                stage.Normal[userindex].used_bee_custom = used_bee_custom;
+                                //stage.Normal[userindex].used_shot_custom = used_shot_custom;
                                 stage.Normal[userindex].used_badge = used_badge;
                                 await stage.save({ new: true });
 
@@ -274,7 +276,8 @@ exports.result = async (req, res, next) => {
                                     //console.log(stage.Normal[userindex])
                                     stage.Normal[userindex].cleartime = cleartime;
                                     stage.Normal[userindex].renewed_at = get_now();
-                                    stage.Normal[userindex].used_custom = used_custom;
+                                    stage.Normal[userindex].used_bee_custom = used_bee_custom;
+                                    //stage.Normal[userindex].used_shot_custom = used_shot_custom;
                                     stage.Normal[userindex].used_badge = used_badge;
 
                                     await stage.save({ new: true }); //신기록 갱신
@@ -367,7 +370,8 @@ exports.result = async (req, res, next) => {
                                 //console.log(stage.Normal[userindex])
                                 stage.Hard[userindex].cleartime = cleartime;
                                 stage.Hard[userindex].renewed_at = get_now();
-                                stage.Hard[userindex].used_custom = used_custom;
+                                stage.Hard[userindex].used_bee_custom = used_bee_custom;
+                                //stage.Hard[userindex].used_shot_custom = used_shot_custom;
                                 stage.Hard[userindex].used_badge = used_badge;
                                 await stage.save({ new: true });
 
@@ -404,7 +408,8 @@ exports.result = async (req, res, next) => {
                                     //console.log(stage.Hard[userindex])
                                     stage.Hard[userindex].cleartime = cleartime;
                                     stage.Hard[userindex].renewed_at = get_now();
-                                    stage.Hard[userindex].used_custom = used_custom;
+                                    stage.Hard[userindex].used_bee_custom = used_bee_custom;
+                                    //stage.Hard[userindex].used_shot_custom = used_shot_custom;
                                     stage.Hard[userindex].used_badge = used_badge;
                                     await stage.save({ new: true }); //신기록 갱신
 
@@ -462,7 +467,7 @@ exports.result = async (req, res, next) => {
                         }
                     }else{
                         console.log('커스텀 뱃지 사기입니다. 유저 밴')
-                        res.status(200).json({message:'유효하지 않은 커스텀, 뱃지',status:banned});
+                        res.status(200).json({message:'유효하지 않은 커스텀, 뱃지',status:'banned'});
                     }
                 } else { //fail
                     try {
@@ -583,8 +588,12 @@ exports.result = async (req, res, next) => {
 
     //2가지 함수가 더 필요함 
     //  1. 커스텀, 뱃지 유효성 체크
-    async function custom_badge_validation(custom,badge,user,email){
-        if(user.customizing.includes(custom) && user.badge.includes(badge)){
+    async function custom_badge_validation(bee_custom,badge,user,email){ //shot_custom 도 필요하면 수정
+        console.log("커스텀 뱃지 유효성 체크 함수 시작")
+        console.log(bee_custom,badge);
+
+        
+        if(user.bee_custom.includes(bee_custom) && user.badge.includes(badge)){
             console.log('뱃지랑 커스텀 모두 보유중입니다.');
             return true;
         }else{
@@ -595,36 +604,9 @@ exports.result = async (req, res, next) => {
     }
 
 //  2. 클리어 할 때 유저가 보유중인 모든 스테이지 used_custom, used_badge 갱신하는 함수
-    async function renew_stageDB(custom,badge,user,user_stage){
+    async function renew_stageDB(bee_custom,badge,user,user_stage){
+        console.log("스테이지 커스텀 통일 함수 실행")
         let all_stage = await Stage.find({});
-
-        // //reduce가 잘 동작하면 이거  사용
-        // let result = user_stage.stage.reduce((acc, cur,i) => {
-        //     if (cur === user_stage.stage[i].stage_name) acc.push(cur);
-        //     return acc;
-        //   }, []);
-
-          
-        // all_stage.forEach(async e => {
-        //     if(result.includes(e.stage_name)){
-        //         var stage = await Stage.findOne({ stage_name: e.stage_name });
-        //         //해당 유저가 기록된 index 구하기
-        //         let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
-        //         let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
-    
-        //         stage.Normal[normal_index].used_custom =custom;
-        //         stage.Normal[normal_index].used_badge =badge;
-        //         stage.Hard[hard_index].used_custom =custom;
-        //         stage.Hard[hard_index].used_badge =badge;
-    
-    
-        //         await stage.save({ new: true });
-        //     }
-        // });
-
-
-            //reduce안되면 이용
-
         let user_stage_arr = [];
         
         for(i=0;i<user_stage.stage.length;i++){
@@ -639,9 +621,9 @@ exports.result = async (req, res, next) => {
                 let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
                 let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
     
-                stage.Normal[normal_index].used_custom =custom;
+                stage.Normal[normal_index].used_bee_custom =bee_custom;
                 stage.Normal[normal_index].used_badge =badge;
-                stage.Hard[hard_index].used_custom =custom;
+                stage.Hard[hard_index].used_bee_custom =bee_custom;
                 stage.Hard[hard_index].used_badge =badge;
     
     
