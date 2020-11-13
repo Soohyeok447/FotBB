@@ -306,15 +306,15 @@ exports.result = async (req, res, next) => {
                             console.log(status);
                             switch(status){
                                 case 'first_clear':{
-                                    res.status(200).json({ "status": "clear_renewal" ,leaderboard: leaderboardArr});
+                                    res.status(200).json({ "status": "clear_renewal",user:user ,leaderboard: leaderboardArr});
                                     break;
                                 }
                                 case 'renewal':{
-                                    res.status(200).json({ "status": "clear_renewal", leaderboard: leaderboardArr });
+                                    res.status(200).json({ "status": "clear_renewal", user:user , leaderboard: leaderboardArr });
                                     break;
                                 }
                                 case 'clear':{
-                                    res.status(200).json({ "ranking": ranking, "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
+                                    res.status(200).json({ "ranking": ranking, user:user,  "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     break;
                                 }
                                 default:break;
@@ -437,15 +437,15 @@ exports.result = async (req, res, next) => {
                             console.log(status);
                             switch(status){
                                 case 'first_clear':{
-                                    res.status(200).json({ "status": "clear_renewal",leaderboard: leaderboardArr});
+                                    res.status(200).json({ "status": "clear_renewal",user:user,leaderboard: leaderboardArr});
                                     break;
                                 }
                                 case 'renewal':{
-                                    res.status(200).json({ "status": "clear_renewal", leaderboard: leaderboardArr });
+                                    res.status(200).json({ "status": "clear_renewal", user:user, leaderboard: leaderboardArr });
                                     break;
                                 }
                                 case 'clear':{
-                                    res.status(200).json({ "ranking": ranking, "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
+                                    res.status(200).json({ "ranking": ranking, user:user , "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     break;
                                 }
                                 default:break;
