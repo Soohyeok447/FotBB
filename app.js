@@ -14,6 +14,7 @@ var Result_router = require('./routes/api/result/result.routes');
 var Fail_router = require("./routes/api/fail/fail.routes");
 var Stage_router = require("./routes/api/stages/stages.routes");
 var Playing_router = require("./routes/api/playing/playing.routes");
+var Badge_router = require("./routes/api/badge/badge.routes");
 
 //API 테스트
 var test = require("./routes/api/middleware/test");
@@ -76,6 +77,7 @@ app.use('/api/result',Result_router);
 app.use('/api/fail',Fail_router);
 app.use('/api/stages',Stage_router);
 app.use('/api/playing',Playing_router);
+app.use('/api/badge',Badge_router);
 
 app.use('/api/middleware/test',test);
 

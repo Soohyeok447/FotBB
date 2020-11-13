@@ -1,14 +1,19 @@
-var User = require("../../../models/user");
-var User_stage = require("../../../models/user_stage");
-var Stage = require("../../../models/stage");
+//게임 중 지속적으로 데이터를 받음(now_time) → 저장돼있는 now_time과 비교해서 어이없는 데이터가 들어오면 
+//유저 모든 db terminate화, 밴처리를 한다. → 그리고 클리어시에도 비교
 
-var {logger,play} = require('../../../config/logger');
+
+var Playing = require("../../../models/playing");
+var Stage = require("../../../models/stage");
+var User_stage = require("../../../models/user_stage");
+var User = require("../../../models/user");
+
+var {ban,delete_playing,get_userid,get_now} = require("../middleware/function");
+
+var {logger,userinfo} = require('../../../config/logger');
 var {upload} = require('./../../../config/s3_option');
 
 
-//middleware
-var {get_userid} = require("../middleware/function");
-
+            
 //////////////////verify///////////////////////
 require('dotenv').config();
 const {OAuth2Client} = require('google-auth-library');
@@ -24,7 +29,7 @@ async function verify(token,email) {
             TokenObj.verified = false;
             TokenObj.error = 'no email';
             logger.error(`no email`);
-            upload('','fail | token',`no email`);
+            upload('','badge | token',`no email`);
             return TokenObj;
         }else{
             var id = await get_userid(email);
@@ -54,14 +59,14 @@ async function verify(token,email) {
             TokenObj.verified = false;
             TokenObj.error = 'no payload';
             logger.error(`no payload error`);
-            upload(email,'fail | token',`accessToken error`);
+            upload(email,'badge | token',`accessToken error`);
             return TokenObj;
         }else{ 
             console.log("페이로드 티켓없음")
             TokenObj.verified = false;
             TokenObj.error = 'no ticket';
             logger.error(`no ticket error`);
-            upload(email,'fail | token',`accessToken error`);
+            upload(email,'badge | token',`accessToken error`);
             return TokenObj;
         }
 
@@ -85,27 +90,38 @@ async function verify(token,email) {
         }
         
         logger.error(`${id} - ${email} : ${err}`);
-        upload(email,`fail | token`,err);
+        upload(email,`badge | token`,err);
         return TokenObj;
     }
 }
 
 
-////////////////////////////////////////////
-
-
-
-
-//죽으면 death 갱신
-exports.death_up = async (req, res, next) => {
-    const {email, stage_name, gametype, get_crystal, token} = req.body
+//뱃지 획득
+exports.badge = async (req, res, next) => {
+    const {email, badge ,token} = req.body;
 
     var verify_result = await verify(token,email)
     if(verify_result.verified){
-        
+        try{
+            if(!badge){
+                res.status(200).json({error:"no badge",status:'fail'});
+            }else{
+                let user = await User.findOneAndUpdate(
+                    { email: email },
+                    { $addToSet: { badge: badge }, },
+                    { new: true, upsert: true },
+                ).setOptions({ runValidators: true });
+                res.status(200).json({user:user,status:'success'});
+            }
+        }catch (err) {
+            let id = await get_userid(email);
+            res.status(500).json({ error: `${err}` });
+            logger.error(`유저 뱃지획득 에러: ${email} : ${id} [${err}]`);
+            userinfo.error(`유저 뱃지획득 에러: ${email} : ${id} [${err}]`);
+            upload(email,'badge',err);
+            next(err);
+        }
     }else{
         res.status(500).json({ "message": "Token error" ,"error":`${verify_result.error}`});
     }
 }
-
-
