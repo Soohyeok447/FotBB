@@ -145,7 +145,6 @@ exports.result = async (req, res, next) => {
         stage_name,
         result_type,
         used_bee_custom,
-        //used_shot_custom, 넣으라고 하면 삽입
         used_badge,
     } = req.body;
 
@@ -240,7 +239,6 @@ exports.result = async (req, res, next) => {
                                 stage.Normal[userindex].cleartime = cleartime;
                                 stage.Normal[userindex].renewed_at = get_now();
                                 stage.Normal[userindex].used_bee_custom = used_bee_custom;
-                                //stage.Normal[userindex].used_shot_custom = used_shot_custom;
                                 stage.Normal[userindex].used_badge = used_badge;
                                 await stage.save({ new: true });
 
@@ -277,7 +275,6 @@ exports.result = async (req, res, next) => {
                                     stage.Normal[userindex].cleartime = cleartime;
                                     stage.Normal[userindex].renewed_at = get_now();
                                     stage.Normal[userindex].used_bee_custom = used_bee_custom;
-                                    //stage.Normal[userindex].used_shot_custom = used_shot_custom;
                                     stage.Normal[userindex].used_badge = used_badge;
 
                                     await stage.save({ new: true }); //신기록 갱신
@@ -371,7 +368,6 @@ exports.result = async (req, res, next) => {
                                 stage.Hard[userindex].cleartime = cleartime;
                                 stage.Hard[userindex].renewed_at = get_now();
                                 stage.Hard[userindex].used_bee_custom = used_bee_custom;
-                                //stage.Hard[userindex].used_shot_custom = used_shot_custom;
                                 stage.Hard[userindex].used_badge = used_badge;
                                 await stage.save({ new: true });
 
@@ -409,7 +405,6 @@ exports.result = async (req, res, next) => {
                                     stage.Hard[userindex].cleartime = cleartime;
                                     stage.Hard[userindex].renewed_at = get_now();
                                     stage.Hard[userindex].used_bee_custom = used_bee_custom;
-                                    //stage.Hard[userindex].used_shot_custom = used_shot_custom;
                                     stage.Hard[userindex].used_badge = used_badge;
                                     await stage.save({ new: true }); //신기록 갱신
 
@@ -506,7 +501,7 @@ exports.result = async (req, res, next) => {
 
                             stage.Normal[userindex].death++;  //Normal death 갱신
                             await stage.save({ new: true });
-                            res.status(200).json({status: 'fail', "total_death": user.total_death, "stage_total_death": stage.total_death, "Normal_death": stage.Normal[userindex].death });
+                            res.status(200).json({status: 'fail',user:user, "total_death": user.total_death, "stage_total_death": stage.total_death, "Normal_death": stage.Normal[userindex].death });
                             logger.info(`${userid} 가 노말 ${stage_name} 실패.`);
                             play.info(`${userid} 가 노말 ${stage_name} 실패.`);
                         } else { //Hard
@@ -514,7 +509,7 @@ exports.result = async (req, res, next) => {
 
                             stage.Hard[userindex].death++;
                             await stage.save({ new: true }); //Hard death 갱신
-                            res.status(200).json({status: 'fail', "total_death": user.total_death, "stage_total_death": stage.total_death, "Hard_death": stage.Hard[userindex].death });
+                            res.status(200).json({status: 'fail',user:user, "total_death": user.total_death, "stage_total_death": stage.total_death, "Hard_death": stage.Hard[userindex].death });
                             logger.info(`${userid} 가 하드 ${stage_name} 실패.`);
                             play.info(`${userid} 가 하드 ${stage_name} 실패.`);
                         }
@@ -588,7 +583,7 @@ exports.result = async (req, res, next) => {
 
     //2가지 함수가 더 필요함 
     //  1. 커스텀, 뱃지 유효성 체크
-    async function custom_badge_validation(bee_custom,badge,user,email){ //shot_custom 도 필요하면 수정
+    async function custom_badge_validation(bee_custom,badge,user,email){ 
         console.log("커스텀 뱃지 유효성 체크 함수 시작")
         console.log(bee_custom,badge);
 

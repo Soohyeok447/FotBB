@@ -242,3 +242,29 @@ exports.report = async (req, res, next) => {
     }
 
 };
+
+//리액트연습
+exports.react = async (req, res, next) => {
+    try {
+        if (!(req.body.email && req.body.token)) { //이메일과 토큰이 없는 잘못된 접근
+            console.log("이메일이 없습니다.");
+            res.render("admin_login",{ error: 'forbidden' });
+        }else{
+            let user = await User.exists({ email: req.body.email });
+            if(!user){ //DB에 없는 유저일 때
+                res.render("admin_login",{error:'nouser'});
+            }else{
+                let _user = await User.findOne({email:req.body.email});
+                if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
+                    console.log("어드민이 아닙니다.");
+                    res.render("admin_login",{ error: 'noadmin' });
+                } else {
+                    res.render("react", {});
+                }
+            }
+        }
+    } catch (err) {
+        console.log(err);
+        res.send(err);
+    }
+};

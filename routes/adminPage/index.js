@@ -26,6 +26,11 @@ router.post("/report",Controller.report);
 // router.post("/log",Controller.log);
 
 
+
+
+//리액트연습
+router.post("/react",Controller.react);
+
 // router.get('/auth/google',Controller.auth_google);
 // router.get('/auth/google/callback',Controller.auth_google_callback);
 

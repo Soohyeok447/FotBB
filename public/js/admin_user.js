@@ -50,7 +50,16 @@ window.onload = ()=>{
           td.textContent = result.user.crystal;
           row.appendChild(td);
           td = document.createElement('td');
-          td.textContent = result.user.customizing;
+          td.textContent = result.user.royal_crystal;
+          row.appendChild(td);
+          td = document.createElement('td');
+          td.textContent = result.user.bee_custom;
+          row.appendChild(td);
+          td = document.createElement('td');
+          td.textContent = result.user.shot_custom;
+          row.appendChild(td);
+          td = document.createElement('td');
+          td.textContent = result.user.badge;
           row.appendChild(td);
           td = document.createElement('td');
           td.textContent = result.user.created_date;
@@ -61,8 +70,6 @@ window.onload = ()=>{
           td = document.createElement('td');
           td.textContent = result.user.country;
           row.appendChild(td);
-
-
 
 
 

@@ -397,8 +397,6 @@ exports.user_login = async (req, res, next) => {
                                     renewed_at: '',
                                     used_badge:0,
                                     used_bee_custom:0,
-                                    //탄커스텀정보도 필요하면 저장
-                                    //used_shot_custom:0,
                                     terminated: false,
                                 },
                                 Hard: {
@@ -408,9 +406,7 @@ exports.user_login = async (req, res, next) => {
                                     country: country,
                                     renewed_at: '',
                                     used_badge:0,
-                                    used_bee_custom:0,
-                                    //탄커스텀정보도 필요하면 저장
-                                    //used_shot_custom:0,
+                                    used_bee_custom:0,  
                                     terminated: false,
                                 },
                             },
@@ -516,7 +512,7 @@ exports.crystal = async (req, res, next) => {
                     { $inc: { crystal: get_crystal } },
                     { new: true }
                 ).setOptions({ runValidators: true });
-                res.status(200).json({ crystal: result.crystal });
+                res.status(200).json({ user: result });
                 logger.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
                 payment.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
             }else if(crystal_type ==='royal'){ //로얄 크리스탈이면
@@ -525,7 +521,7 @@ exports.crystal = async (req, res, next) => {
                     { $inc: { royal_crystal: get_crystal } },
                     { new: true }
                 ).setOptions({ runValidators: true });
-                res.status(200).json({ royal_crystal: result.royal_crystal });
+                res.status(200).json({ user: result });
                 logger.info(`${result.googleid} 가 로얄 크리스탈 ${get_crystal}개를 획득했습니다.`);
                 payment.info(`${result.googleid} 가 로얄 크리스탈 ${get_crystal}개를 획득했습니다.`);
             }else{
@@ -682,8 +678,10 @@ exports.stage = async (req, res, next) => {
             let now_crystal = user.crystal;//현재 보유중인 크리스탈
             //유저 country 알 수 있으면 받아오게 수정
 
-            let user_bee_custom = user_stage.stage[0].user_bee_custom;
-            let user_badge = user_stage.stage[0].user_badge;
+            let stageObj = await Stage.findOne({stage_name:'바흐시메이저'});
+            let idx = stageObj.Normal.findIndex((e) => e.userid === user.googleid);
+            let used_bee_custom = stageObj.Normal[idx].used_bee_custom;
+            let used_badge = stageObj.Normal[idx].used_badge;
 
             if (now_crystal < reduce_crystal) {
                 res.status(200).json({ status: 'fail', message: "크리스탈이 부족합니다." });
@@ -701,8 +699,8 @@ exports.stage = async (req, res, next) => {
                                     cleartime: 0,
                                     death: 0,
                                     country: user.country,
-                                    used_bee_custom:user_bee_custom,
-                                    user_badge:user_badge,
+                                    used_bee_custom:used_bee_custom,
+                                    used_badge:used_badge,
                                     renewed_at: '',
                                     terminated: false,
                                 },
@@ -711,8 +709,8 @@ exports.stage = async (req, res, next) => {
                                     cleartime: 0,
                                     death: 0,
                                     country: user.country,
-                                    used_bee_custom:user_bee_custom,
-                                    user_badge:user_badge,
+                                    used_bee_custom:used_bee_custom,
+                                    used_badge:used_badge,
                                     renewed_at: '',
                                     terminated: false,
                                 },
@@ -962,6 +960,14 @@ exports.test = async (req, res, next) => {
             user_stage.stage[0].H_cleartime = 0;
             user_stage.stage[0].N_death = 0;
             user_stage.stage[0].H_death = 0;
+            
+            user.total_death = 0;
+            user.bee_custom = 0;
+            user.shot_custom = 0;
+            user.badge = 0;
+
+ 
+
             all_stage.forEach(async e => {
 
                 if (e.stage_name !== '바흐시메이저') {
@@ -1001,9 +1007,9 @@ exports.test = async (req, res, next) => {
             user_stage.stage.splice(1, user_stage.stage.length);
 
             await user_stage.save({ new: true });
+            await user.save({new:true});
 
-
-            res.status(200).send('초기화 완료');
+            res.status(200).json(user_stage);
         } catch (err) {
             console.log(err);
             res.status(200).send(err);
@@ -1015,70 +1021,10 @@ exports.test = async (req, res, next) => {
 }
 
 exports.test2 = async (req, res, next) => {
-    const { email, crystal, token } = req.body;
-    var verify_result = await verify(token, email)
-    if (verify_result.verified) {
-        try {
-            let user = await User.findOne({ email: email });
-            let user_stage = await User_stage.findOne({ userid: user.googleid });
-            console.log(user_stage.stage, "\n\n");
-            user_stage.stage.forEach(async e => {
-
-                if (e.stage_name !== '바흐시메이저') {
-                    console.log("진입");
-
-
-                    let stage = await Stage.findOne({ stage_name: e.stage_name });
-
-                    //해당 유저가 기록된 index 구하기
-                    normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
-                    hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
-
-                    stage.Normal.splice(normal_index, 1);
-                    stage.Hard.splice(hard_index, 1);
-                    stage.save({ new: true });
-
-                } else {
-                    console.log("바흐 시메이저입니다.")
-                }
-            })
-            user_stage.stage.splice(1, user_stage.stage.length);
-            user_stage.save({ new: true });
-
-
-            res.status(200).send(user_stage.stage);
-        } catch (err) {
-            console.log(err);
-            res.status(200).send(err);
-        }
-    } else {
-        res.status(500).json({ "message": "Token error" });
-    }
 
 }
 
 exports.test3 = async (req, res, next) => {
-    const { email, token } = req.body;
-    var verify_result = await verify(token, email)
-    if (verify_result.verified) {
-        try {
-            //유저가 보유중인 스테이지의 목록을 얻는다.
-            let userid = await get_userid(email);
-            let user_stage = await User_stage.findOne({ userid: userid });
-            let testArr;
-
-            // 스테이지마다 돌면서 글로벌 리더보드와 정보를 뽑는다.
-
-            let stage_list = await Stage.find({});
-            testArr = stage_list.map(x=> x.stage_name);
-            res.status(200).json(testArr);
-        } catch (err) {
-            console.log(err);
-            res.status(200).send(err);
-        }
-    } else {
-        res.status(500).json({ "message": "Token error" });
-    }
-
+    
     
 }
