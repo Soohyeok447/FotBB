@@ -309,17 +309,17 @@ exports.result = async (req, res, next) => {
 
                             switch(status){
                                 case 'first_clear':{
-                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage,stage_name);
                                     res.status(200).json({ "status": "clear_renewal",user:user ,leaderboard: leaderboardArr});
                                     break;
                                 }
                                 case 'renewal':{
-                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage,stage_name);
                                     res.status(200).json({ "status": "clear_renewal", user:user , leaderboard: leaderboardArr });
                                     break;
                                 }
                                 case 'clear':{
-                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage,stage_name);
                                     res.status(200).json({ "ranking": ranking, user:user,  "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     break;
                                 }
@@ -443,17 +443,17 @@ exports.result = async (req, res, next) => {
                             console.log(status);
                             switch(status){
                                 case 'first_clear':{
-                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom, used_badge, user, user_stage, stage_name);
                                     res.status(200).json({ "status": "clear_renewal",user:user,leaderboard: leaderboardArr});
                                     break;
                                 }
                                 case 'renewal':{
-                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom, used_badge, user, user_stage, stage_name);
                                     res.status(200).json({ "status": "clear_renewal", user:user, leaderboard: leaderboardArr });
                                     break;
                                 }
                                 case 'clear':{
-                                    await renew_stageDB(used_bee_custom,used_badge,user,user_stage);
+                                    await renew_stageDB(used_bee_custom, used_badge, user, user_stage, stage_name);
                                     res.status(200).json({ "ranking": ranking, user:user , "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
                                     break;
                                 }
@@ -599,32 +599,95 @@ exports.result = async (req, res, next) => {
     }
 
 //  2. 클리어 할 때 유저가 보유중인 모든 스테이지 used_custom, used_badge 갱신하는 함수
-    async function renew_stageDB(bee_custom,badge,user,user_stage){
+    async function renew_stageDB(bee_custom,badge,user,user_stage,stage_name){
         console.log("스테이지 커스텀 통일 함수 실행")
-        let all_stage = await Stage.find({});
+
+
+        //만약 이미 다 통일 돼있는데 계속 바꾸면 낭비니까
+        // 바흐시메이저일 경우는 .index +1
+        // 나머지 곡일 경우는 index -1 해서 해당 스테이지들 used_bee_custom 비교를 하고
+        // 같으면 내비두고 다르면 수정하도록 변경
+
+
+        
         let user_stage_arr = [];
         
         for(i=0;i<user_stage.stage.length;i++){
             user_stage_arr.push(user_stage.stage[i].stage_name);
         }
+        console.log(user_stage_arr.length);
+        if(user_stage_arr.length===1){ //바흐시메이저 밖에없다.
+            renew_db(user_stage_arr,user,bee_custom,badge);
+        }else{ //곡이 여러개가 있다.
+            let check_stage = await Stage.findOne({stage_name:'바흐시메이저'});
+        
+            let normal_index = check_stage.Normal.findIndex((e) => e.userid === user.googleid);
+            let used_bee_custom = check_stage.Normal[normal_index].used_bee_custom;
+            let used_badge = check_stage.Normal[normal_index].used_badge
+
+            if(bee_custom===used_bee_custom && badge === used_badge){ //다 같아서 수정할 필요가 없다.
+                console.log("갱신할 필요가 없음");
+                return
+            }else if(bee_custom!==used_bee_custom && badge === used_badge){
+                renew_db(user_stage_arr,user,bee_custom);
+            }else if(bee_custom===used_bee_custom && badge !== used_badge){
+                renew_db(user_stage_arr,user,null,badge);
+            }else{
+                renew_db(user_stage_arr,user,bee_custom,badge);
+            }
+        
+        }
+        
+    }
+
+    async function renew_db(user_stage_arr,user,bee_custom,badge){
 
 
-        all_stage.forEach(async e => {
-            if(user_stage_arr.includes(e.stage_name)){
-                var stage = await Stage.findOne({ stage_name: e.stage_name });
+        if(bee_custom && !badge){
+            console.log('renew_db 1');
+            for(e of user_stage_arr){
+                var stage = await Stage.findOne({ stage_name: e });
+                //해당 유저가 기록된 index 구하기
+                let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
+                let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
+        
+                stage.Normal[normal_index].used_bee_custom =bee_custom;
+                stage.Hard[hard_index].used_bee_custom =bee_custom;
+        
+                await stage.save({ new: true });
+            }
+        }else if(badge && !bee_custom){
+            console.log('renew_db 2');
+            for(e of user_stage_arr){
+                var stage = await Stage.findOne({ stage_name: e });
                 //해당 유저가 기록된 index 구하기
                 let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
                 let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
     
+                stage.Normal[normal_index].used_badge =badge;
+                stage.Hard[hard_index].used_badge =badge;
+    
+                await stage.save({ new: true });
+            }
+        }else{
+            console.log('renew_db 3');
+            for(e of user_stage_arr){
+                var stage = await Stage.findOne({ stage_name: e });
+                //해당 유저가 기록된 index 구하기
+                let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
+                let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
+            
                 stage.Normal[normal_index].used_bee_custom =bee_custom;
                 stage.Normal[normal_index].used_badge =badge;
                 stage.Hard[hard_index].used_bee_custom =bee_custom;
                 stage.Hard[hard_index].used_badge =badge;
-    
-    
+            
+            
                 await stage.save({ new: true });
-            }
-        });
+            }  
+        }
     }
+
 }
+
 
