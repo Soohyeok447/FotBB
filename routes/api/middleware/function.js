@@ -8,6 +8,7 @@ var Banned = require("../../../models/banned");
 var User = require("../../../models/user");
 var Stage = require("../../../models/stage");
 var User_stage = require("../../../models/user_stage");
+var Rt = require("../../../models/rt");
 
 // 밴용 moment
 var moment = require("moment");
@@ -260,23 +261,69 @@ async function get_stage_info(stage) {
 // 	}
 // }
 
-exports.verifyToken = (req,res,next)=>{
+exports.verifyToken = async (req,res,next)=>{
 	try{
-		console.log("Fotbb토큰의 유효성검사 시작");
-		jwt.verify(req.body.fotbbToken, process.env.FOTBB_JWT_SECRET_KEY);
-		console.log('통과');
-		next();
+		if(req.body.refreshToken){
+			console.log("토큰 재발급");
+			console.log("refreshToken의 유효성 검사 시작");
+			try{
+				
+				let rfToken = await Rt.findOne({email:req.body.email});
+				if(rfToken.rt===req.body.refreshToken){ //DB에 저장된 rf랑 같으면
+					console.log("유효한 refreshToken입니다.");
+					jwt.verify(req.body.refreshToken, process.env.FOTBB_JWT_SECRET_KEY);
+					const token = jwt.sign({
+						email: req.body.email,
+					},process.env.FOTBB_JWT_SECRET_KEY,{
+						expiresIn:'1h',
+						issuer:'Fotbb',
+					});
+					return res.status(200).json({
+						status:'tokenRefresh',
+						message:'Fotbb 토큰 재발급',
+						token
+					});
+					console.log(token);
+					//next(token);
+				}else{ // DB에 저장된 rf랑 다르면 (이상한 접근)
+					return res.status(550).json({
+						status:'invaliedToken',
+						message:'유효하지 않은 토큰입니다.'
+					});
+				}
+				
+				
+			}catch(err){
+				console.log(err);
+				if (err.name === 'TokenExpiredError') {
+					console.log("refresh토큰 만료");
+					return res.status(560).json({
+						status: 'refreshTokenExpired',
+						message: 'Fotbb refresh토큰 만료 재로그인 하세요',
+					});
+				}
+				return res.status(550).json({
+					status: 'invaliedToken',
+					message: '유효하지 않은 토큰입니다.'
+				});
+			}
+		}else{
+			console.log("Fotbb토큰의 유효성검사 시작");
+			jwt.verify(req.body.token, process.env.FOTBB_JWT_SECRET_KEY);
+			console.log('통과');
+			next();
+		}
 	}catch(err){
-		if(error.name==='TokenExpiredError'){
+		console.log(err);
+		if(err.name==='TokenExpiredError'){
 			console.log("토큰 만료");
 			return res.status(555).json({
-				status:'fail',
+				status:'tokenExpired',
 				message:'Fotbb 토큰 만료',
 			});
 		}
-		console.log("토큰 에러");
 		return res.status(550).json({
-			status:'fail',
+			status:'invaliedToken',
 			message:'유효하지 않은 토큰입니다.'
 		});
 	}

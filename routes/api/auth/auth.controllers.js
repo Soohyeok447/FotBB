@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+var Rt = require("../../../models/rt");
 
 var {get_userid} = require("../middleware/function");
 
@@ -90,18 +91,41 @@ async function verify(token,email) {
 
 //fotbb API서버의 토큰 발급
 exports.auth = async (req, res, next) => {
-    const {email ,token} = req.body;
+    const {email ,gpgsToken} = req.body;
 
-    var verify_result = await verify(token,email)
+    var verify_result = await verify(gpgsToken,email)
     if(verify_result.verified){
         try{
             const token = jwt.sign({
                 email: email,
             },process.env.FOTBB_JWT_SECRET_KEY,{
-                expiresIn:'31d',
+                //expiresIn:'1h',
+                expiresIn:'10s',
                 issuer:'Fotbb',
             });
-            res.status(200).json({status:"success",message:'Fotbb토큰 발급완료',token});
+            const refreshToken = jwt.sign({
+                email: email,
+            },process.env.FOTBB_JWT_SECRET_KEY,{
+                expiresIn:'1d',
+                //expiresIn:'10m',
+                issuer:'Fotbb',
+            });
+
+            if(await Rt.exists({email:email})){
+                console.log("로그인 하고 Rt DB 갱신")
+                let rt_user = await Rt.findOne({email:email});
+                rt_user.rt = refreshToken;
+                await rt_user.save();
+            }else{
+                console.log("로그인 하고 Rt DB에 신규생성");
+                let rt_user = new Rt({
+                    email:email,
+                    rt:refreshToken
+                });
+                await rt_user.save();
+            }
+            
+            res.status(200).json({status:"success",message:'Fotbb토큰 발급완료',token,refreshToken});
         }catch (err) {
             let id = await get_userid(email);
             res.status(500).json({ error: `${err}`,status:'fail',message:'Fotbb토큰 발급실패' });

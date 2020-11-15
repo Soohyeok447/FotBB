@@ -49,4 +49,6 @@ module.exports = () => {
     require("./banned");
     require("./playing");
     require("./report_user");
+    require("./rt");
+    
 };

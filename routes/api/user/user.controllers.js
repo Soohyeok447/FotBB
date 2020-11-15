@@ -828,7 +828,6 @@ exports.test = async (req, res, next) => {
             if (e.stage_name !== '바흐시메이저') {
                 console.log("진입");
 
-
                 var stage = await Stage.findOne({ stage_name: e.stage_name });
 
                 //해당 유저가 기록된 index 구하기
