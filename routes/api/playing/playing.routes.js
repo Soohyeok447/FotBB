@@ -2,12 +2,13 @@
 //인기도는 어떻게 떨궈야 할지 고민
 
 var express = require("express");
-
+//middleware
+var { verifyToken } = require("../middleware/function");
 const router = express.Router();
 
 var playingController = require("./playing.controllers");
 
 //실행하면 playcount +1
-router.post("/", playingController.check_modulation);
+router.post("/",verifyToken ,playingController.check_modulation);
 
 module.exports = router;

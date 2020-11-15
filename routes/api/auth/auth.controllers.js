@@ -98,7 +98,7 @@ exports.auth = async (req, res, next) => {
             const token = jwt.sign({
                 email: email,
             },process.env.FOTBB_JWT_SECRET_KEY,{
-                expiresIn:'999h',
+                expiresIn:'31d',
                 issuer:'Fotbb',
             });
             res.status(200).json({status:"success",message:'Fotbb토큰 발급완료',token});

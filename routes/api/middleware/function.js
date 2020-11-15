@@ -263,7 +263,7 @@ async function get_stage_info(stage) {
 exports.verifyToken = (req,res,next)=>{
 	try{
 		console.log("Fotbb토큰의 유효성검사 시작");
-		jwt.verify(req.body.token, process.env.FOTBB_JWT_SECRET_KEY);
+		jwt.verify(req.body.fotbbToken, process.env.FOTBB_JWT_SECRET_KEY);
 		console.log('통과');
 		next();
 	}catch(err){
