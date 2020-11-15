@@ -14,9 +14,10 @@ var Result_router = require('./routes/api/result/result.routes');
 var Stage_router = require("./routes/api/stages/stages.routes");
 var Playing_router = require("./routes/api/playing/playing.routes");
 var Badge_router = require("./routes/api/badge/badge.routes");
+var Auth_router = require("./routes/api/auth/auth.routes");
 
 //API 테스트
-var test = require("./routes/api/middleware/test");
+//var test = require("./routes/api/middleware/test");
 
 //관리자 페이지
 var adminPage = require("./routes/adminPage/index");
@@ -76,8 +77,9 @@ app.use('/api/result',Result_router);
 app.use('/api/stages',Stage_router);
 app.use('/api/playing',Playing_router);
 app.use('/api/badge',Badge_router);
+app.use('/api/auth',Auth_router);
 
-app.use('/api/middleware/test',test);
+//app.use('/api/middleware/test',test);
 
 app.use('/adminPage',adminPage);
 

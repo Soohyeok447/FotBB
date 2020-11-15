@@ -1,5 +1,7 @@
 require("dotenv").config();
 
+const jwt = require('jsonwebtoken');
+
 var Playing = require("../../../models/playing");
 var Banned = require("../../../models/banned");
 
@@ -245,6 +247,39 @@ async function get_stage_info(stage) {
 		
 
 	return jsonObj;
+}
+
+
+
+// function verifyToken(){
+// 	try{
+// 		let fotbbToken = jwt.verify(req.body.token, process.env.FOTBB_JWT_SECRET_KEY);
+// 		res.status(200).json({fotbbToken});
+// 	}catch(err){
+
+// 	}
+// }
+
+exports.verifyToken = (req,res,next)=>{
+	try{
+		console.log("Fotbb토큰의 유효성검사 시작");
+		jwt.verify(req.body.token, process.env.FOTBB_JWT_SECRET_KEY);
+		console.log('통과');
+		next();
+	}catch(err){
+		if(error.name==='TokenExpiredError'){
+			console.log("토큰 만료");
+			return res.status(555).json({
+				status:'fail',
+				message:'Fotbb 토큰 만료',
+			});
+		}
+		console.log("토큰 에러");
+		return res.status(550).json({
+			status:'fail',
+			message:'유효하지 않은 토큰입니다.'
+		});
+	}
 }
 
 
