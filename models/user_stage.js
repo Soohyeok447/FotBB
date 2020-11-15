@@ -18,9 +18,7 @@ const User_stage= new Schema({
     stage:[new Schema({
         stage_name: String,
         N_cleartime: Number, //Normal
-        H_cleartime: Number, //hard
         N_death:Number,
-        H_death:Number,
     })]},{ 
         versionKey : false 
 });

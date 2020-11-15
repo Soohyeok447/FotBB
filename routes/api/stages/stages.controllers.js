@@ -89,86 +89,6 @@ async function verify(token, email) {
 }
 
 
-
-
-
-
-// ////////////////////////////////////////////
-// //스테이지목록에서 한 스테이지 눌렀을 때 글로벌랭킹 받아오기
-// exports.global = async (req, res, next) => {
-//     const { email, stage_name, token } = req.body;
-//     var verify_result = await verify(token, email)
-//     if (verify_result.verified) {
-//         try {
-//             let stage = await Stage.findOne({ stage_name: stage_name });
-//             let user = await User.findOne({ email: email });
-
-//             //user.stage_checked
-//             let check_initialized = user.stage_checked.findIndex(s => s === stage_name);
-//             if (check_initialized < 0) { //스테이지 랭킹 불러온적이 없을 때
-//                 user.stage_checked.push(stage_name);
-//                 user.save({ new: true });
-
-//                 let jsonObj = get_global_leaderboard(stage, email);
-
-//                 res.status(200).json(jsonObj);
-//                 logger.info(`${userid} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
-//             } else { //스테이지를 불러온적이 있을 때,
-//                 res.status(200).json({ message: "이미 불러온 적 있습니다.", status: 'fail' })
-//             }
-//         } catch (err) {
-//             res.status(500).json({ error: `${err}` });
-//             logger.error(`${userid} 가 스테이지 ${stage_name}의 랭킹로딩에 실패 [${err}]`)
-//             upload(email, 'stages', err);
-//             next(err);
-//         }
-//     } else {
-//         res.status(500).json({ "message": "Token error", "error": `${verify_result.error}` });
-//     }
-// }
-
-
-// ////////////////////////////////////////////
-// //스테이지목록에서 한 스테이지 눌렀을 때 국가랭킹 받아오기
-// exports.country = async (req, res, next) => {
-//     const { email, country, stage_name, token } = req.body;
-//     var verify_result = await verify(token, email)
-//     if (verify_result.verified) {
-//         try {
-
-//             let stage = await Stage.findOne({ stage_name: stage_name });
-//             let user = await User.findOne({ email: email });
-
-
-//             let stage_name_country = `${stage_name}` + '_' + `${country}`;
-//             //user.stage_checked
-//             let check_initialized = user.stage_checked.findIndex(s => s === stage_name_country);
-//             if (check_initialized < 0) { //스테이지 랭킹 불러온적이 없을 때
-//                 user.stage_checked.push(stage_name_country);
-//                 user.save({ new: true });
-
-
-//                 let jsonObj = get_country_leaderboard(stage, email, country);
-
-
-
-//                 res.status(200).json(jsonObj);
-//                 logger.info(`${userid} 가 스테이지 ${stage_name}의 랭킹을 로딩`)
-//             } else { //스테이지를 불러온적이 있을 때,
-//                 res.status(200).json({ message: "이미 불러온 적 있습니다.", status: 'fail' })
-//             }
-
-//         } catch (err) {
-//             res.status(500).json({ error: `${err}` });
-//             logger.error(`${userid} 가 스테이지 ${stage_name}의 랭킹로딩에 실패 [${err}]`)
-//             upload(email, 'stages', err);
-//             next(err);
-//         }
-//     } else {
-//         res.status(500).json({ "message": "Token error", "error": `${verify_result.error}` });
-//     }
-// }
-
 //스테이지목록에서 한 스테이지 눌렀을 때 타입에 따라 전체랭킹,국가랭킹 불러오기
 exports.leaderboard = async (req, res, next) => {
     const { email, country, stage_name, token } = req.body;
@@ -188,8 +108,7 @@ exports.leaderboard = async (req, res, next) => {
 
                 let jsonArr = [];
                 jsonObj.stage_info = await get_stage_info(stage);
-                jsonObj.country_Normal = await get_country_leaderboard(stage, country, "Normal",user.googleid);
-                jsonObj.country_Hard = await get_country_leaderboard(stage, country, "Hard",user.googleid);
+                jsonObj.country_Normal = await get_country_leaderboard(stage, country,user.googleid);
                 jsonArr.push(jsonObj);
                 res.status(200).json({ status: 'success', leaderboard: jsonArr });
                 //logger.info(`${userid} 가 스테이지 ${stage_name}의 랭킹을 로딩`)

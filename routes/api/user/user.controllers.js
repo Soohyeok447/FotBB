@@ -312,7 +312,7 @@ async function get_all_leaderboard(email){
     for (j in user_stage.stage) {
         let stage = await Stage.findOne({ stage_name: user_stage.stage[j].stage_name });
 
-        await add_obj(stage, email,userid).then((Obj) => {
+        await add_obj(stage,userid).then((Obj) => {
             resultArr.push(Obj);
         })
     }
@@ -321,14 +321,13 @@ async function get_all_leaderboard(email){
 
 
 
-    function add_obj(stage, email,userid) {
+    function add_obj(stage,userid) {
         const jsonObj = {};
         //유저가 보유중인 스테이지를 참조하여 스테이지 객체를 얻는다.
 
         return new Promise(async (resolve, rejected) => {
             jsonObj["stage_info"] = await get_stage_info(stage);
-            jsonObj["global_Normal"] = await get_global_leaderboard(stage, "Normal",userid);
-            jsonObj["global_Hard"] = await get_global_leaderboard(stage, "Hard",userid);
+            jsonObj["global_Normal"] = await get_global_leaderboard(stage,userid);
             resolve(jsonObj);
         })
     };
@@ -380,9 +379,7 @@ exports.user_login = async (req, res, next) => {
                         stage: {
                             stage_name: "바흐시메이저",
                             N_cleartime: 0, //Normal
-                            H_cleartime: 0, //hard
                             N_death: 0,
-                            H_death: 0,
                         },
                     });
                     await Stage.findOneAndUpdate(
@@ -397,16 +394,6 @@ exports.user_login = async (req, res, next) => {
                                     renewed_at: '',
                                     used_badge:0,
                                     used_bee_custom:0,
-                                    terminated: false,
-                                },
-                                Hard: {
-                                    userid: new_id,
-                                    cleartime: 0,
-                                    death: 0,
-                                    country: country,
-                                    renewed_at: '',
-                                    used_badge:0,
-                                    used_bee_custom:0,  
                                     terminated: false,
                                 },
                             },
@@ -704,16 +691,6 @@ exports.stage = async (req, res, next) => {
                                     renewed_at: '',
                                     terminated: false,
                                 },
-                                Hard: {
-                                    userid: user.googleid,
-                                    cleartime: 0,
-                                    death: 0,
-                                    country: user.country,
-                                    used_bee_custom:used_bee_custom,
-                                    used_badge:used_badge,
-                                    renewed_at: '',
-                                    terminated: false,
-                                },
                             },
                         }, { new: true }).setOptions({ runValidators: true });
 
@@ -744,10 +721,7 @@ exports.stage = async (req, res, next) => {
                     stageObj.stage_info = await get_stage_info(stage);
 
                     stageObj.global_Normal = await get_global_leaderboard(stage, "Normal",user.googleid);
-                    stageObj.global_Hard = await get_global_leaderboard(stage, "Hard",user.googleid);
-
                     stageObj.country_Normal = await get_country_leaderboard(stage, user.country, "Normal",user.googleid);
-                    stageObj.country_Hard = await get_country_leaderboard(stage, user.country, "Hard",user.googleid);
                     stageArr.push(stageObj);
 
                     res.status(200).json({ message: `${stage_name} 언락완료.`, crystal: userResult.crystal, status: 'success', user_stage: usResult, leaderboard: stageArr });
@@ -957,9 +931,7 @@ exports.test = async (req, res, next) => {
             let all_stage = await Stage.find({});
             console.log(user_stage);
             user_stage.stage[0].N_cleartime = 0;
-            user_stage.stage[0].H_cleartime = 0;
             user_stage.stage[0].N_death = 0;
-            user_stage.stage[0].H_death = 0;
             
             user.total_death = 0;
             user.bee_custom = 0;
@@ -978,10 +950,8 @@ exports.test = async (req, res, next) => {
 
                     //해당 유저가 기록된 index 구하기
                     let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
-                    let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
-
                     stage.Normal.splice(normal_index, 1);
-                    stage.Hard.splice(hard_index, 1);
+
 
                     await stage.save({ new: true });
                     //console.log(stage);
@@ -991,15 +961,10 @@ exports.test = async (req, res, next) => {
                     var stage = await Stage.findOne({ stage_name: e.stage_name });
                     //해당 유저가 기록된 index 구하기
                     let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
-                    let hard_index = stage.Hard.findIndex((e) => e.userid === user.googleid);
 
                     stage.Normal[normal_index].cleartime =0;
                     stage.Normal[normal_index].renewed_at ='';
                     stage.Normal[normal_index].death =0;
-                    stage.Hard[hard_index].cleartime =0;
-                    stage.Hard[hard_index].renewed_at ='';
-                    stage.Hard[hard_index].death =0;
-
 
                     await stage.save({ new: true });
                 }

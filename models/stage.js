@@ -26,20 +26,6 @@ const Stage = new Schema({
         renewed_at:String,
         terminated: Boolean,
     })],
-    Hard: [new Schema({
-        userid: String,
-        cleartime: Number,
-        ranking:{
-            type:Number,
-            default: '',
-        },
-        death: Number,
-        country: String,
-        used_bee_custom:Number,
-        used_badge:Number,
-        renewed_at:String,
-        terminated: Boolean,
-    })],
     },{ 
         versionKey : false 
 });
