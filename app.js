@@ -51,7 +51,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //helmet
 app.use(helmet());
 app.use(function(req, res, next) {
-  res.setHeader("Content-Security-Policy", "script-src 'self' https://apis.google.com 'unsafe-inline'"); //구글 API 이용하기 위한 헤더
+  res.setHeader("Content-Security-Policy", "script-src 'self' https://apis.google.com 'unsafe-inline' https://unpkg.com/react@17/umd/react.development.js https://unpkg.com/react-dom@17/umd/react-dom.development.js https://unpkg.com/babel-standalone@6/babel.min.js"); //구글 API 이용하기 위한 헤더
   return next();
 });
 //내장된 body-parser
