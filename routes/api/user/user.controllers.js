@@ -488,31 +488,43 @@ exports.user_login = async (req, res, next) => {
 
 //크리스탈 처리 라우터 (크리스탈 획득)
 exports.crystal = async (req, res, next) => {
-    const { email,crystal_type ,get_crystal, token } = req.body;
+    const { email,crystal ,royal_crystal, token } = req.body;
 
     var verify_result = await verify(token, email)
     if (verify_result.verified) {
         try {
-            if(crystal_type === 'normal'){ //일반 크리스탈이면
+            if(crystal&&!royal_crystal){ //일반 크리스탈이면
                 var result = await User.findOneAndUpdate(
                     { email: email },
-                    { $inc: { crystal: get_crystal } },
+                    { $inc: { crystal: crystal } },
                     { new: true }
                 ).setOptions({ runValidators: true });
                 res.status(200).json({ user: result });
-                logger.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
-                payment.info(`${result.googleid} 가 크리스탈 ${get_crystal}개를 획득했습니다.`);
-            }else if(crystal_type ==='royal'){ //로얄 크리스탈이면
+                logger.info(`${result.googleid} 가 크리스탈 ${crystal}개를 획득했습니다.`);
+                payment.info(`${result.googleid} 가 크리스탈 ${crystal}개를 획득했습니다.`);
+            } else if(royal_crystal&&!crystal){ //로얄 크리스탈이면
                 var result = await User.findOneAndUpdate(
                     { email: email },
-                    { $inc: { royal_crystal: get_crystal } },
+                    { $inc: { royal_crystal: royal_crystal } },
                     { new: true }
                 ).setOptions({ runValidators: true });
                 res.status(200).json({ user: result });
-                logger.info(`${result.googleid} 가 로얄 크리스탈 ${get_crystal}개를 획득했습니다.`);
-                payment.info(`${result.googleid} 가 로얄 크리스탈 ${get_crystal}개를 획득했습니다.`);
+                logger.info(`${result.googleid} 가 로얄 크리스탈 ${royal_crystal}개를 획득했습니다.`);
+                payment.info(`${result.googleid} 가 로얄 크리스탈 ${royal_crystal}개를 획득했습니다.`);
+            }else if(royal_crystal && crystal){
+                var result = await User.findOneAndUpdate(
+                    { email: email },
+                    { 
+                        $inc: { crystal , royal_crystal} 
+                    },
+                    { new: true }
+                ).setOptions({ runValidators: true });
+                res.status(200).json({ user: result });
+                logger.info(`${result.googleid} 가 크리스탈 ${crystal}, 로얄 크리스탈 ${royal_crystal}개를 획득했습니다.`);
+                payment.info(`${result.googleid} 가 크리스탈 ${crystal}, 로얄 크리스탈 ${royal_crystal}개를 획득했습니다.`);
             }else{
                 res.status(200).json({ message:"잘못된 입력", status: 'fail' });
+
             }
         } catch (err) {
             res.status(500).json({ error: "database failure" });
