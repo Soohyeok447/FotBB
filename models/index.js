@@ -50,5 +50,5 @@ module.exports = () => {
     require("./playing");
     require("./report_user");
     require("./rt");
-    
+    require("./rt_blacklist");
 };

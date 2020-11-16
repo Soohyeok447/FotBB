@@ -16,13 +16,14 @@ exports.badge = async (req, res, next) => {
             let user = await User.findOne({ email: email });
             let has_badge = user.badge.find(e=> e===badge);
             if(has_badge){
+                
                 res.status(200).json({message:"이미 보유중인 뱃지입니다.",status:'fail'});
             }else{
 
                 user.badge.push(badge);
                 await user.save({new:true});
+                
                 res.status(200).json({user:user,status:'success'});
-
             }
         }
     }catch (err) {

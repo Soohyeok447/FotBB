@@ -42,6 +42,7 @@ exports.check_modulation = async (req, res, next) => {
                     //playing모델에 id,now_time 필드 등록
                     await user_playing.save({ new: true });
                     res.status(200).json({message:'새로운 시작.'});
+
                 }else{  //진짜 첫 플레이이면
                     let check_exist_user = await User.exists({email:email});
                     let user_stage = await User_stage.findOne({userid:userid});
@@ -55,6 +56,8 @@ exports.check_modulation = async (req, res, next) => {
                         if(check_has_stage === -1){ //보유중이지 않은 스테이지면
                             console.log(check_has_stage);
                             res.status(200).json({error:`보유중이지 않은 스테이지 ${stage_name} playing 시도`})
+
+                            
                         }else{ //보유중인 스테이지면
                             console.log("start 진입했어요");
                             await delete_playing(email); //playing DB 초기화
@@ -68,6 +71,7 @@ exports.check_modulation = async (req, res, next) => {
                             //playing모델에 id,now_time 필드 등록
                             await user_playing.save({ new: true });
                             res.status(200).json({message:'플레이 시작'})
+                                
                         }
                     }
                 }
@@ -76,6 +80,8 @@ exports.check_modulation = async (req, res, next) => {
                 //start가 false인데 playing DB에 존재하지 않을 때,
                 if(!await Playing.exists({email:email})){
                     res.status(200).json({message:"잘못된 접근입니다."});
+                        
+                    
                 //올바른 접근일 때
                 }else{
                     console.log("이전 기록과 비교를 해야합니다.")
@@ -93,9 +99,10 @@ exports.check_modulation = async (req, res, next) => {
                         //밴 , playing 모델에서 필드 삭제
                         ban(email,'부정기록');
                         await delete_playing(email);
-        
-        
+
                         res.status(200).json({"previous_time":check.now_time,"now_time":now_time,"banned":true,"userid":userid});  
+                        
+                        
                         userinfo.info(`유저 ${userid} 밴 됨.`);
                         logger.info(`유저 ${userid} 밴 됨.`);
                     }else{
@@ -107,14 +114,20 @@ exports.check_modulation = async (req, res, next) => {
                             { new: true }
                         ).setOptions({ runValidators: true });
         
+                        
                         res.status(200).json({"now_time":now_time,"validation":"true"});
+
+                        
                     }
                 }
             }
         }
     }catch (err) {
         let id = await get_userid(email);
+        
         res.status(500).json({ error: `${err}` });
+
+        
         logger.error(`유저 밴 에러: ${email} : ${id} [${err}]`);
         userinfo.error(`유저 밴 에러: ${email} : ${id} [${err}]`);
         upload(email,'playing',err);

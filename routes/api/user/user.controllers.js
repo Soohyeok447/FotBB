@@ -77,6 +77,8 @@ exports.nickname_generator = async (req, res, next) => {
     }
     res.status(200).json({ generated_nickname: userid });
 
+    
+
 
 
     function generator() {

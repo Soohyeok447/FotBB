@@ -8,7 +8,11 @@ var Banned = require("../../../models/banned");
 var User = require("../../../models/user");
 var Stage = require("../../../models/stage");
 var User_stage = require("../../../models/user_stage");
+
 var Rt = require("../../../models/rt");
+var Rt_blacklist = require("../../../models/rt_blacklist");
+
+
 
 // 밴용 moment
 var moment = require("moment");
@@ -266,33 +270,45 @@ exports.verifyToken = async (req,res,next)=>{
 		if(req.body.refreshToken){
 			console.log("토큰 재발급");
 			console.log("refreshToken의 유효성 검사 시작");
-			try{
-				
-				let rfToken = await Rt.findOne({email:req.body.email});
-				if(rfToken.rt===req.body.refreshToken){ //DB에 저장된 rf랑 같으면
-					console.log("유효한 refreshToken입니다.");
-					jwt.verify(req.body.refreshToken, process.env.FOTBB_JWT_SECRET_KEY);
-					const token = jwt.sign({
-						email: req.body.email,
-					},process.env.FOTBB_JWT_SECRET_KEY,{
-						expiresIn:'1h',
-						issuer:'Fotbb',
-					});
+			try{		
+								//블랙리스트관련처리	
+				//만약 블랙리스트에 있는 리프레시토큰이면 실패해야한다.
+				if(await Rt_blacklist.exists({rt:req.body.refreshToken})){ //true이면  (블랙리스트이면)
+					console.log("블랙리스트에 있는 토큰");
+					//만약 블랙리스트의 exp_ms보다 now_ms가 오래됐으면 (만료됐다는 뜻)
+					//블랙리스트에서 제거해도 무방
+					await check_expired(req.body.email);
+
 					return res.status(200).json({
-						status:'tokenRefresh',
-						message:'Fotbb 토큰 재발급',
-						token
+						status:'forbiddenToken',
+						message:'블랙리스트에 있는 토큰입니다.',
 					});
-					console.log(token);
-					//next(token);
-				}else{ // DB에 저장된 rf랑 다르면 (이상한 접근)
-					return res.status(550).json({
-						status:'invaliedToken',
-						message:'유효하지 않은 토큰입니다.'
-					});
+				}else{ //블랙리스트에 없는 토큰 (유효한 하나 밖에 없는 토큰)
+					let rfToken = await Rt.findOne({email:req.body.email});
+					if(rfToken.rt===req.body.refreshToken){ //DB에 저장된 rf랑 같으면
+						console.log("유효한 refreshToken입니다. token을 재발급합니다.");
+						jwt.verify(req.body.refreshToken, process.env.FOTBB_JWT_SECRET_KEY);
+						const token = jwt.sign({
+							email: req.body.email,
+						},process.env.FOTBB_JWT_SECRET_KEY,{
+							expiresIn:'30s',
+							issuer:'Fotbb',
+						});
+						return res.status(200).json({
+							status:'tokenRefresh',
+							message:'Fotbb 토큰 재발급',
+							token
+						});
+
+						
+	
+					}else{ // DB에 저장된 rf랑 다르면 (이상한 접근)
+						return res.status(550).json({
+							status:'invaliedToken',
+							message:'유효하지 않은 토큰입니다.'
+						});
+					}
 				}
-				
-				
 			}catch(err){
 				console.log(err);
 				if (err.name === 'TokenExpiredError') {
@@ -327,6 +343,25 @@ exports.verifyToken = async (req,res,next)=>{
 			message:'유효하지 않은 토큰입니다.'
 		});
 	}
+}
+
+async function check_expired(email){
+    //만약 블랙리스트의 exp_ms보다 now_ms가 오래됐으면 (만료됐다는 뜻)
+    if(await Rt_blacklist.exists({email:email})){
+        let expired_Rt = await Rt_blacklist.findOne({email:email});
+        let now_ms = new Date().getTime();
+        if(expired_Rt.exp<now_ms){
+            console.log(expired_Rt.exp);
+            console.log(now_ms);
+            console.log('리프레시토큰 만료됐습니다. DB에서 삭제해도 무방합니다.');
+            await Rt_blacklist.findOneAndRemove({email:email});
+            console.log(await Rt_blacklist.findOne({email:email}));
+        }else{
+            console.log("아직 리프레시토큰이 신선합니다.")
+        }
+    }else{
+        console.log('블랙리스트에없음');
+    }
 }
 
 
