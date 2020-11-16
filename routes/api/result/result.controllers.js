@@ -235,11 +235,12 @@ exports.result = async (req, res, next) => {
                 try {
                     await delete_playing(email);
                     //User 모델의 death, playtime 갱신
-                    let user = await User.findOneAndUpdate(
-                        { email: email },
-                        { $inc: { crystal: get_crystal, total_death: 1 } },
-                        { new: true }
-                    ).setOptions({ runValidators: true });
+                    
+                    let user = await User.findOne({email:email});
+
+                    await up_crystal(user,crystal,royal_crystal);
+                    user.total_death++;
+                    await user.save({new:true});
 
 
                     //user_Stage 모델의 N_death, H_death 갱신

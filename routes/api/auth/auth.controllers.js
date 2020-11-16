@@ -106,14 +106,14 @@ exports.auth = async (req, res, next) => {
                 email: email,
             },process.env.FOTBB_JWT_SECRET_KEY,{
                 //expiresIn:'1h',
-                expiresIn:'30s',
+                expiresIn:'3m',
                 issuer:'Fotbb',
             });
             const refreshToken = jwt.sign({
                 email: email,
             },process.env.FOTBB_JWT_SECRET_KEY,{
-                expiresIn:'1m',
-                //expiresIn:'10m',
+                //expiresIn:'1m',
+                expiresIn:'1d',
                 issuer:'Fotbb',
             });
 

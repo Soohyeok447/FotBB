@@ -304,13 +304,12 @@ exports.verifyToken = async (req,res,next)=>{
 	
 					}else{ // DB에 저장된 rf랑 다르면 (이상한 접근)
 						return res.status(550).json({
-							status:'invaliedToken',
+							status:'invaliedRefreshToken',
 							message:'유효하지 않은 토큰입니다.'
 						});
 					}
 				}
 			}catch(err){
-				console.log(err);
 				if (err.name === 'TokenExpiredError') {
 					console.log("refresh토큰 만료");
 					return res.status(560).json({
@@ -318,6 +317,7 @@ exports.verifyToken = async (req,res,next)=>{
 						message: 'Fotbb refresh토큰 만료 재로그인 하세요',
 					});
 				}
+				console.log('유효하지 않은 토큰');
 				return res.status(550).json({
 					status: 'invaliedToken',
 					message: '유효하지 않은 토큰입니다.'
@@ -330,7 +330,6 @@ exports.verifyToken = async (req,res,next)=>{
 			next();
 		}
 	}catch(err){
-		console.log(err);
 		if(err.name==='TokenExpiredError'){
 			console.log("토큰 만료");
 			return res.status(555).json({
@@ -338,6 +337,7 @@ exports.verifyToken = async (req,res,next)=>{
 				message:'Fotbb 토큰 만료',
 			});
 		}
+		console.log('유효하지 않은 토큰');
 		return res.status(550).json({
 			status:'invaliedToken',
 			message:'유효하지 않은 토큰입니다.'

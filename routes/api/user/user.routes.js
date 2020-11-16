@@ -39,9 +39,9 @@ router.post("/change",verifyToken ,userController.id_change);
 
 
 //테스트
-router.post("/test", verifyToken,userController.test);
-router.post("/test2",verifyToken ,userController.test2);
-router.post("/test3",verifyToken ,userController.test3);
+router.post("/test" ,userController.test);
+router.post("/test2" ,userController.test2);
+router.post("/test3" ,userController.test3);
 
 
 
