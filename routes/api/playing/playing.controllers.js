@@ -19,6 +19,10 @@ exports.check_modulation = async (req, res, next) => {
 
     try{
         let userid = await get_userid(email);
+        let check_exist_user = await User.exists({email:email});
+        
+        let user_stage = await User_stage.findOne({userid:userid});
+        let check_has_stage = user_stage.stage.findIndex(s => s.stage_name === stage_name);
         //console.log("유저아이디 함수테스트",userid);
 
         //존재하는 유저 인지 검사
@@ -31,6 +35,7 @@ exports.check_modulation = async (req, res, next) => {
             if(start){
                 let check_duplicate = await Playing.exists({email:email})
                 if(check_duplicate){  // 해킹이나 버그로 start=true가 또 오거나
+                    await check_Stage_DB(email,stage_name,check_has_stage);
                     await delete_playing(email); //playing DB 초기화
                     var user_playing = new Playing({
                         userid: userid,
@@ -44,11 +49,10 @@ exports.check_modulation = async (req, res, next) => {
                     res.status(200).json({message:'새로운 시작.'});
 
                 }else{  //진짜 첫 플레이이면
-                    let check_exist_user = await User.exists({email:email});
-                    let user_stage = await User_stage.findOne({userid:userid});
+                    
                     await up_playcount(stage_name);
 
-                    let check_has_stage = user_stage.stage.findIndex(s => s.stage_name === stage_name);
+                    
                     console.log(check_has_stage);
                     if(!check_exist_user){//만약 존재하지 않는 유저라면
                         res.status(200).json({error:`없는 유저입니다.`})
@@ -59,6 +63,7 @@ exports.check_modulation = async (req, res, next) => {
 
                             
                         }else{ //보유중인 스테이지면
+                            await check_Stage_DB(email,stage_name,check_has_stage);
                             console.log("start 진입했어요");
                             await delete_playing(email); //playing DB 초기화
                             var user_playing = new Playing({
@@ -142,5 +147,41 @@ exports.check_modulation = async (req, res, next) => {
         let selected_stage = await Stage.findOne({stage_name});
         selected_stage.playcount++;
         await selected_stage.save({new:true});
+    }
+
+
+    async function check_Stage_DB(email, stage_name,check_has_stage) {
+        console.log('함수 진입');
+        let user = await User.findOne({email:email});
+        let stage = await Stage.findOne({stage_name:stage_name});
+        let stage_idx = stage.Normal.findIndex((e) => e.userid === user.googleid);
+
+        console.log(stage_idx);
+        console.log(check_has_stage);
+        if ( stage_idx===-1 && check_has_stage !== -1) { //user_stage에는 보유중인데 stageDB에는 없을 때(오류로 언락이 안됐을 때)
+            console.log("DB저장이 잘 안됐습니다. 새로 추가합니다.")
+            
+            let stageObj = await Stage.findOne({ stage_name: '바흐시메이저' });
+            let idx = stageObj.Normal.findIndex((e) => e.userid === user.googleid);
+            let used_bee_custom = stageObj.Normal[idx].used_bee_custom;
+            let used_badge = stageObj.Normal[idx].used_badge;
+
+            await Stage.findOneAndUpdate(
+                { stage_name: stage_name },
+                {
+                    $addToSet: {
+                        Normal: {
+                            userid: user.googleid,
+                            cleartime: 0,
+                            death: 0,
+                            country: user.country,
+                            used_bee_custom: used_bee_custom,
+                            used_badge: used_badge,
+                            renewed_at: '',
+                            terminated: false,
+                        },
+                    },
+                }, { new: true }).setOptions({ runValidators: true });
+        }
     }
 }

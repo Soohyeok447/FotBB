@@ -4,6 +4,7 @@ const jwt_decode = require('jwt-decode');
 
 var Rt = require("../../../models/rt");
 var Rt_blacklist = require("../../../models/rt_blacklist");
+var User = require("../../../models/user");
 
 var {get_userid} = require("../middleware/function");
 
@@ -19,6 +20,7 @@ const client = new OAuth2Client(process.env.CLIENT_ID);
 
 async function verify(token,email) {
     try{
+        console.log(token);
         var TokenObj ={}
         
         //email이 존재하지 않는 경우
@@ -105,8 +107,8 @@ exports.auth = async (req, res, next) => {
             const token = jwt.sign({
                 email: email,
             },process.env.FOTBB_JWT_SECRET_KEY,{
-                //expiresIn:'1h',
-                expiresIn:'3m',
+                expiresIn:'1h',
+                //expiresIn:'3m',
                 issuer:'Fotbb',
             });
             const refreshToken = jwt.sign({
@@ -117,7 +119,9 @@ exports.auth = async (req, res, next) => {
                 issuer:'Fotbb',
             });
 
-
+            //저장됐던 토큰의 만료시간을 얻는다.
+            let decode = jwt_decode(token);
+            let exp_ms = (decode.exp) * 1000;
 
             /* 
                         리프레시토큰 관련 처리
@@ -134,16 +138,22 @@ exports.auth = async (req, res, next) => {
                 console.log("Rt DB에 저장돼있는 리프레시토큰 갱신")
                 await Rt.findOneAndUpdate(
                     {email:email},
-                    {rt:refreshToken},
+                    {
+                        rt:refreshToken,
+                        exp: exp_ms,
+                    },
                     { new: true, upsert: true },
                 ).setOptions({ runValidators: true });
                 
             }else{
                 console.log("로그인 하고 Rt DB에 신규 생성");
                 
+
+    
                 let rt_user = new Rt({
                     email:email,
                     rt:refreshToken,
+                    exp: exp_ms,
                 });
                 await rt_user.save();
             }
@@ -236,10 +246,44 @@ async function check_expired(email){
                 console.log("아직 리프레시토큰이 신선합니다.")
             }
         }
-
-        
         
     }else{
         console.log('블랙리스트에없음');
     }
+}
+
+exports.clearRt = async (req, res, next) => {
+    const {email} = req.body;
+    try{
+        let user = await User.findOne({email:email});
+        if(user.admin===true){
+            let expired_rt_arr1 = await Rt.find();
+            let now_ms = new Date().getTime();
+            for (e of expired_rt_arr1){   
+                if(e.exp<now_ms){
+                    console.log('리프레시토큰 만료됐습니다. DB에서 삭제해도 무방합니다.');
+                    await Rt.findOneAndRemove({rt:e.rt});
+                }else{
+                    console.log("아직 리프레시토큰이 신선합니다.")
+                }
+            }
+            
+            let expired_rt_arr2 = await Rt_blacklist.find();
+
+            for (e of expired_rt_arr2){   
+                if(e.exp<now_ms){
+                    console.log('리프레시토큰 만료됐습니다. DB에서 삭제해도 무방합니다.');
+                    await Rt_blacklist.findOneAndRemove({rt:e.rt});
+                }else{
+                    console.log("아직 리프레시토큰이 신선합니다.")
+                }
+            }
+
+            res.status(200).json();
+        }
+    }catch (err) {
+        res.status(500).json({ error: `${err}`});
+        next(err);
+    }
+
 }

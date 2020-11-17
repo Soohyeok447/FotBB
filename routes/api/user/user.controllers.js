@@ -834,12 +834,11 @@ exports.test = async (req, res, next) => {
 
                 //해당 유저가 기록된 index 구하기
                 let normal_index = stage.Normal.findIndex((e) => e.userid === user.googleid);
-                stage.Normal.splice(normal_index, 1);
-
-
-                await stage.save({ new: true });
-                //console.log(stage);
-
+                if(normal_index!==-1){
+                    stage.Normal.splice(normal_index, 1);
+                    await stage.save({ new: true });
+                }
+                
             } else {
                 console.log("바흐 시메이저입니다.")
                 var stage = await Stage.findOne({ stage_name: e.stage_name });

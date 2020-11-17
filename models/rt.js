@@ -6,6 +6,7 @@ const Rt = new Schema({
     //구글 연동 id
     email:String,
     rt:String,
+    exp:Number
     },{ 
         versionKey : false 
 });
