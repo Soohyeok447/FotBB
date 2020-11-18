@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <meta charset="UTF-8"/>
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>리액트연습</title>
     <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
@@ -12,73 +12,15 @@
 
 <body>
     <h3>구구단 컴포넌트</h3>
-    <div id="gugudan"></div>
+    <p>클래스 이용</p>
+    <div id="gugudan_class"></div>
+    <p>Hooks 이용</p>
+    <div id="gugudan_Hooks"></div>
 
 
-    <script type="text/babel">
-        class Gugudan extends React.Component{ //구구단 컴포넌트
-            //constructor
-            state = { //바뀌는 부분을 state로
-                    //속성으로 추가해주면 됨
-                    first: Math.ceil(Math.random()*9),
-                    second: Math.ceil(Math.random()*9),
-                    state: '',
-                    value:'',
-                    result: '',
-            };
-            
 
-            //method
-            onSubmit = (e) =>{
-                e.preventDefault();
-                let result = parseInt(this.state.value);
-                if(result === this.state.first * this.state.second){
-                    this.setState((prevState)=>{
-                        return {
-                            result:'정답: ' + prevState.value,
-                            first:Math.ceil(Math.random()*9),
-                            second:Math.ceil(Math.random()*9),
-                            value:''
-                        };
-                    })
-                    this.input.focus();
-                }else{
-                    this.setState({
-                        result:'땡',
-                        value:''
-                    })
-                    this.input.focus();
-                } 
-            }
 
-            onChange =(e)=>{
-                this.setState({ value: e.target.value })
-            }
-
-            //참조를 위한 변수 선언 
-            input;
-
-            //render
-            render(){
-                return (
-                    <React.Fragment>
-                        <div>{this.state.first}곱하기{this.state.second}는?</div>
-                        <form onSubmit={this.onSubmit}>
-                            <input  ref={(c)=>{ this.input = c;}} type="number" value ={this.state.value} onChange ={this.onChange} />
-                            <button>입력</button>
-                        </form>    
-                        <div>{this.state.result}</div>
-                    </React.Fragment>
-                );
-            }
-        }
-    </script>
-    <script type="text/babel">
-        ReactDOM.render(
-            <div><Gugudan /><Gugudan /><Gugudan /></div>,
-            document.querySelector('#gugudan')
-        );
-    </script>
+    <script type="text/babel" src="/js/react.js"></script>
 </body>
 
 </html>

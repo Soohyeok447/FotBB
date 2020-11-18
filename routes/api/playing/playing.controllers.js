@@ -12,10 +12,10 @@ var {ban,delete_playing,get_userid,get_now} = require("../middleware/function");
 var {logger,userinfo} = require('../../../config/logger');
 var {upload} = require('./../../../config/s3_option');
 
-
+var midi_info = require('../../../src/midi_info.json');
 //플레이 중 데이터 변조 체크
 exports.check_modulation = async (req, res, next) => {
-    const {email, now_time,start,stage_name} = req.body //gametype에 따라 구분해야한다면 나중에 수정
+    const {email, now_time,start,stage_name,midi_request} = req.body //gametype에 따라 구분해야한다면 나중에 수정
 
     try{
         let userid = await get_userid(email);
@@ -46,7 +46,12 @@ exports.check_modulation = async (req, res, next) => {
                     });
                     //playing모델에 id,now_time 필드 등록
                     await user_playing.save({ new: true });
-                    res.status(200).json({message:'새로운 시작.'});
+                    if(midi_request){
+                        let midi_info_ = midi_info[stage_name];
+                        res.status(200).json({message:'새로운 시작.',midi_info:midi_info_});
+                    }else{
+                        res.status(200).json({message:'플레이 시작.'});
+                    }
 
                 }else{  //진짜 첫 플레이이면
                     
@@ -75,8 +80,13 @@ exports.check_modulation = async (req, res, next) => {
                             });
                             //playing모델에 id,now_time 필드 등록
                             await user_playing.save({ new: true });
-                            res.status(200).json({message:'플레이 시작'})
-                                
+
+                            if(midi_request){
+                                let midi_info_ = midi_info[stage_name];
+                                res.status(200).json({message:'플레이 시작.',midi_info:midi_info_});
+                            }else{
+                                res.status(200).json({message:'플레이 시작.'});
+                            }
                         }
                     }
                 }
@@ -142,15 +152,22 @@ exports.check_modulation = async (req, res, next) => {
 
     
 
-    async function up_playcount(stage_name){
+    
+
+
+    
+}
+
+
+
+async function up_playcount(stage_name){
         // 스테이지 플레이 횟수 증가
         let selected_stage = await Stage.findOne({stage_name});
         selected_stage.playcount++;
         await selected_stage.save({new:true});
     }
 
-
-    async function check_Stage_DB(email, stage_name,check_has_stage) {
+async function check_Stage_DB(email, stage_name,check_has_stage) {
         console.log('함수 진입');
         let user = await User.findOne({email:email});
         let stage = await Stage.findOne({stage_name:stage_name});
@@ -184,4 +201,3 @@ exports.check_modulation = async (req, res, next) => {
                 }, { new: true }).setOptions({ runValidators: true });
         }
     }
-}

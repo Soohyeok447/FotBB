@@ -246,7 +246,6 @@ exports.report = async (req, res, next) => {
 //리액트연습
 exports.react = async (req, res, next) => {
     try {
-        console.log(req.body);
         if(req.body.value){
             res.render("react",{value:req.body.value});
         }else{
@@ -254,18 +253,15 @@ exports.react = async (req, res, next) => {
                 console.log("이메일이 없습니다.");
                 res.render("admin_login",{ error: 'forbidden' });
             }else if (req.body.email && req.body.token){
-                console.log("진입 ㅋㅋ");
                 let user = await User.exists({ email: req.body.email });
                 if(!user){ //DB에 없는 유저일 때
                     res.render("admin_login",{error:'nouser'});
                 }else{
-                    console.log("또 또 진입 ㅋㅋ");
                     let _user = await User.findOne({email:req.body.email});
                     if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
                         console.log("어드민이 아닙니다.");
                         res.render("admin_login",{ error: 'noadmin' });
                     } else {
-                        console.log("이제 안되면 렌더링 문제");
                         res.render("react",{value:req.body.value});
                     }
                 }

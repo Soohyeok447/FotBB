@@ -867,7 +867,63 @@ exports.test = async (req, res, next) => {
 }
 
 exports.test2 = async (req, res, next) => {
+    const {email} = req.body;
+    let user = await User.findOne({email:email});
+    all_stage_list=[];
+    all_user_stage_list = [];
 
+    let all_stage = await Stage.find();
+    all_stage.forEach(x=>{
+        all_stage_list.push(x.stage_name);
+
+    });
+
+    let all_user_stage = await User_stage.findOne({userid:user.googleid});
+    all_user_stage.stage.forEach(x=>{
+        all_user_stage_list.push(x.stage_name)
+    })
+
+
+    for(s of all_stage_list){
+        if(!all_user_stage_list.find(e => e === s)){
+            await Stage.findOneAndUpdate(
+                { stage_name: s },
+                {
+                    $addToSet: {
+                        Normal: {
+                            userid: user.googleid,
+                            cleartime: 0,
+                            death: 0,
+                            country: user.country,
+                            used_bee_custom: 0,
+                            used_badge: 0,
+                            renewed_at: '',
+                            terminated: false,
+                        },
+                    },
+                }, { new: true }).setOptions({ runValidators: true });
+        
+            await User_stage.findOneAndUpdate(
+                { userid: user.googleid },
+                {
+                    $addToSet: {
+                        stage: {
+                            stage_name: s,
+                            N_cleartime: 0,
+                            H_cleartime: 0,
+                            N_death: 0,
+                            H_death: 0,
+                        }
+                    }
+                },
+                { new: true }
+            ).setOptions({ runValidators: true });
+    
+        }
+
+        
+    }
+    res.status(200).json({});
 }
 
 exports.test3 = async (req, res, next) => {

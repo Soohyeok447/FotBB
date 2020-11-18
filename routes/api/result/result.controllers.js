@@ -96,8 +96,7 @@ exports.result = async (req, res, next) => {
                     console.log("정당한 기록입니다. 기록을 저장합니다.")
                     await delete_playing(email);
 
-
-
+                    
                     //유저 stage db , stage 모델 갱신
                     let stage = await Stage.findOne({ stage_name: stage_name });
 
@@ -236,6 +235,10 @@ exports.result = async (req, res, next) => {
                     await delete_playing(email);
                     //User 모델의 death, playtime 갱신
                     
+                
+
+
+
                     let user = await User.findOne({email:email});
 
                     await up_crystal(user,crystal,royal_crystal);
