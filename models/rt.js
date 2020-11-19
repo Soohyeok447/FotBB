@@ -4,7 +4,11 @@ const ttl = require('mongoose-ttl');
 const { Schema } = mongoose;
 const Rt = new Schema({
     //구글 연동 id
-    email:String,
+    email:{
+        type:String,
+        unique :true,
+        index:true,
+    },
     rt:String,
     exp:Number
     },{ 

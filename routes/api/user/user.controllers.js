@@ -200,42 +200,18 @@ exports.check_validation = async (req, res, next) => {
 }
 
 
-async function get_all_leaderboard(email) {
+async function get_all_leaderboard(user,user_stage) {
     let resultArr = [];
-    let j = 0;
-    // let stage_list = [];
-    // let totalObj= {};
+    let stage = await Stage.find({})
 
-    //유저가 보유중인 스테이지의 목록을 얻는다.
-    let userid = await get_userid(email);
-    let user_stage = await User_stage.findOne({ userid: userid });
-    // 스테이지마다 돌면서 글로벌 리더보드와 정보를 뽑는다.
-
-
-    // console.log("===============함수 실행===============")
-    // console.log(`user_stage.stage.length(유저의 스테이지 개수) = ${user_stage.stage.length}\n\n\n`);
-    for (j in user_stage.stage) {
-        let stage = await Stage.findOne({ stage_name: user_stage.stage[j].stage_name });
-
-        await add_obj(stage, userid).then((Obj) => {
-            resultArr.push(Obj);
-        })
+    for(s of stage){
+        let jsonObj = {};
+        jsonObj["stage_info"] = await get_stage_info(s);
+        jsonObj["global_Normal"] = await get_global_leaderboard(s, user.googleid);
+        resultArr.push(jsonObj);
     }
 
     return resultArr;
-
-
-
-    function add_obj(stage, userid) {
-        const jsonObj = {};
-        //유저가 보유중인 스테이지를 참조하여 스테이지 객체를 얻는다.
-
-        return new Promise(async (resolve, rejected) => {
-            jsonObj["stage_info"] = await get_stage_info(stage);
-            jsonObj["global_Normal"] = await get_global_leaderboard(stage, userid);
-            resolve(jsonObj);
-        })
-    };
 }
 
 
@@ -308,7 +284,8 @@ exports.user_login = async (req, res, next) => {
                 jsonObj.user = user;
                 jsonObj.user_stage = user_stage;
                 //여기서 리더보드도 같이 응답하도록
-                jsonObj.leaderboard = await get_all_leaderboard(email);
+                
+                jsonObj.leaderboard = await get_all_leaderboard(user,user_stage);
 
 
 
@@ -328,6 +305,8 @@ exports.user_login = async (req, res, next) => {
         //이미 등록된 유저 일 때, 로그인 진행
     } else {
         try {
+            var start =new Date().getTime();
+
             let check_banned = await Banned.findOne({ email: email });
             //로그인할 때 밴 여부 체크
             //밴 당한 유저일 때
@@ -354,10 +333,12 @@ exports.user_login = async (req, res, next) => {
                 jsonObj.user_stage = user_stage;
                 jsonObj.user = user;
                 //여기서 리더보드도 같이 응답하도록
-                jsonObj.leaderboard = await get_all_leaderboard(email);
+                jsonObj.leaderboard = await get_all_leaderboard(user,user_stage);
 
 
 
+                var end = new Date().getTime();
+                console.log(end-start,'  ms')
 
                 res.status(200).json(jsonObj);
                 logger.info(`email : ${email} - ${user.googleid} 가 로그인 했습니다.`);
@@ -458,15 +439,13 @@ exports.customizing = async (req, res, next) => {
                     if (holding_royal_crystal < reduce_crystal) {
                         res.status(201).json({ message: "로얄 크리스탈이 부족합니다.", status: 'fail' });
                     } else {
-                        var result = await User.findOneAndUpdate(
-                            { email: email },
-                            {
-                                $inc: { royal_crystal: -reduce_crystal },
-                                $addToSet: { bee_custom: customizing }
-                            },
-                            { new: true, upsert: true },
-                        ).setOptions({ runValidators: true });
-                        res.status(200).json({ user: result, status: 'success' });
+                        
+                        user.royal_crystal-=reduce_crystal;
+                        user.bee_custom.push(customizing);
+                        await user.save({new:true});
+
+
+                        res.status(200).json({ user: user, status: 'success' });
                         logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                         userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                     }
@@ -474,15 +453,10 @@ exports.customizing = async (req, res, next) => {
                     if (holding_crystal < reduce_crystal) {
                         res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
                     } else {
-                        var result = await User.findOneAndUpdate(
-                            { email: email },
-                            {
-                                $inc: { crystal: -reduce_crystal },
-                                $addToSet: { bee_custom: customizing }
-                            },
-                            { new: true, upsert: true },
-                        ).setOptions({ runValidators: true });
-                        res.status(200).json({ user: result, status: 'success' });
+                        user.crystal-=reduce_crystal;
+                        user.bee_custom.push(customizing);
+                        await user.save({new:true});
+                        res.status(200).json({ user: user, status: 'success' });
                         logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                         userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
 
@@ -504,15 +478,10 @@ exports.customizing = async (req, res, next) => {
                     if (holding_royal_crystal < reduce_crystal) {
                         res.status(201).json({ message: "로얄 크리스탈이 부족합니다.", status: 'fail' });
                     } else {
-                        var result = await User.findOneAndUpdate(
-                            { email: email },
-                            {
-                                $inc: { royal_crystal: -reduce_crystal },
-                                $addToSet: { shot_custom: customizing }
-                            },
-                            { new: true, upsert: true },
-                        ).setOptions({ runValidators: true });
-                        res.status(200).json({ user: result, status: 'success' });
+                        user.royal_crystal-=reduce_crystal;
+                        user.shot_custom.push(customizing);
+                        await user.save({new:true});
+                        res.status(200).json({ user: user, status: 'success' });
                         logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                         userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                     }
@@ -520,15 +489,10 @@ exports.customizing = async (req, res, next) => {
                     if (holding_crystal < reduce_crystal) {
                         res.status(201).json({ message: "크리스탈이 부족합니다.", status: 'fail' });
                     } else {
-                        var result = await User.findOneAndUpdate(
-                            { email: email },
-                            {
-                                $inc: { crystal: -reduce_crystal },
-                                $addToSet: { shot_custom: customizing }
-                            },
-                            { new: true, upsert: true },
-                        ).setOptions({ runValidators: true });
-                        res.status(200).json({ user: result, status: 'success' });
+                        user.crystal-=reduce_crystal;
+                        user.shot_custom.push(customizing);
+                        await user.save({new:true});
+                        res.status(200).json({ user: user, status: 'success' });
                         logger.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
                         userinfo.info(`${user.googleid} 가 커스텀 ${customizing}을(를) 획득했습니다.`);
 
@@ -848,7 +812,8 @@ exports.test = async (req, res, next) => {
                 stage.Normal[normal_index].cleartime = 0;
                 stage.Normal[normal_index].renewed_at = '';
                 stage.Normal[normal_index].death = 0;
-
+                stage.Normal[normal_index].used_bee_custom = 0;
+                stage.Normal[normal_index].used_badge = 0;
                 await stage.save({ new: true });
             }
         })

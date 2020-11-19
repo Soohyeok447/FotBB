@@ -7,7 +7,10 @@ const mongoose = require("mongoose");
 
 const { Schema } = mongoose;
 const Stage = new Schema({
-    stage_name:String,
+    stage_name:{
+        type:String,
+        index : true,
+    },
     composer:String,
     playcount:Number,
     total_death:Number,
@@ -29,6 +32,7 @@ const Stage = new Schema({
     },{ 
         versionKey : false 
 });
+
 
 
 module.exports = mongoose.model(

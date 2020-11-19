@@ -4,7 +4,10 @@ const { Schema } = mongoose;
 const Rt_blacklist = new Schema({
     rt:String,
     exp:Number,
-    email:String,
+    email:{
+        type:String,
+        index:true,
+    },
     },{ 
         versionKey : false 
 });

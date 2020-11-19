@@ -70,7 +70,7 @@ async function verify(token,email) {
         }
 
     }catch(err){
-        console.log("err났습니다.")
+        
         let check_expiredtoken = /Token used too late/;
         
         let error = err.toString();
@@ -80,10 +80,12 @@ async function verify(token,email) {
         
         //토큰 만료 에러
         if(check){
+            console.log("gpgs토큰만료.")
             TokenObj.error = 'Token Expired';
             TokenObj.verified = false; 
         //토큰 만료 에러 외
         }else{
+            console.log("gpgs토큰만료 외 에러.")
             TokenObj.error = err;
             TokenObj.verified = false; 
         }
@@ -233,12 +235,10 @@ async function set_blacklist(email){
 async function check_expired(email){
     //만약 블랙리스트의 exp_ms보다 now_ms가 오래됐으면 (만료됐다는 뜻)
     if(await Rt_blacklist.exists({email:email})){
-        let expired_rt_arr = await Rt_blacklist.find();
-        let user_expired_rt_arr = expired_rt_arr.filter((e)=> e.email === email);
-
+        let expired_rt_arr = await Rt_blacklist.find({email});
         let now_ms = new Date().getTime();
         console.log(now_ms);
-        for (e of user_expired_rt_arr){   
+        for (e of expired_rt_arr){   
             if(e.exp<now_ms){
                 console.log('리프레시토큰 만료됐습니다. DB에서 삭제해도 무방합니다.');
                 await Rt_blacklist.findOneAndRemove({rt:e.rt});

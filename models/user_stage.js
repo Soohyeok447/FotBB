@@ -11,10 +11,7 @@ const { Schema } = mongoose;
 const User_stage= new Schema({
     
     //users스키마에서 가져온 id
-    userid: {
-        type: String,
-        required: true,
-    },
+    userid: String,
     stage:[new Schema({
         stage_name: String,
         N_cleartime: Number, //Normal

@@ -5,7 +5,11 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const Playing = new Schema({
     userid: String,
-    email:String,
+    email:{
+        type:String,
+        unique :true,
+        index:true,
+    },
     now_time:Number,
     start_at:String,
     stage_name:String,

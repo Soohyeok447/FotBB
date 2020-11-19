@@ -58,10 +58,11 @@ exports.result = async (req, res, next) => {
         if (!await Playing.exists({ email: email })) {
             res.status(200).json({ message: "잘못된 접근입니다.", status: 'fail' });
         } else {
-            //userid 불러오기
-            let userid = await get_userid(email);
-            //유저 db 갱신
+            //유저 db 받기, 유저_스테이지 db 받기
             let user = await User.findOne({ email: email });
+            let user_stage = await User_stage.findOne({ userid: user.googleid });
+
+
 
             var status;
 
@@ -76,18 +77,18 @@ exports.result = async (req, res, next) => {
                     console.log("부정기록입니다 해당 유저를 밴 합니다.")
                     try {
                         //밴    
-                        await ban(email, '부정기록')
+                        await ban(user, email,'부정기록')
                         //Playing 초기화
                         await delete_playing(email);
 
 
-                        res.status(200).json({ "now_time": playing.now_time, "cleartime": cleartime, "userid": userid, status: 'banned' });
-                        userinfo.info(`유저 ${userid} 밴 됨.`);
-                        logger.info(`유저 ${userid} 밴 됨.`);
+                        res.status(200).json({ "now_time": playing.now_time, "cleartime": cleartime, "userid": user.googleid, status: 'banned' });
+                        userinfo.info(`유저 ${user.googleid} 밴 됨.`);
+                        logger.info(`유저 ${user.googleid} 밴 됨.`);
                     } catch (err) {
                         res.status(500).json({ error: "database failure" });
-                        logger.error(`유저 밴 에러: ${userid} ${email} [${err}]`);
-                        userinfo.error(`유저 밴 에러: ${userid} ${email} [${err}]`);
+                        logger.error(`유저 밴 에러: ${user.googleid} ${email} [${err}]`);
+                        userinfo.error(`유저 밴 에러: ${user.googleid} ${email} [${err}]`);
                         upload(email, `clear`, err);
                     }
 
@@ -109,7 +110,7 @@ exports.result = async (req, res, next) => {
                     await user.save({ new: true });
                     //이전 클리어타임 확인용
                     let stage_select = stage.Normal.filter( //stage_name으로 stage 선택
-                        (s) => s.userid === userid
+                        (s) => s.userid === user.googleid
                     );
                     //console.log(stage_select);
                     let previous_cleartime = stage_select[0].cleartime; //이전기록과 클리어타임 비교용인 이전기록 변수
@@ -117,7 +118,7 @@ exports.result = async (req, res, next) => {
 
 
                     //user_stage 모델에 Normal클리어타임 갱신
-                    let user_stage = await User_stage.findOne({ userid: userid });
+                    
                     let userindex = user_stage.stage.findIndex((s) => s.stage_name === stage_name);
 
 
@@ -134,8 +135,8 @@ exports.result = async (req, res, next) => {
                         await user_stage.save({ new: true }); //user_stage 모델에 cleartime 갱신
 
                         //랭킹등록 
-                        //let stage = await Stage.findOne( { stage_name: stage_name});
-                        userindex = stage.Normal.findIndex((s) => s.userid === userid);
+
+                        userindex = stage.Normal.findIndex((s) => s.userid === user.googleid);
                         stage.Normal[userindex].cleartime = cleartime;
                         stage.Normal[userindex].renewed_at = get_now();
                         stage.Normal[userindex].used_bee_custom = used_bee_custom;
@@ -144,11 +145,11 @@ exports.result = async (req, res, next) => {
 
 
 
-                        var leaderboardArr = await integrating_leaderboard_arr(stage, userid, user.country);
+                        var leaderboardArr = await integrating_leaderboard_arr(stage, user.googleid, user.country);
 
                         //res.status(200).json({ "status": "clear_renewal_unlock",user_stage:user_stage ,leaderboard: leaderboardArr ,"nextstage_leaderboard":stageArr});
-                        logger.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 :  기록  : ${cleartime}`);
-                        play.info(`${userid} 가 노말 ${stage_name} 첫 클리어.   랭킹 :   기록  : ${cleartime}`);
+                        logger.info(`${user.googleid} 가 노말 ${stage_name} 첫 클리어.   랭킹 :  기록  : ${cleartime}`);
+                        play.info(`${user.googleid} 가 노말 ${stage_name} 첫 클리어.   랭킹 :   기록  : ${cleartime}`);
                     } else { //첫 플레이가 아닐경우(기록 존재)
                         console.log("첫플레이가 아닙니다.");
                         status = 'renewal';
@@ -161,7 +162,7 @@ exports.result = async (req, res, next) => {
                             console.log("기록 갱신 성공");
 
                             //user_stage 모델에 Normal클리어타임 갱신
-                            let user_stage = await User_stage.findOne({ userid: userid });
+                            //let user_stage = await User_stage.findOne({ userid: user.googleid });
                             let userindex = user_stage.stage.findIndex((s) => s.stage_name === stage_name);
                             //console.log(stage.Normal[userindex])
                             user_stage.stage[userindex].N_cleartime = cleartime;
@@ -169,8 +170,8 @@ exports.result = async (req, res, next) => {
                             await user_stage.save({ new: true }); //user_stage 모델에 cleartime 갱신
 
                             //랭킹등록 
-                            let stage = await Stage.findOne({ stage_name: stage_name });
-                            userindex = stage.Normal.findIndex((s) => s.userid === userid);
+                            //let stage = await Stage.findOne({ stage_name: stage_name });
+                            userindex = stage.Normal.findIndex((s) => s.userid === user.googleid);
                             //console.log(stage.Normal[userindex])
                             stage.Normal[userindex].cleartime = cleartime;
                             stage.Normal[userindex].renewed_at = get_now();
@@ -179,48 +180,51 @@ exports.result = async (req, res, next) => {
 
                             await stage.save({ new: true }); //신기록 갱신
 
-                            var leaderboardArr = await integrating_leaderboard_arr(stage, userid, user.country);
+                            var leaderboardArr = await integrating_leaderboard_arr(stage, user.googleid, user.country);
                             //res.status(200).json({ "status": "clear_renewal", leaderboard: leaderboardArr });
 
-                            logger.info(`${userid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 :   기록  : ${cleartime}`);
-                            play.info(`${userid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 :   기록  : ${cleartime}`);
+                            logger.info(`${user.googleid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 :   기록  : ${cleartime}`);
+                            play.info(`${user.googleid} 가 노말 ${stage_name} 클리어.(갱신)   랭킹 :   기록  : ${cleartime}`);
                         } else { //기록 갱신 실패했을 경우
                             console.log("기록갱신 실패했습니다.");
-                            let stage = await Stage.findOne({ stage_name: stage_name });
+                            //let stage = await Stage.findOne({ stage_name: stage_name });
                             status = 'clear';
+                            userindex = stage.Normal.findIndex((s) => s.userid === user.googleid);
+                            stage.Normal[userindex].used_bee_custom = used_bee_custom;
+                            stage.Normal[userindex].used_badge = used_badge;
+                            await stage.save({ new: true }); //뱃지 비 커스텀 갱신
 
                             var sorted_ranking = calculate_leaderboard(stage);
 
                             //등수 찾기
-                            var ranking = (sorted_ranking.findIndex((s) => s.userid === userid) + 1);
+                            var ranking = (sorted_ranking.findIndex((s) => s.userid === user.googleid) + 1);
                             console.log("갱신실패 ", previous_cleartime, "초  ", ranking, "등입니다. 현재 초 :", cleartime);
 
                             //내 바로 다음 랭커 기록 찾기
                             let compare_with_me = sorted_ranking[ranking - 2];
-                            console.log(compare_with_me);
                             //스테이지 정보 불러오기
                             var stage_info = await get_stage_info(stage, 'Normal');
 
-                            logger.info(`${userid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
-                            play.info(`${userid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
+                            logger.info(`${user.googleid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
+                            play.info(`${user.googleid} 가 노말 ${stage_name} 클리어.   랭킹 : ${ranking}  기록  : ${cleartime}   이전기록  :  ${previous_cleartime}`);
                         }
 
                     }
 
                     switch (status) {
                         case 'first_clear': {
-                            await renew_stageDB(used_bee_custom, used_badge, user, user_stage);
                             res.status(200).json({ "status": "clear_renewal", user: user, leaderboard: leaderboardArr });
+                            await renew_stageDB(used_bee_custom, used_badge, user, user_stage);
                             break;
                         }
                         case 'renewal': {
-                            await renew_stageDB(used_bee_custom, used_badge, user, user_stage);
                             res.status(200).json({ "status": "clear_renewal", user: user, leaderboard: leaderboardArr });
+                            await renew_stageDB(used_bee_custom, used_badge, user, user_stage);
                             break;
                         }
                         case 'clear': {
-                            await renew_stageDB(used_bee_custom, used_badge, user, user_stage);
                             res.status(200).json({ "ranking": ranking, user: user, "previous_cleartime": previous_cleartime, "stage_info": stage_info, status: 'clear' });
+                            await renew_stageDB(used_bee_custom, used_badge, user, user_stage);
                             break;
                         }
                         default: break;
@@ -247,7 +251,7 @@ exports.result = async (req, res, next) => {
 
 
                     //user_Stage 모델의 N_death, H_death 갱신
-                    let user_stage = await User_stage.findOne({ userid: userid });
+                    //let user_stage = await User_stage.findOne({ userid: user.googleid });
                     let stageindex = user_stage.stage.findIndex((s) => s.stage_name === stage_name);
 
                     user_stage.stage[stageindex].N_death++;
@@ -260,18 +264,18 @@ exports.result = async (req, res, next) => {
                     //total_death갱신
                     stage.total_death++;
 
-                    var userindex = stage.Normal.findIndex((s) => s.userid === userid);
+                    var userindex = stage.Normal.findIndex((s) => s.userid === user.googleid);
 
                     stage.Normal[userindex].death++;  //Normal death 갱신
                     await stage.save({ new: true });
                     res.status(200).json({ status: 'fail', user: user, "total_death": user.total_death, "stage_total_death": stage.total_death, "Normal_death": stage.Normal[userindex].death });
-                    logger.info(`${userid} 가 노말 ${stage_name} 실패.`);
-                    play.info(`${userid} 가 노말 ${stage_name} 실패.`);
+                    logger.info(`${user.googleid} 가 노말 ${stage_name} 실패.`);
+                    play.info(`${user.googleid} 가 노말 ${stage_name} 실패.`);
 
                 } catch (err) {
                     res.status(500).json({ error: "database failure" });
-                    logger.error(`스테이지 fail 에러: ${userid} [${err}]`);
-                    play.error(`스테이지 fail 에러: ${userid} [${err}]`);
+                    logger.error(`스테이지 fail 에러: ${user.googleid} [${err}]`);
+                    play.error(`스테이지 fail 에러: ${user.googleid} [${err}]`);
                     upload(email, `fail`, err);
                     next(err);
                 }
@@ -290,7 +294,7 @@ exports.result = async (req, res, next) => {
 
 
 
-
+//TODO:// userid 변경
     //Obj랑 Arr 합쳐주는 함수
     async function integrating_leaderboard_arr(stage, userid, country) {
         try {
@@ -341,7 +345,7 @@ exports.result = async (req, res, next) => {
             return true;
         } else {
             console.log('뱃지랑 커스텀 중 보유중인게 없습니다.')
-            await ban(email, '뱃지커스텀 사기');
+            await ban(user,email ,'뱃지커스텀 사기');
             return false;
         }
     }

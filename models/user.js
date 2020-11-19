@@ -3,12 +3,11 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const User = new Schema({
     //구글 연동 id
-    googleid: {
-        type: String,
-        unique: true,
-        required: true,
+    googleid: String,
+    email:{
+        type:String,
+        unique :true,
     },
-    email:String,
     //총 죽은 횟수
     total_death: {
         type: Number,
