@@ -1,3 +1,6 @@
+const React = require('react');
+const ReactDom = require('react-dom');
+
 const GuGuDan = ()=>{
     const[first,setFirst] = React.useState(Math.ceil(Math.random()*9));
     const[second,setSecond] = React.useState(Math.ceil(Math.random()*9));
@@ -103,11 +106,11 @@ class Gugudan extends React.Component { //구구단 컴포넌트
 
 
 
-ReactDOM.render(
+ReactDom.render(
     <div><Gugudan /><Gugudan /><Gugudan /></div>,
     document.querySelector('#gugudan_class')
 );
-ReactDOM.render(
+ReactDom.render(
     <div><GuGuDan /></div>,
     document.querySelector('#gugudan_Hooks')
 );
