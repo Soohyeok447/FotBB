@@ -1,11 +1,16 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-const ejs = require("ejs");
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
 var helmet = require('helmet')
+const passport = require('passport');
+const session = require('express-session');
+var flash = require('connect-flash');
+
+require('dotenv').config();
+
       //// 라우터
 //API
 var User_router = require('./routes/api/user/user.routes');
@@ -22,21 +27,21 @@ var Auth_router = require("./routes/api/auth/auth.routes");
 //관리자 페이지
 var adminPage = require("./routes/adminPage/index");
 
+//passport config
+// const passportConfig = require('./config/passport');
 
 
-
+var app = express(); 
 var connect = require('./models');
-
-var app = express();
+const { env } = require('process');
 connect();  //mongoDB 와 연결
-
+// passportConfig(passport); //passport 연결
 
 var port = 8901;
 app.set('port', port);
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-
 
 
 if(process.env.NODE_ENV === 'production'){ //배포환경
@@ -52,7 +57,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //helmet
 app.use(helmet());
 app.use(function(req, res, next) {
-  res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-eval'" ); //구글 API 이용하기 위한 헤더
+  res.setHeader("Content-Security-Policy",  "script-src 'self' https://apis.google.com 'unsafe-inline' 'unsafe-eval' " ); //구글 API 이용하기 위한 헤더
   return next();
 });
 //내장된 body-parser
@@ -64,7 +69,30 @@ app.use(bodyParser.raw());
 app.use(bodyParser.text());
 //cookie-parser
 app.use(cookieParser());
-//path
+
+//express-session
+app.set('trust proxy', 1) // trust first proxy
+app.use(session({ //세션 관리용 미들웨어 (로그인할 때 유용)
+  secret: process.env.COOKIE_SECRET,
+  resave: true,
+  saveUninitialized: true,
+  cookie: { 
+    maxAge: 60 * 60 * 1000,
+    store:true,
+    secure:'auto',
+    httpOnly:true,
+    // domain:'fotbbapi.shop:2986',
+  },
+}));
+app.use(flash());
+
+
+
+//passport
+app.use(passport.initialize()); //패스포트 설정을 초기화
+app.use(passport.session()); // req.session 객체에 passport 정보를 저장
+
+
 
 
 // app.get('/admin',function(req,res){

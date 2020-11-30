@@ -204,7 +204,18 @@ async function get_all_leaderboard(user,user_stage) {
     let resultArr = [];
     let stage = await Stage.find({})
 
-    for(s of stage){
+    let stageArr = [];
+    for (let i = 0; i < user_stage.stage.length; i++) {
+        let result = stage.filter(x => {
+            return user_stage.stage[i].stage_name === x.stage_name;
+        })
+        console.log(result);
+        stageArr.push(result[0]);
+    }
+
+
+
+    for (s of stageArr) {
         let jsonObj = {};
         jsonObj["stage_info"] = await get_stage_info(s);
         jsonObj["global_Normal"] = await get_global_leaderboard(s, user.googleid);
@@ -837,15 +848,25 @@ exports.test2 = async (req, res, next) => {
     all_stage_list=[];
     all_user_stage_list = [];
 
-    let all_stage = await Stage.find();
-    all_stage.forEach(x=>{
-        all_stage_list.push(x.stage_name);
+    
 
+    let all_stage = await Stage.find();
+    let i = 0;
+    all_stage.forEach(x=>{
+        if(i>2){
+            all_stage_list.push(x.stage_name);
+        }
+        i++;
     });
 
     let all_user_stage = await User_stage.findOne({userid:user.googleid});
+
+    let j =0;
     all_user_stage.stage.forEach(x=>{
-        all_user_stage_list.push(x.stage_name)
+        if(j>2){
+            all_user_stage_list.push(x.stage_name)
+        }
+        j++;
     })
 
 

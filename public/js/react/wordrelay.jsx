@@ -1,3 +1,4 @@
+const { Component, useEffect } = require('react');
 const React = require('react');
 const { useState, useRef }= React;
 
@@ -28,7 +29,12 @@ const WordRelay = () => {
         setValue(e.target.value);
     };
 
+    useEffect(()=>{
+        fetch('https://fotbbapi.shop:2986/adminpage/user')
+        .then(res=>res.json())
+        .then(data => console.log(data))
 
+    })
     /* render */
     return (
         <>

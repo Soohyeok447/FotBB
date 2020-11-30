@@ -7,15 +7,13 @@
     <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
 		<link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="/stylesheets/style_main.css" type="text/css"/>
-    <meta name = "google-signin-client_id"content = "12613827067-rmalng0o61d47jradh8d1vjsm6pk9l5c.apps.googleusercontent.com">
   </head>
   <body>
     
     <h1>왕벌의 비행 관리자</h1>
-    <a href="/adminpage/" onclick="signOut();">로그아웃</a>
+    <a href="/adminpage/logout">로그아웃</a>
     <strong><%= admin %>님 어서오세요</strong>
     <strong id="now_email"><%= admin_email%></strong>
-    <div class="g-signin2" data-onsuccess="onSignIn"></div>
     <div id="menu">
       <button id="user">유저 관리</button>
       <button id="stage">스테이지 관리</button>
@@ -26,9 +24,9 @@
       <button id="log">서버 로그(할지 안 할지 모름)</button>
       <button id="react">리액트연습</button>
     </div>
-    
+
     <script src="/js/admin_main.js"></script>
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
+
   </body>
   </html>
 

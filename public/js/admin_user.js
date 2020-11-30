@@ -13,6 +13,7 @@ function getUser() {
 
 
 window.onload = ()=>{
+  console.log(document.getElementsByTagName(body).users);
   document.getElementById('search-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const search_email = e.target.search_user.value;

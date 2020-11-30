@@ -3,49 +3,55 @@ var Stage = require("../../models/stage");
 var User_stage = require("../../models/user_stage");
 var Banned = require("../../models/banned");
 var Report = require("../../models/report_user");
+
+const passport = require('passport');
 require('dotenv').config();
 
 
 //로그인 페이지
 exports.login = async (req, res, next) => {
     res.render("admin_login",{
-        error:'none'
+        error:req.flash('error'),
     });
 };
+
+exports.googleLogin = async (req,res,next)=>{
+    console.log('구글로그인에 접근했음');
+    const auth = () =>{
+        console.log("auth함수 실행됨. 이거 안되면 뭔가 문제가 있는거")
+        passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login'] })
+    };
+    auth();
+    
+}
+
+exports.googleCallback = async (req,res,next)=>{
+    console.log('구글로그인 콜백을 받았음');
+    passport.authenticate('google', {
+        failureRedirect: '/adminpage'}),
+        (req, res) => {
+            res.redirect('./main');
+        }
+}
 
 //메인 페이지
 exports.main = async (req, res, next) => {
     try {
-        if (!(req.body.email && req.body.token)) { //이메일과 토큰이 없는 잘못된 접근
-            console.log("이메일이 없습니다.");
-            res.render("admin_login",{ error: 'forbidden' });
-        }else{
-            let user = await User.exists({ email: req.body.email });
-            if(req.body.email==='slasnrn@gmail.com'){ //나중에 삭제
-                let users = await User.find({});
-                res.render("admin_user", {
-                    users: users,
-                    admin: '진안이',
-                    admin_email: req.body.email
+        console.log(req.user);
+        // let _user = await User.findOne({ email: req.session.email });
+        // if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
+        //     console.log("어드민이 아닙니다.");
+        //     res.render("admin_login", { error: 'noadmin' });
+        // } else {
+        //     res.render("admin_main", {
+        //         admin: _user.googleid,
+        //         admin_email: req.body.email
+        //     });
+        // }
+        res.render("admin_main",{
+                    admin: req.user.id,
+                    admin_email: req.user.email,
                 });
-            }else{
-                if(!user){ //DB에 없는 유저일 때
-                    res.render("admin_login",{error:'nouser'});
-                }else{
-                    let _user = await User.findOne({email:req.body.email});
-                    if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
-                        console.log("어드민이 아닙니다.");
-                        res.render("admin_login",{ error: 'noadmin' });
-                    } else {
-                        res.render("admin_main", {
-                            admin: _user.googleid,
-                            admin_email: req.body.email
-                        });
-                    }
-                }
-            }
-        }
-
     } catch (err) {
         res.json({ error: "tlqkf" });
     }
