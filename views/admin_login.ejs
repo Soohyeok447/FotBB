@@ -7,53 +7,17 @@
     <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
 		<link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="/stylesheets/style_login.css" type="text/css"/>
-    <meta name = "google-signin-client_id"content = "12613827067-rmalng0o61d47jradh8d1vjsm6pk9l5c.apps.googleusercontent.com">
   </head>
   <body>
-    
+    <% if(error===''){ %>
     <h1>왕벌의 비행 관리자</h1>
-		<form action="https://fotbbapi.shop:2986/adminpage/main" method="POST">
-			<label for="user-id">아이디</label>
-			<input type="text" id="user-id" placeholder="아이디">
-			<label for="user-email">이메일</label>
-			<input type="email" id="user-email" placeholder="이메일">
-			<label for="user-password">토큰</label>
-			<input type="password" id="user-password" placeholder="토큰">
-			<button type="submit">확인</button>
-    </form>
-    
-    <!-- <div class="g-signin2" data-onsuccess="onSignIn"></div> -->
-    <a href="login/google">구글로그인 이제 좀 돼라</a>
-    <% if( error ==='forbidden'){ %>
-      <p>당신 누구야!</p>
-    
+      <a href="login/google">구글로그인</a>
     <% } %>
-    <% if( error ==='nouser'){ %>
-      <p>당신 누구야! 디비에 존재하지 않아</p>
-    
+    <% if(error) { %>
+      <div><%=error%> </div>
     <% } %>
-    <% if( error ==='noadmin'){ %>
-      <p>당신 누구야! 어드민이 아니야</p>
-    
-    <% } %>
-    
-    
-    <div id="hi"></div>
+
     <script src="/js/admin_login.js"></script>
-    <!-- <script src="https://apis.google.com/js/platform.js" async defer></script> -->
   </body>
   </html>
   
-  
-  
-  
-  <!-- 필요한거 -->
-  <!-- 
-    로그인버튼,  어드민용 디비관리페이지 ㅡ> 최대한 안꾸미고 실용적이게
-    (로그인하려면 이메일,(토큰) 이 필요하고 어드민 설정을 해둬야 함) 그리고 세션유지를 위해 redis나 memcache적용ㅡ 유저정보(검색, 수정)
-    ㅡ 스테이지 관리(스테이지 추가 , 수정, 클리어율, 시도횟수, 랭킹)
-  ㅡ 밴유저목록(검색 , 밴, 밴해제)
-  ㅡ 이메일발송(상황에 따른 템플릿 존재)
-  ㅡ 필터링단어 관리(추가, 삭제) 오 이거 쫌 까다로워보이는데
-  ㅡ 신고많이당한 유저목록(강제닉변버튼, 신고횟수, 밴 버튼, 목록에서 삭제버튼 , 강제닉변횟수 )
-  로그도 볼 수 있게 하고 싶지만 s3에 접근해야 해서 사용량을 더는 늘릴 수 없을 것 같아 제외-->

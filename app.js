@@ -27,8 +27,6 @@ var Auth_router = require("./routes/api/auth/auth.routes");
 //관리자 페이지
 var adminPage = require("./routes/adminPage/index");
 
-//passport config
-// const passportConfig = require('./config/passport');
 
 
 var app = express(); 

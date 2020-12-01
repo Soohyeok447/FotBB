@@ -3,9 +3,8 @@ var router = express.Router();
 
 
 // 패스포트 관련
-var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 var passport = require('passport');
-
+var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 
 //DB, 미들웨어
 const User = require('../../models/user');
@@ -18,17 +17,13 @@ require('dotenv').config();
 router.get("/", isNotLoggedIn, Controller.login);
 
 
-
-
-
 /*
 
                         구글 로그인        
 
 */
-//router.get("/login/google/callback", passport.authenticate('google', ({ failureRedirect: '/adminpage' })),
 router.get("/login/google", passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login','https://www.googleapis.com/auth/userinfo.email'] }));
-router.get("/login/google/callback", passport.authenticate('google', ({ failureRedirect: '/adminpage' })),
+router.get("/login/google/callback", passport.authenticate('google', ({ failureRedirect: '/adminpage' ,failureFlash: true})),
 	function (req, res) {
 		console.log('\n\n성공을 해서 /main으로 리다이렉트 시키겠습니다.')
 		res.redirect('https://fotbbapi.shop:2986/adminpage/main');
@@ -39,25 +34,7 @@ router.get('/logout',isLoggedIn,(req,res)=>{
     req.session.destroy();
     res.redirect('/adminpage');
 })
-
-passport.serializeUser((user, done) => {
-	console.log('serializeUser입니다. 이 밑은 구글전략에서 넘겨받은 data입니다.',user);
-	console.log('\n\n');
-    console.log('serializeuser메서드 안에서 done을 실행시키겠습니다. req.session에 저장되며, deserializeUser에는 user.email을 넘기겠습니다.')
-    
-    let obj= {};
-    obj.id = user.googleid;
-    obj.email = user.email;
-    console.log(obj);
-	done(null, obj); //구글 이메일을 req.session 객체에 넘김
-});
-
-passport.deserializeUser((Obj, done) => {
-	console.log('\n\ndeserializeUser입니다. serializeuser에서 받은 obj가 여기서 req.user에 저장됩니다.',Obj);
-	done(null, Obj); // 여기의 user가 req.user가 됨
-});
-
-
+//구글전략
 passport.use(new GoogleStrategy({
     clientID: process.env.GCP_CLIENT_ID,
     clientSecret: process.env.GCP_PASSWORD,
@@ -66,8 +43,8 @@ passport.use(new GoogleStrategy({
     async (accessToken, refreshToken, profile, cb) => {
         try {
             console.log('구글로그인을 했습니다. 구글전략이 실행됩니다.')
-			console.log('이 밑은 로그인을 해서 얻은 profile입니다.')
-			console.log(profile);
+            console.log('이 밑은 로그인을 해서 얻은 profile입니다.')
+            console.log(profile);
 
             console.log('자 그럼이제 구글전략안에 있는 콜백을 실행시켜보겠습니다.\n\n')
             const exUser = await User.findOne({ email: profile._json.email })
@@ -79,10 +56,11 @@ passport.use(new GoogleStrategy({
                     return cb(null, exUser)
                 } else {
                     console.log('어드민이 아니네 로그인 실패')
-                    return cb(null, false, { error: 'no admin' });
+                    return cb(null, false, { message: 'no admin' });
                 }
             } else {
-                return cb(null,false,{error:'no data'})
+                console.log('DB에 없는 유저입니다.')
+                return cb(null, false, { message: 'no data' })
             }
         } catch (error) {
             return cb(error)
@@ -90,40 +68,25 @@ passport.use(new GoogleStrategy({
     }
 )
 )
+//패스포트
+passport.serializeUser((user, done) => {
+    console.log('serializeUser입니다. 이 밑은 구글전략에서 넘겨받은 data입니다.',user);
+    console.log('\n\n');
+    console.log('serializeuser메서드 안에서 done을 실행시키겠습니다. req.session에 저장되며, deserializeUser에는 user.email을 넘기겠습니다.')
+    
+    let obj= {};
+    obj.id = user.googleid;
+    obj.email = user.email;
+    console.log(obj);
+    done(null, obj); //구글 이메일을 req.session 객체에 넘김
+});
 
-// passport.use(new GoogleStrategy({
-// 	clientID: process.env.GCP_CLIENT_ID,
-//     clientSecret: process.env.GCP_PASSWORD,
-//     callbackURL: "https://fotbbapi.shop:2986/adminpage/login/google/callback",
-//     // passReqToCallback : true,
-// },
-// 	async (accessToken, refreshToken, profile, cb) => {
-// 		try {
-// 			console.log('구글로그인을 했습니다. 구글전략이 실행됩니다.')
-// 			console.log('이 밑은 로그인을 해서 얻은 profile입니다.')
-// 			console.log(profile);
-// 			console.log('#여기에서 어드민인지 아닌지 검사하는 로직을 넣으면 됩니다.# 통과하면 로그인이 된 것입니다.')
-// 			console.log('DB에 있고 어드민이라고 치고 넘어가봅시다.')
-// 			console.log('자 그럼이제 구글전략안에 있는 콜백을 실행시켜보겠습니다.\n\n')
-// 			cb(null, profile);
+passport.deserializeUser((Obj, done) => {
+    console.log('\n\ndeserializeUser입니다. serializeuser에서 받은 obj가 여기서 req.user에 저장됩니다.',Obj);
+    done(null, Obj); // 여기의 user가 req.user가 됨
+});
 
-// 		} catch (error) {
-// 			return cb(error)
-// 		}
-// 	}
-// )
-// )
-
-
-
-///////////////////////////////////////////////////////
-
-
-
-
-
-
-
+////////////////////////////////////////////////
 
 //메인 헤더
 router.get("/main", isLoggedIn, Controller.main);

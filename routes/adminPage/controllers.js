@@ -4,50 +4,37 @@ var User_stage = require("../../models/user_stage");
 var Banned = require("../../models/banned");
 var Report = require("../../models/report_user");
 
-const passport = require('passport');
+
 require('dotenv').config();
 
 
 //로그인 페이지
 exports.login = async (req, res, next) => {
-    res.render("admin_login",{
-        error:req.flash('error'),
-    });
+    let fmsg = req.flash();
+    let feedback = '';
+    if(fmsg.error){
+        req.session.result = true;
+        feedback=fmsg.error[0];
+        req.session.feedback=feedback
+    }
+    console.log(req.session);
+    if(req.session.result){
+        console.log('result가 true')
+        res.render("admin_login",{
+            error:req.session.feedback,
+        });
+    }else{
+        console.log('result가 false')
+        res.render("admin_login",{
+            error:'',
+        });
+    }
 };
-
-exports.googleLogin = async (req,res,next)=>{
-    console.log('구글로그인에 접근했음');
-    const auth = () =>{
-        console.log("auth함수 실행됨. 이거 안되면 뭔가 문제가 있는거")
-        passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login'] })
-    };
-    auth();
-    
-}
-
-exports.googleCallback = async (req,res,next)=>{
-    console.log('구글로그인 콜백을 받았음');
-    passport.authenticate('google', {
-        failureRedirect: '/adminpage'}),
-        (req, res) => {
-            res.redirect('./main');
-        }
-}
 
 //메인 페이지
 exports.main = async (req, res, next) => {
     try {
         console.log(req.user);
-        // let _user = await User.findOne({ email: req.session.email });
-        // if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
-        //     console.log("어드민이 아닙니다.");
-        //     res.render("admin_login", { error: 'noadmin' });
-        // } else {
-        //     res.render("admin_main", {
-        //         admin: _user.googleid,
-        //         admin_email: req.body.email
-        //     });
-        // }
         res.render("admin_main",{
                     admin: req.user.id,
                     admin_email: req.user.email,
@@ -58,39 +45,21 @@ exports.main = async (req, res, next) => {
 
 };
 
+
 //유저관리 페이지
 exports.user = async (req, res, next) => {
     try {
-        if (!(req.body.email && req.body.token)) { //이메일과 토큰이 없는 잘못된 접근
-            console.log("이메일이 없습니다.");
-            res.render("admin_login",{ error: 'forbidden' });
-        }else{
-            let user = await User.exists({ email: req.body.email });
-            if(req.body.email==='slasnrn@gmail.com'){ //나중에 삭제
-                let users = await User.find({});
-                res.render("admin_user", {
-                    users: users,
-                    admin: '진안이',
-                    admin_email: req.body.email
-                });
-            }else{
-                if(!user){ //DB에 없는 유저일 때
-                    res.render("admin_login",{error:'nouser'});
-                }else{
-                    let _user = await User.findOne({email:req.body.email});
-                    if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
-                        console.log("어드민이 아닙니다.");
-                        res.render("admin_login",{ error: 'noadmin' });
-                    } else {
-                        let users = await User.find({});
-                        res.render("admin_user", {
-                            users: users,
-                            admin: _user.googleid,
-                            admin_email: req.body.email
-                        });
-                    }
-                }
-            }
+        let _user = await User.findOne({email:req.body.email});
+        if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
+            console.log("어드민이 아닙니다.");
+            res.render("admin_login",{ error: 'noadmin' });
+        } else {
+            let users = await User.find({});
+            res.render("admin_user", {
+                users: users,
+                admin: _user.googleid,
+                admin_email: req.body.email
+            });
         }
     } catch (err) {
         res.json({ error: "tlqkf" });
@@ -124,157 +93,72 @@ exports.user_ajax = async (req, res, next) => {
 //스테이지관리 페이지
 exports.stage = async (req, res, next) => {
     try {
-        if (!(req.body.email && req.body.token)) { //이메일과 토큰이 없는 잘못된 접근
-            console.log("이메일이 없습니다.");
-            res.render("admin_login",{ error: 'forbidden' });
-        }else{
-            let user = await User.exists({ email: req.body.email });
-            if(req.body.email==='slasnrn@gmail.com'){ //나중에 삭제
-                let stages = await Stage.find({});
-                res.render("admin_stage", {
-                    stages: stages,
-                    admin: '진안이',
-                    admin_email: req.body.email
-                });
-            }else{
-                if(!user){ //DB에 없는 유저일 때
-                    res.render("admin_login",{error:'nouser'});
-                }else{
-                    let _user = await User.findOne({email:req.body.email});
-                    if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
-                        console.log("어드민이 아닙니다.");
-                        res.render("admin_login",{ error: 'noadmin' });
-                    } else {
-                        let stages = await Stage.find({});
-                        res.render("admin_stage", {
-                            stages: stages,
-                            admin: _user.googleid,
-                            admin_email: req.body.email
-                        });
-                    }
-                }
-            }
-        }
-
+        let stages = await Stage.find({});
+        res.render("admin_stage", {
+            stages: stages,
+            admin: _user.googleid,
+            admin_email: req.body.email
+        });
     } catch (err) {
         console.log(err);
         res.send(err);
     }
-
 };
 
 
 //밴유저 관리 페이지
 exports.ban = async (req, res, next) => {
     try {
-        if (!(req.body.email && req.body.token)) { //이메일과 토큰이 없는 잘못된 접근
-            console.log("이메일이 없습니다.");
-            res.render("admin_login",{ error: 'forbidden' });
-        }else{
-            let user = await User.exists({ email: req.body.email });
-            if(req.body.email==='slasnrn@gmail.com'){ //나중에 삭제
-                let banned = await Banned.find({});
-                res.render("admin_stage", {
-                    banned: banned,
-                    admin: '진안이',
-                    admin_email: req.body.email
-                });
-            }else{
-                if(!user){ //DB에 없는 유저일 때
-                    res.render("admin_login",{error:'nouser'});
-                }else{
-                    let _user = await User.findOne({email:req.body.email});
-                    if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
-                        console.log("어드민이 아닙니다.");
-                        res.render("admin_login",{ error: 'noadmin' });
-                    } else {
-                        let banned = await Banned.find({});
-                        res.render("admin_ban", {
-                            banned: banned,
-                            admin: _user.googleid,
-                            admin_email: req.body.email
-                        });
-                    }
-                }
-            }
+        let _user = await User.findOne({email:req.body.email});
+        if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
+            console.log("어드민이 아닙니다.");
+            res.render("admin_login",{ error: 'noadmin' });
+        } else {
+            let banned = await Banned.find({});
+            res.render("admin_ban", {
+                banned: banned,
+                admin: _user.googleid,
+                admin_email: req.body.email
+            });
         }
-
     } catch (err) {
         console.log(err);
         res.send(err);
     }
-
 };
 
 
 //신고된 유저 관리 페이지
 exports.report = async (req, res, next) => {
     try {
-        if (!(req.body.email && req.body.token)) { //이메일과 토큰이 없는 잘못된 접근
-            console.log("이메일이 없습니다.");
-            res.render("admin_login",{ error: 'forbidden' });
-        }else{
-            let user = await User.exists({ email: req.body.email });
-            if(req.body.email==='slasnrn@gmail.com'){ //나중에 삭제
-                let reported = await Report.find({});
-                res.render("admin_report", {
-                    reported: reported,
-                    admin: '진안이',
-                    admin_email: req.body.email
-                });
-            }else{
-                if(!user){ //DB에 없는 유저일 때
-                    res.render("admin_login",{error:'nouser'});
-                }else{
-                    let _user = await User.findOne({email:req.body.email});
-                    if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
-                        console.log("어드민이 아닙니다.");
-                        res.render("admin_login",{ error: 'noadmin' });
-                    } else {
-                        let reported = await Report.find({});
-                        res.render("admin_report", {
-                            reported: reported,
-                            admin: _user.googleid,
-                            admin_email: req.body.email
-                        });
-                    }
-                }
-            }
+        let _user = await User.findOne({email:req.body.email});
+        if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
+            console.log("어드민이 아닙니다.");
+            res.render("admin_login",{ error: 'noadmin' });
+        } else {
+            let reported = await Report.find({});
+            res.render("admin_report", {
+                reported: reported,
+                admin: _user.googleid,
+                admin_email: req.body.email
+            }); 
         }
-
     } catch (err) {
         console.log(err);
         res.send(err);
     }
-
 };
 
 //리액트연습
 exports.react = async (req, res, next) => {
     try {
-        if(req.body.value){
+        let _user = await User.findOne({email:req.body.email});
+        if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
+            console.log("어드민이 아닙니다.");
+            res.render("admin_login",{ error: 'noadmin' });
+        } else {
             res.render("react",{value:req.body.value});
-        }else{
-            if (!(req.body.email && req.body.token)) { //이메일과 토큰이 없는 잘못된 접근
-                console.log("이메일이 없습니다.");
-                res.render("admin_login",{ error: 'forbidden' });
-            }else if (req.body.email && req.body.token){
-                let user = await User.exists({ email: req.body.email });
-                if(!user){ //DB에 없는 유저일 때
-                    res.render("admin_login",{error:'nouser'});
-                }else{
-                    let _user = await User.findOne({email:req.body.email});
-                    if (_user.admin !== true) { //구글로그인을 했는데 어드민이 아닐 때
-                        console.log("어드민이 아닙니다.");
-                        res.render("admin_login",{ error: 'noadmin' });
-                    } else {
-                        res.render("react",{value:req.body.value});
-                    }
-                }
-            }
         }
-
-        
     } catch (err) {
         console.log(err);
         res.send(err);
