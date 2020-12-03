@@ -8,7 +8,21 @@ const User_search = memo(() => {
     const [result, setResult] = useState('');
     const [searchLoading, setSearchLoading] = useState(true);
     const inputRef = useRef(null);
+
+
     /* method */
+
+    //밴버튼 클릭
+    const onClickBan = (e) => {
+        e.preventDefault()
+        console.log(e);
+    }
+
+    //수정버튼 클릭
+    const onClickModify = (e) => {
+
+    }
+
 
     const onSubmitForm = (e) => {
         e.preventDefault()
@@ -22,6 +36,9 @@ const User_search = memo(() => {
             axios.get(`https://fotbbapi.shop:2986/adminpage/user_search/${search_email}`).then(res => {
                 if(res.data.user === null){
                     setResult('error')
+                    setSearchLoading(true);
+                }else if(res.data.user === 'banned'){
+                    setResult('banned')
                     setSearchLoading(true);
                 }else{
                     setResult(res.data.user);
@@ -42,12 +59,16 @@ const User_search = memo(() => {
     return (
         <div id="search">
             <form id="search-form" onSubmit={onSubmitForm}>
-                <input ref={inputRef} value={search} onChange={onChangeInput} placeholder=" email" />
+                <input ref={inputRef} value={search} onChange={onChangeInput} placeholder="email" />
                 <button id="search-button">검색</button>
             </form>
 
             {result === 'error'
                 ?(`${constsearch} 는 없는 유저입니다.`)
+                :("")
+            }
+            {result === 'banned'
+                ?(`${constsearch} 는 밴당한 유저입니다.`)
                 :("")
             }
 

@@ -8,25 +8,10 @@ import {User_table} from './user_table';
 const User = () => {
     /* state */
     const [data, loading] = useFetch('https://fotbbapi.shop:2986/adminpage/user');
-
-    /* method */
+    const [afterban, setAfterban] = useState('');
+    
     
 
-    //밴버튼 클릭
-    const onClickBan = (e) => {
-
-    }
-
-    //수정버튼 클릭
-    const onClickModify = (e) => {
-
-    }
-
-    useEffect(() => {
-        console.log('user.jsx입니다');
-        console.log(data);
-
-    }, [data]);
     /* render */
     return (
         <>
@@ -55,7 +40,7 @@ const User = () => {
                         </thead>
                         <tbody>
                             {data.map((x) => (
-                                <User_table key = {x.googleid} users={x}/>
+                                <User_table key = {x.googleid} users={x} setAfterban={setAfterban}/>
                             ))}
                         </tbody>
                     </table>
