@@ -1,29 +1,111 @@
 * {
 	box-sizing: border-box;
 	margin: 0;
-  }
-  
-  body {
+}
+
+body {
 	height:100vh;
 	font-family: 'Spoqa Han Sans', 'Sans-serif';
 	letter-spacing: -0.02em;
-	  
-  }
-  
-  h1 {
+	
+}
+
+h1 {
 	/* font-size: 16px; */
 	font-weight: 1000;
 	color: #1f2d3d;
 	line-height: 1.25;
-  }
-  
-  strong {
-	font-size: 14px;
-	font-weight: 400;
-	color: #afb3b9;
-	line-height: 1.4285714286;
+}
+
+	strong {
+		font-size: 14px;
+		font-weight: 400;
+		color: #afb3b9;
+		line-height: 1.4285714286;
 	}
 
-  .g-signin2{
-    display:none;
-  }
+	#search-button{
+		margin-bottom:7px;
+		margin-top:20px;
+	}
+
+#search{
+	margin-bottom:20px;
+}
+
+#user-list {
+border-collapse: collapse;
+}
+#user-list th{
+border:2px solid black;
+
+}
+
+#user-list td{
+border:1px solid gray;
+padding:5px;
+
+}
+
+
+
+
+
+#stage-list{
+border-collapse: collapse;
+}
+
+
+
+#stage-list th{
+border: 1px black solid;
+}
+#stage-list td{
+border: 1px gray solid;
+}
+#stage_margin { 
+margin-bottom: 30px;
+
+}
+#stagebox { 
+margin-right:400px;
+border: 1px black solid;
+}
+
+
+
+/* 모달창 */
+#user_modify_modal{
+	display: none;
+	width: auto;
+	height: 250px;
+	padding: 20px 40px;
+	background-color: #fefefe;
+	border: 1px solid #888;
+	border-radius: 3px;
+}
+
+
+#user_modify_modal .modal_close_btn{
+	position: absolute;
+	top: 10px;
+	right: 10px;
+}
+
+#user_ban_modal{
+	display: none;
+	width: 500px;
+	height: 70px;
+	padding: 20px 40px;
+	background-color: #fefefe;
+	border: 1px solid #888;
+	border-radius: 3px;
+}
+
+
+#user_ban_modal .modal_close_btn{
+	position: absolute;
+	top: 10px;
+	right: 10px;
+}
+

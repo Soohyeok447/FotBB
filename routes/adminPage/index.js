@@ -91,18 +91,22 @@ passport.deserializeUser((Obj, done) => {
 //메인 헤더
 router.get("/main", isLoggedIn, Controller.main);
 
-// //로그인관리 페이지
-// router.post("/user", Controller.user);
-// //로그인관리 ajax
-// router.post("/user_ajax", Controller.user_ajax);
-// //스테이지관리 페이지
-// router.post("/stage", Controller.stage);
-// //밴유저관리 페이지
-// router.post("/ban", Controller.ban);
-// //신고유저관리 페이지
-// router.post("/report", Controller.report);
-// // //로그관리 페이지
-// // router.post("/log",Controller.log);
+//로그인관리 페이지
+router.get("/user", isLoggedIn,Controller.user);
+//로그인관리 ajax
+router.get("/user_search/:email", isLoggedIn,Controller.user_search);
+//유저 밴 ajax
+router.post("/user_ban", isLoggedIn,Controller.user_ban);
+//유저 정보수정 ajax
+router.post("/user_modify", isLoggedIn,Controller.user_modify);
+//스테이지관리 페이지
+router.get("/stage", isLoggedIn,Controller.stage);
+//밴유저관리 페이지
+router.get("/ban", isLoggedIn,Controller.ban);
+//신고유저관리 페이지
+router.get("/report", isLoggedIn,Controller.report);
+// //로그관리 페이지
+// router.get("/log",Controller.log);
 
 
 

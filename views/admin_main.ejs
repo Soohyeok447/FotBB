@@ -1,48 +1,90 @@
 <!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>왕벌의 비행 관리자</title>
-    <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
-		<link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="/stylesheets/style_main.css" type="text/css"/>
-  </head>
-  <body>
-    
-    <h1>왕벌의 비행 관리자</h1>
-    <a href="/adminpage/logout">로그아웃</a>
-    <strong><%= admin %>님 어서오세요</strong>
-    <strong id="now_email"><%= admin_email%></strong>
-    <div id="menu">
-      <button id="user">유저 관리</button>
-      <button id="stage">스테이지 관리</button>
-      <button id="ban">밴 유저 목록</button>
-      <button id="report">신고 많이 당한 유저 목록</button>
-      <button id="sendemail">이메일 발송</button>
-      <button id="filteringDB">필터링단어 관리</button>
-      <button id="log">서버 로그(할지 안 할지 모름)</button>
-      <button id="react">리액트연습</button>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>왕벌의 비행 관리자</title>
+  <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
+  <link href='//spoqa.github.io/spoqa-han-sans/css/SpoqaHanSans-kr.css' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="/stylesheets/style_main.css" type="text/css" />
+</head>
+
+<body>
+
+  <h1>왕벌의 비행 관리자</h1>
+  <a href="/adminpage/logout">로그아웃</a>
+  <strong><%= admin %>님 어서오세요</strong>
+  <strong id="user_email"><%= admin_email%></strong>
+  <div id="menu">
+    <button id="btn_user">유저 관리</button>
+    <button id="btn_stage">스테이지 관리</button>
+    <button id="btn_ban">밴 유저 목록</button>
+    <button id="btn_report">신고 많이 당한 유저 목록</button>
+    <button id="btn_sendemail">이메일 발송</button>
+    <button id="btn_filteringDB">필터링단어 관리</button>
+    <button id="btn_log">서버 로그(할지 안 할지 모름)</button>
+    <button id="btn_react">리액트연습</button>
+  </div>
+  <div id="user_count"></div>
+  <div id="root"></div>
+  <div id="user_component"></div>
+  <div id="stage_component"></div>
+  <div id="ban_component"></div>
+  <div id="report_component"></div>
+  <div id="sendemail_component"></div>
+  <div id="filteringDB_component"></div>
+  <div id="log_component"></div>
+  <div id="react_component"></div>
+  <div id="modal">
+
+    <div id="user_ban_modal">
+      <span id="final_check"></span>
+      <span> 를 정말 밴하시겠습니까?</span>
+      <button id=ban_btn>네</button>
+      <a class="modal_close_btn">닫기</a>
     </div>
 
-    <script src="/js/admin_main.js"></script>
+    <div id="user_modify_modal">
+      <div id="user_modify_modal_info">컴마 꼭 잊지마세용</div>
+      <div id="googleid_modal">
+        <label for="googleid">googleid</label>
+        <input id="googleid" placeholder="googleid" name="googleid">
+      </div>
+      <div id="email_modal">
+        <label for="email">email</label>
+        <input id="email" placeholder="email" name="email">
+      </div>
+      <div id="crystal_modal">
+        <label for="crystal">crystal</label>
+        <input id="crystal" placeholder="crystal" name="crystal">
+      </div>
+      <div id="royal_crystal_modal">
+        <label for="royal_crystal">royal_crystal</label>
+        <input id="royal_crystal" placeholder="royal_crystal" name="royal_crystal">
+      </div>
+      <div id="bee_custom_modal">
+        <label for="bee_custom">bee_custom</label>
+        <input id="bee_custom" placeholder="bee_custom" name="bee_custom">
+      </div>
+      <div id="badge_modal">
+        <label for="badge">badge</label>
+        <input id="badge" placeholder="badge" name="badge">
+      </div>
+      <button id=modify_btn>수정</button>
+      <a class="modal_close_btn">닫기</a>
+    </div>
 
-  </body>
-  </html>
+    <div id="report_modal">
+
+    </div>
 
 
+  </div>
 
 
-  
-  
-  
-  <!-- 필요한거 -->
-  <!-- 
-    로그인버튼,  어드민용 디비관리페이지 ㅡ> 최대한 안꾸미고 실용적이게
-    (로그인하려면 이메일,(토큰) 이 필요하고 어드민 설정을 해둬야 함) 그리고 세션유지를 위해 redis나 memcache적용ㅡ 유저정보(검색, 수정)
-    ㅡ 스테이지 관리(스테이지 추가 , 수정, 클리어율, 시도횟수, 랭킹)
-  ㅡ 밴유저목록(검색 , 밴, 밴해제)
-  ㅡ 이메일발송(상황에 따른 템플릿 존재)
-  ㅡ 필터링단어 관리(추가, 삭제) 오 이거 쫌 까다로워보이는데
-  ㅡ 신고많이당한 유저목록(강제닉변버튼, 신고횟수, 밴 버튼, 목록에서 삭제버튼 , 강제닉변횟수 )
-  로그도 볼 수 있게 하고 싶지만 s3에 접근해야 해서 사용량을 더는 늘릴 수 없을 것 같아 제외-->
+  <script src="/js/dist/react_app.js"></script>
+
+</body>
+
+</html>

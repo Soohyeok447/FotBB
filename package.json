@@ -5,12 +5,16 @@
   "scripts": {
     "start": "cross-env NODE_ENV=production PORT=80 pm2 start app.js -i 0",
     "dev": "nodemon app",
-    "build": "webpack serve --env development"
+    "build": "webpack serve --env development",
+    "webpack": "cd public/js npx webpack --watch",
+    "nodemon": "cd ../.. nodemon app"
   },
   "dependencies": {
+    "@babel/polyfill": "^7.12.1",
     "JSON": "^1.0.0",
     "app-root-path": "^3.0.0",
     "aws-sdk": "^2.750.0",
+    "axios": "^0.21.0",
     "body-parser": "^1.19.0",
     "cookie-parser": "~1.4.4",
     "cross-env": "^7.0.2",

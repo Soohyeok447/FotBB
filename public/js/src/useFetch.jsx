@@ -2,12 +2,11 @@ import {useState, useEffect} from 'react';
 import axios from 'axios';
 
 function useFetch(url){
-    console.log('useFetch Hook 실행');
+    console.log('useFetch Hook');
     const [data,setData] = useState([]);
     const [loading,setLoading] = useState(true);
     async function fetchUrl(){
         await axios.get(url).then(res => {
-            console.log('useFetch Hook속 fetchUrl함수실행');
             console.log('url:',url);
             console.log(res);
             const bowl = res.data.users.map(x => x);

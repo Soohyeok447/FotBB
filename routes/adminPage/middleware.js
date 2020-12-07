@@ -5,6 +5,7 @@ exports.isLoggedIn = (req,res,next) =>{
         next();
     }else{
         console.log('로그인중이 아닙니다.')
+        req.session.destroy();
         res.redirect('/adminpage');
     }
 };

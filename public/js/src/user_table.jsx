@@ -92,6 +92,8 @@ const User_table = ({ users, setAfterban }) => {
                 }).then(function (res) {
                     bg.remove();
                     modal.style.display = 'none';
+                    // setAfterban(true);
+                    // setAfterban('');
                 })
                     .catch(function (error) {
                         //handle error
@@ -163,17 +165,47 @@ const User_table = ({ users, setAfterban }) => {
 
         console.log(selectedRowArr);
         user_modify_modal.querySelector('#googleid').value = selectedRowArr[0];
-        user_modify_modal.querySelector('#email').value = selectedRowArr[1];
-        user_modify_modal.querySelector('#crystal').value = selectedRowArr[2];
-        user_modify_modal.querySelector('#royal_crystal').value = selectedRowArr[3];
-        user_modify_modal.querySelector('#bee_custom').value = selectedRowArr[4];
-        user_modify_modal.querySelector('#shot_custom').value = selectedRowArr[5];
+        let original_email = user_modify_modal.querySelector('#email').value = selectedRowArr[1];
+        user_modify_modal.querySelector('#crystal').value = selectedRowArr[3];
+        user_modify_modal.querySelector('#royal_crystal').value = selectedRowArr[4];
+        user_modify_modal.querySelector('#bee_custom').value = selectedRowArr[5];
         user_modify_modal.querySelector('#badge').value = selectedRowArr[6];
 
-        user_modify_modal.querySelector('#modify_btn').addEventListener('click', () => {
-            e.preventDefault();
 
-        })
+
+        function click(){
+            let googleid = user_modify_modal.querySelector('#googleid').value;
+            let crystal = user_modify_modal.querySelector('#crystal').value;
+            let royal_crystal = user_modify_modal.querySelector('#royal_crystal').value;
+            let bee_custom = user_modify_modal.querySelector('#bee_custom').value;
+            let badge = user_modify_modal.querySelector('#badge').value;
+            let modified_email = user_modify_modal.querySelector('#email').value;
+
+            console.log('밴버튼에서 확인 클릭');
+            axios({
+                method: 'post',
+                url: 'https://fotbbapi.shop:2986/adminpage/user_modify',
+                data: {
+                    googleid:googleid,
+                    original_email:original_email,
+                    modified_email:modified_email,
+                    crystal:crystal,
+                    royal_crystal:royal_crystal,
+                    bee_custom:bee_custom,
+                    badge:badge
+                }
+            }).then(function (res) {
+                bg.remove();
+                modal.style.display = 'none';
+            })
+                .catch(function (error) {
+                    //handle error
+                    console.log(error);
+
+                })
+        }
+
+        user_modify_modal.querySelector('#modify_btn').addEventListener('click', click)
 
 
 
@@ -191,7 +223,6 @@ const User_table = ({ users, setAfterban }) => {
             <td>{users.crystal}</td>
             <td>{users.royal_crystal}</td>
             <td>{users.bee_custom + ', '}</td>
-            <td>{users.shot_custom + ', '}</td>
             <td>{users.badge + ', '}</td>
             <td>{users.created_date}</td>
             <td>{users.latest_login}</td>

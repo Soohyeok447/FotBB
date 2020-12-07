@@ -86,7 +86,6 @@ const User_search = memo(() => {
                                 <th>크리스탈</th>
                                 <th>로얄크리스탈</th>
                                 <th>보유 벌 커스텀</th>
-                                <th>보유 샷 커스텀</th>
                                 <th>보유 뱃지</th>
                                 <th>생성 날짜</th>
                                 <th>최종로그인 날짜</th>
@@ -101,7 +100,6 @@ const User_search = memo(() => {
                                 <td>{result.crystal}</td>
                                 <td>{result.royal_crystal}</td>
                                 <td>{result.bee_custom + ', '}</td>
-                                <td>{result.shot_custom + ', '}</td>
                                 <td>{result.badge + ', '}</td>
                                 <td>{result.created_date}</td>
                                 <td>{result.latest_login}</td>

@@ -91,11 +91,6 @@ app.use(passport.initialize()); //패스포트 설정을 초기화
 app.use(passport.session()); // req.session 객체에 passport 정보를 저장
 
 
-
-
-// app.get('/admin',function(req,res){
-//   res.render("admin_login",{});
-// })
 //라우팅
 app.use('/api/version',Version_router);
 app.use('/api/user', User_router);
