@@ -7,9 +7,17 @@ function useFetch(url){
     const [loading,setLoading] = useState(true);
     async function fetchUrl(){
         await axios.get(url).then(res => {
+            let bowl;
             console.log('url:',url);
             console.log(res);
-            const bowl = res.data.users.map(x => x);
+            if(res.data.users){
+                bowl = res.data.users.map(x => x);
+            }else if(res.data.stages){
+                bowl = res.data.stages.map(x => x);
+            }else if (res.data.banned){
+                bowl = res.data.banned.map(x => x);
+            }
+            
             setData(bowl);
         });
         setLoading(false);

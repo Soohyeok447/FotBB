@@ -16,7 +16,7 @@ const User_table = ({ users, setAfterban }) => {
     //밴버튼 클릭 (모달창 띄우기)
     const onClickBan = (e) => {
         console.log('밴버튼 클릭')
-
+        e.preventDefault();
 
         function promise(cb) {
             return new Promise((resolve, reject) => {
@@ -170,7 +170,7 @@ const User_table = ({ users, setAfterban }) => {
         user_modify_modal.querySelector('#royal_crystal').value = selectedRowArr[4];
         user_modify_modal.querySelector('#bee_custom').value = selectedRowArr[5];
         user_modify_modal.querySelector('#badge').value = selectedRowArr[6];
-
+        user_modify_modal.querySelector('#country').value = selectedRowArr[9];
 
 
         function click(){
@@ -180,6 +180,7 @@ const User_table = ({ users, setAfterban }) => {
             let bee_custom = user_modify_modal.querySelector('#bee_custom').value;
             let badge = user_modify_modal.querySelector('#badge').value;
             let modified_email = user_modify_modal.querySelector('#email').value;
+            let country = user_modify_modal.querySelector('#country').value;
 
             console.log('밴버튼에서 확인 클릭');
             axios({
@@ -192,7 +193,8 @@ const User_table = ({ users, setAfterban }) => {
                     crystal:crystal,
                     royal_crystal:royal_crystal,
                     bee_custom:bee_custom,
-                    badge:badge
+                    badge:badge,
+                    country:country,
                 }
             }).then(function (res) {
                 bg.remove();

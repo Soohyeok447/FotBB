@@ -10,7 +10,7 @@ module.exports = {
     
     
     entry:{ // 입력
-        app:['@babel/polyfill','./admin_main','./admin_stage'],
+        app:['@babel/polyfill','./admin_main'],
     },
 
     module:{ // loaders

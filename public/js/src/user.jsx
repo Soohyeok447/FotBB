@@ -5,11 +5,14 @@ import { useFetch } from './useFetch';
 import {User_search} from './user_search';
 import {User_table} from './user_table';
 
-const User = () => {
+const User = ({rendered}) => {
     /* state */
     const [data, loading] = useFetch('https://fotbbapi.shop:2986/adminpage/user');
     const [afterban, setAfterban] = useState('');
     
+    if(!rendered){
+        return null;    
+    }
     
     /* render */
     return (
