@@ -41,9 +41,6 @@ const Stage = ({rendered}) => {
         //id값 기준으로 tr을 다시 붙인다~
         var tbody = document.querySelector('#stage-list tbody');
         tbody.innerHTML = '';
-  
-        console.log(sorted_list.length);
-        console.log(result.length);
 
         for(let j=0;sorted_list.length;j++){
             let tr = sorted_list[j].parentNode.childNodes;
