@@ -3,8 +3,7 @@ import React, { useState, memo,useEffect } from 'react';
 
 
 const Stage_table = ({ stages, setAfterban }) => {
-    const [selectedRow, setSelectedRow] = useState([]);
-    const [selectedEmail, setSelectedEmail] = useState('');
+
 
     /* method */
     useEffect(() => {

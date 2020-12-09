@@ -5,6 +5,7 @@ import ReactDom  from 'react-dom';
 import User_count from './src/user_count';
 import User from './src/user';
 import Stage from './src/stage';
+import Banned from './src/banned';
 
 
 
@@ -17,7 +18,7 @@ document.getElementById("btn_user").onclick = function() {
 
     ReactDom.render(<User rendered = {true}/>,document.querySelector('#user_component'));
     ReactDom.render(<Stage rendered = {false}/>,document.querySelector('#stage_component'));
-
+    ReactDom.render(<Banned rendered = {false}/>,document.querySelector('#ban_component'));
     
 }
 
@@ -26,7 +27,7 @@ document.getElementById("btn_stage").onclick = function() {
 
     ReactDom.render(<User rendered = {false}/>,document.querySelector('#user_component'));
     ReactDom.render(<Stage rendered = {true}/>,document.querySelector('#stage_component'));
-
+    ReactDom.render(<Banned rendered = {false}/>,document.querySelector('#ban_component'));
     
 }
 
@@ -35,7 +36,7 @@ document.getElementById("btn_ban").onclick = function() {
 
     ReactDom.render(<User rendered = {false}/>,document.querySelector('#user_component'));
     ReactDom.render(<Stage rendered = {false}/>,document.querySelector('#stage_component'));
-
+    ReactDom.render(<Banned rendered = {true}/>,document.querySelector('#ban_component'));
     
 }
 
@@ -44,6 +45,6 @@ document.getElementById("btn_report").onclick = function() {
 
     ReactDom.render(<User rendered = {false}/>,document.querySelector('#user_component'));
     ReactDom.render(<Stage rendered = {false}/>,document.querySelector('#stage_component'));
-
+    ReactDom.render(<Banned rendered = {false}/>,document.querySelector('#ban_component'));
     
 }

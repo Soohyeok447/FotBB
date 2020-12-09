@@ -78,7 +78,7 @@ const User_table = ({ users, setAfterban }) => {
             });
 
 
-            user_ban_modal.querySelector('#final_check').innerText = res;
+            user_ban_modal.querySelector('.final_check').innerText = res;
 
             function click(){
                 console.log('밴버튼에서 확인 클릭');
@@ -182,7 +182,7 @@ const User_table = ({ users, setAfterban }) => {
             let modified_email = user_modify_modal.querySelector('#email').value;
             let country = user_modify_modal.querySelector('#country').value;
 
-            console.log('밴버튼에서 확인 클릭');
+            console.log('수정버튼에서 확인 클릭');
             axios({
                 method: 'post',
                 url: 'https://fotbbapi.shop:2986/adminpage/user_modify',

@@ -5,7 +5,6 @@ const User_count = () => {
     /* state */
     const [data, loading] = useFetch('https://fotbbapi.shop:2986/adminpage/user');
 
-    console.log(data);
     /* render */
     return (
         <>

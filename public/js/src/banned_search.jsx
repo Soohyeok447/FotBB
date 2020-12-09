@@ -1,7 +1,7 @@
 import React, { useState, useRef,memo } from 'react';
 import axios from 'axios';
 
-const User_search = memo(() => {
+const Banned_search = memo(() => {
     /* state */
     const [search, setSearch] = useState('');
     const [constsearch, setConstsearch] = useState('');
@@ -117,4 +117,4 @@ const User_search = memo(() => {
 })
 
 
-export { User_search };
+export { Banned_search };

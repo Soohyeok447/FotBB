@@ -2,14 +2,11 @@ import {useState, useEffect} from 'react';
 import axios from 'axios';
 
 function useFetch(url){
-    console.log('useFetch Hook');
     const [data,setData] = useState([]);
     const [loading,setLoading] = useState(true);
     async function fetchUrl(){
         await axios.get(url).then(res => {
             let bowl;
-            console.log('url:',url);
-            console.log(res);
             if(res.data.users){
                 bowl = res.data.users.map(x => x);
             }else if(res.data.stages){

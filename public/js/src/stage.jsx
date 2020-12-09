@@ -7,20 +7,17 @@ import {Stage_table} from './stage_table';
 const Stage = ({rendered}) => {
     /* state */
     const [data, loading] = useFetch('https://fotbbapi.shop:2986/adminpage/stage');
-    const [afterban, setAfterban] = useState('');
+
     // const [list, setList] = useState([]);
 
     if(!rendered){
         return null;    
     }
 
-    // let result;
-    // let list;
-
+    
     let toggle = 1;
 
     const onClick = (e) => {
-        console.log('클리어 % 클릭 정렬하고 싶네요')
         e.preventDefault();
 
         let result = [];
@@ -123,7 +120,6 @@ const Stage = ({rendered}) => {
 
         return sorted_ranking
     }
-
 
     /* render */
     return (
