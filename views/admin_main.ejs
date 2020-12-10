@@ -24,10 +24,10 @@
     <button id="btn_sendemail">이메일 발송</button>
     <button id="btn_filteringDB">필터링단어 관리</button>
     <button id="btn_log">서버 로그(할지 안 할지 모름)</button>
-    <button id="btn_react">리액트연습</button>
   </div>
+
   <div id="user_count"></div>
-  <div id="root"></div>
+
   <div id="user_component"></div>
   <div id="stage_component"></div>
   <div id="ban_component"></div>
@@ -36,10 +36,11 @@
   <div id="filteringDB_component"></div>
   <div id="log_component"></div>
   <div id="react_component"></div>
+
   <div id="modal">
 
     <div id="user_ban_modal">
-      <span id="final_check"></span>
+      <span class="final_check"></span>
       <span> 를 정말 밴하시겠습니까?</span>
       <button id=ban_btn>네</button>
       <a class="modal_close_btn">닫기</a>
@@ -71,12 +72,27 @@
         <label for="badge">badge</label>
         <input id="badge" placeholder="badge" name="badge">
       </div>
+      <div id="country_modal">
+        <label for="country">country</label>
+        <input id="country" placeholder="country" name="country">
+      </div>
       <button id=modify_btn>수정</button>
       <a class="modal_close_btn">닫기</a>
     </div>
 
-    <div id="report_modal">
+    <div id="unban_modal">
+      <span class="final_check"></span>
+      <span> 를 밴 해제 하시겠습니까?</span>
+      <button id=unban_btn>네</button>
+      <a class="modal_close_btn">닫기</a>
+    </div>
 
+    <div id="report_modal">
+      <span id="original_id"></span>
+      <span>   =>   </span>
+      <span id="changed_id"></span>
+      <button id=changeid_btn>네</button>
+      <a class="modal_close_btn">닫기</a>
     </div>
 
 

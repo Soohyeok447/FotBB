@@ -75,6 +75,7 @@ border: 1px black solid;
 
 
 /* 모달창 */
+/* user 컴포넌트 */
 #user_modify_modal{
 	display: none;
 	width: auto;
@@ -102,10 +103,46 @@ border: 1px black solid;
 	border-radius: 3px;
 }
 
-
 #user_ban_modal .modal_close_btn{
 	position: absolute;
 	top: 10px;
 	right: 10px;
 }
 
+
+/* 밴해제 */
+#unban_modal {
+	display: none;
+	width: 500px;
+	height: 60px;
+	padding: 20px 40px;
+
+	background-color: #fefefe;
+	border: 1px solid #888;
+	border-radius: 3px;
+}
+
+#unban_modal .modal_close_btn{
+	position: absolute;
+	top: 10px;
+	right: 10px;
+}
+
+
+/* 신고 모달 */
+#report_modal {
+	display: none;
+	width: 700px;
+	height: 60px;
+	padding: 20px 40px;
+
+	background-color: #fefefe;
+	border: 1px solid #888;
+	border-radius: 3px;
+}
+
+#report_modal .modal_close_btn{
+	position: absolute;
+	top: 10px;
+	right: 10px;
+}

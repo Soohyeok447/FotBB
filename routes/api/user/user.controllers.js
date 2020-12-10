@@ -775,6 +775,12 @@ exports.id_change = async (req, res, next) => {
             }
             await e.save({ new: true });
         });
+
+        let report = await Report.findOne({id:before_id});;
+        report.id = new_id;
+        await report.save({new:true});
+        
+
         res.status(200).json({ message: `닉네임 변경 ${before_id} => ${new_id}`, code: 200 });
     }
 

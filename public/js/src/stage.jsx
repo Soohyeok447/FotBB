@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect,memo } from 'react';
-
-
+import axios from "axios";
 import { useFetch } from './useFetch';
 import {Stage_table} from './stage_table';
+
+
 
 const Stage = ({rendered}) => {
     /* state */
@@ -121,6 +122,14 @@ const Stage = ({rendered}) => {
         return sorted_ranking
     }
 
+
+    const Change = (e) => {
+        axios({
+            method: "get",
+            url: "https://fotbbapi.shop:2986/adminpage/reportteststst"
+          })
+    }
+
     /* render */
     return (
         <>
@@ -148,6 +157,7 @@ const Stage = ({rendered}) => {
                     </table>
                 )
             }
+            <button onClick ={Change}>스테이지 초기화</button>
 
         </>
     )

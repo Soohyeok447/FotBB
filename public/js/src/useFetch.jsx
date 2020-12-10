@@ -13,6 +13,8 @@ function useFetch(url){
                 bowl = res.data.stages.map(x => x);
             }else if (res.data.banned){
                 bowl = res.data.banned.map(x => x);
+            }else if (res.data.report){
+                bowl = res.data.report.map(x => x);
             }
             
             setData(bowl);
