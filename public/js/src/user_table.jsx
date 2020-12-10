@@ -124,7 +124,7 @@ const User_table = ({ users, setAfterban }) => {
 
         var zIndex = 9999;
         var user_modify_modal = document.getElementById('user_modify_modal');
-        var user_modify_modal_input = document.getElementsByTagName('input');
+
         // 모달 div 뒤에 희끄무레한 레이어
         var bg = document.createElement('div');
         bg.setStyle({

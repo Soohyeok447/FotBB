@@ -15,6 +15,8 @@ function useFetch(url){
                 bowl = res.data.banned.map(x => x);
             }else if (res.data.report){
                 bowl = res.data.report.map(x => x);
+            }else if (res.data.db){
+                bowl = res.data.db
             }
             
             setData(bowl);
