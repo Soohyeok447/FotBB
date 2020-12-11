@@ -60,19 +60,16 @@ const Report_search = memo(() => {
         var children = tr.childNodes;
         console.log(children);
         //이거 안쓰일지도
-        resolve(children[1].innerText);
+        resolve(children);
       });
     }
 
     promise(e)
       .then((res) => {
-        return res;
-      })
-      .then((res) => {
         var zIndex = 9999;
         var user_ban_modal = document.getElementById("user_ban_modal");
-        let email = res;
-
+        let email = res[1].innerText;
+        let id = res[0].innerText;
         // 모달 div 뒤에 희끄무레한 레이어
         var bg = document.createElement("div");
         bg.setStyle({
@@ -136,6 +133,19 @@ const Report_search = memo(() => {
               //handle error
               console.log(error);
             });
+
+
+            axios({
+              method: "post",
+              url: "https://fotbbapi.shop:2986/adminpage/modify_filter",
+              data: {
+                word: id,
+              },
+            }).then(function (res) {
+              console.log('필터 갱신')
+            })
+            
+
         }
         user_ban_modal
           .querySelector("#ban_btn")
@@ -166,7 +176,7 @@ const onClickIdChange = (e) => {
         var zIndex = 9999;
         var report_modal = document.getElementById("report_modal");
         let email = res[1].innerText;
-
+        let id = res[0].innerText;
         // 모달 div 뒤에 희끄무레한 레이어
         var bg = document.createElement("div");
         bg.setStyle({
@@ -233,6 +243,20 @@ const onClickIdChange = (e) => {
               //handle error
               console.log(error);
             });
+
+
+            axios({
+              method: "post",
+              url: "https://fotbbapi.shop:2986/adminpage/modify_filter",
+              data: {
+                word: id,
+              },
+            }).then(function (res) {
+              console.log('필터 갱신')
+            })
+            
+
+
         }
         report_modal
           .querySelector("#changeid_btn")
