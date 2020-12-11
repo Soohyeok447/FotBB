@@ -1,6 +1,116 @@
 import React, { useState, useRef, memo } from "react";
 import axios from "axios";
 
+var nick_obj = {
+	"noun": [
+		"개구리",
+		"아메리카노",
+		"아이스아메리카노",
+		"솜뭉치",
+		"다람쥐",
+		"병아리",
+		"노숙자",
+		"곰탱이",
+		"병아리",
+		"물총새",
+		"새끼손가락",
+		"새끼발가락",
+		"바위",
+		"호빵",
+		"새우튀김",
+		"강아지",
+		"고양이",
+		"고추장",
+		"공중전화",
+		"발가락",
+		"변호사",
+		"아저씨",
+		"새끼발가락",
+		"외국인",
+		"호랑이",
+		"사자",
+		"물개",
+		"가재",
+		"돼지",
+		"수달",
+		"친칠라",
+		"흑돼지",
+		"조랑말",
+		"나무늘보",
+		"참새",
+		"닭",
+		"메추라기",
+		"올빼미",
+		"거북이",
+		"목도리도마뱀",
+		"구렁이",
+		"악어",
+		"뱀장어",
+		"흰동가리",
+		"아기상어",
+		"새우",
+		"소라게",
+		"투구게",
+		"그리마",
+		"물방개",
+		"꿀벌",
+		"하늘소",
+		"모기",
+		"나비",
+		"불가사리",
+		"해파리",
+		"문어",
+		"달팽이"
+	],
+	"adj": [
+		"포근한",
+		"귀여운",
+		"멋진",
+		"잘생긴",
+		"자신감넘치는",
+		"예의바른",
+		"야생의",
+		"용감한",
+		"야심있는",
+		"출세한",
+		"가식적인",
+		"이기적인",
+		"엉뚱한",
+		"사나운",
+		"피곤한",
+		"우아한",
+		"화려한",
+		"소중한",
+		"난데없는",
+		"노란",
+		"무시무시한",
+		"비싼",
+		"빠른",
+		"성가신",
+		"슬픈",
+		"아픈",
+		"어린",
+		"엄청난",
+		"예쁜",
+		"즐거운",
+		"짓궂은",
+		"탐스러운",
+		"느닷없는",
+		"너그러운",
+		"깨끗한",
+		"게으른",
+		"자신없는",
+		"감각적인",
+		"진취적인",
+		"말랑한",
+		"섹시한",
+		"따뜻한",
+		"시원한",
+		"어두운",
+		"덤덤한"
+	]
+};
+
 const Report_search = memo(() => {
   /* state */
   const [search, setSearch] = useState("");
@@ -111,7 +221,7 @@ const Report_search = memo(() => {
           webkitTransform: "translate(-50%, -50%)",
         });
 
-        user_ban_modal.querySelector(".final_check").innerText = res;
+        user_ban_modal.querySelector(".final_check").innerText = email;
 
         function click() {
           console.log("밴 버튼에서 확인 클릭");
@@ -220,7 +330,7 @@ const onClickIdChange = (e) => {
 
 
         let changedId = generator();
-        report_modal.querySelector("#original_id").innerText = res[0].innerText;
+        report_modal.querySelector("#original_id").innerText = id;
         report_modal.querySelector("#changed_id").innerText = changedId;
 
 
@@ -319,3 +429,44 @@ const onClickIdChange = (e) => {
 });
 
 export { Report_search };
+
+//여기에다가 닉변함수
+function generator() {
+	let adj;
+	let noun;
+	let rand_int;
+	let combined_nickname;
+	const max_int = 10000;
+
+	//<형용사>
+	//형용사 객체 개수를 length로 구하고
+	let adj_max = nick_obj.adj.length;
+
+	//랜덤으로 객체(형용사)를 정한다.
+	let rand_adj = Math.floor(Math.random() * adj_max);
+
+
+	//객체 필드 접근으로 형용사를 뽑는다.
+	adj = nick_obj.adj[rand_adj];
+	//console.log("형용사",adj);
+
+	//<명사>
+	//명사 객체 개수를 length로 구하고
+	let noun_max = nick_obj.noun.length;
+
+	//랜덤으로 객체(명사)를 정한다.
+	let rand_noun = Math.floor(Math.random() * noun_max);
+
+	//객체 필드 접근으로 명사를 뽑는다.
+	noun = nick_obj.noun[rand_noun];
+	//console.log("명사",noun);
+
+	//랜덤 숫자를 뽑는다/
+	rand_int = Math.floor(Math.random() * max_int);
+	//console.log("랜덤숫자",rand_int);
+
+	//닉네임을 조합한다.
+	combined_nickname = adj + noun + rand_int;
+
+	return combined_nickname;
+}

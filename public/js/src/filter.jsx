@@ -50,7 +50,7 @@ const Filter = ({ rendered }) => {
             </div>
 
             <div>
-                <label>필터링 DB - 추가할 때 '단어1|(추가할 단어)' 이렇게 적어주세요~</label>
+                <label>필터링 DB - 추가할 때 <b>'단어1|(추가할 단어)'</b> 이렇게 적어주세요~ </label>
             </div>
             <div className="textwrapper">
                 <form id='filter_form' onSubmit={onclickSubmit}>
