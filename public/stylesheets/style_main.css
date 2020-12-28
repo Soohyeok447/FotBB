@@ -146,3 +146,22 @@ border: 1px black solid;
 	top: 10px;
 	right: 10px;
 }
+
+
+#db_box{
+	border:3px solid black;
+}
+
+#filter{
+  width:100%;
+
+}
+
+.textwrapper{
+  border:3px solid #999999;
+  margin:5px 0;
+  padding:3px;
+  padding-top:15px;
+  padding-bottom:15px;
+}
+

@@ -7,6 +7,19 @@ var { ban, delete_playing, get_userid, get_now, get_country_leaderboard, get_glo
 
 var { logger, play, userinfo } = require('../../../config/logger');
 var { upload } = require('./../../../config/s3_option');
+var { fail } = require('./../../../config/failLogger');
+
+var moment = require('moment');
+require('moment-timezone');
+moment.tz.setDefault("Asia/Seoul");
+
+function set_date() {
+    dateformat = moment().format('YYYY-MM-DD');
+    return dateformat;
+}
+
+
+
 
 
 
@@ -46,10 +59,12 @@ exports.result = async (req, res, next) => {
         crystal,
         royal_crystal,
         cleartime,
+        failtime,
         stage_name,
         result_type,
         used_bee_custom,
         used_badge,
+        
     } = req.body;
 
 
@@ -234,15 +249,12 @@ exports.result = async (req, res, next) => {
                     console.log('커스텀 뱃지 사기입니다. 유저 밴')
                     res.status(200).json({ message: '유효하지 않은 커스텀, 뱃지', status: 'banned' });
                 }
-            } else { //fail
+                //fail
+            } else { 
                 try {
                     await delete_playing(email);
                     //User 모델의 death, playtime 갱신
                     
-                
-
-
-
                     let user = await User.findOne({email:email});
 
                     await up_crystal(user,crystal,royal_crystal);
@@ -271,7 +283,7 @@ exports.result = async (req, res, next) => {
                     res.status(200).json({ status: 'fail', user: user, "total_death": user.total_death, "stage_total_death": stage.total_death, "Normal_death": stage.Normal[userindex].death });
                     logger.info(`${user.googleid} 가 노말 ${stage_name} 실패.`);
                     play.info(`${user.googleid} 가 노말 ${stage_name} 실패.`);
-
+                    fail(stage_name,failtime);
                 } catch (err) {
                     res.status(500).json({ error: "database failure" });
                     logger.error(`스테이지 fail 에러: ${user.googleid} [${err}]`);

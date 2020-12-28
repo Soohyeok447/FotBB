@@ -35,7 +35,7 @@ router.get(
     failureFlash: true,
   }),
   function (req, res) {
-    console.log("\n\n성공을 해서 /main으로 리다이렉트 시키겠습니다.");
+    // console.log("\n\n성공을 해서 /main으로 리다이렉트 시키겠습니다.");
     res.redirect("https://fotbbapi.shop:2986/adminpage/main");
   }
 );
@@ -54,26 +54,26 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, cb) => {
       try {
-        console.log("구글로그인을 했습니다. 구글전략이 실행됩니다.");
-        console.log("이 밑은 로그인을 해서 얻은 profile입니다.");
-        console.log(profile);
+        // console.log("구글로그인을 했습니다. 구글전략이 실행됩니다.");
+        // console.log("이 밑은 로그인을 해서 얻은 profile입니다.");
+        // console.log(profile);
 
-        console.log(
-          "자 그럼이제 구글전략안에 있는 콜백을 실행시켜보겠습니다.\n\n"
-        );
+        // console.log(
+        //   "자 그럼이제 구글전략안에 있는 콜백을 실행시켜보겠습니다.\n\n"
+        // );
         const exUser = await User.findOne({ email: profile._json.email });
         if (exUser) {
-          console.log(exUser);
-          console.log("유저가 DB에 존재");
+          // console.log(exUser);
+          // console.log("유저가 DB에 존재");
           if (exUser.admin === true) {
-            console.log("게다가 어드민 맞음. 로그인 성공");
+            // console.log("게다가 어드민 맞음. 로그인 성공");
             return cb(null, exUser);
           } else {
-            console.log("어드민이 아니네 로그인 실패");
+            // console.log("어드민이 아니네 로그인 실패");
             return cb(null, false, { message: "no admin" });
           }
         } else {
-          console.log("DB에 없는 유저입니다.");
+          // console.log("DB에 없는 유저입니다.");
           return cb(null, false, { message: "no data" });
         }
       } catch (error) {
@@ -84,27 +84,27 @@ passport.use(
 );
 //패스포트
 passport.serializeUser((user, done) => {
-  console.log(
-    "serializeUser입니다. 이 밑은 구글전략에서 넘겨받은 data입니다.",
-    user
-  );
-  console.log("\n\n");
-  console.log(
-    "serializeuser메서드 안에서 done을 실행시키겠습니다. req.session에 저장되며, deserializeUser에는 user.email을 넘기겠습니다."
-  );
+  // console.log(
+  //   "serializeUser입니다. 이 밑은 구글전략에서 넘겨받은 data입니다.",
+  //   user
+  // );
+  // console.log("\n\n");
+  // console.log(
+  //   "serializeuser메서드 안에서 done을 실행시키겠습니다. req.session에 저장되며, deserializeUser에는 user.email을 넘기겠습니다."
+  // );
 
   let obj = {};
   obj.id = user.googleid;
   obj.email = user.email;
-  console.log(obj);
+  // console.log(obj);
   done(null, obj); //구글 이메일을 req.session 객체에 넘김
 });
 
 passport.deserializeUser((Obj, done) => {
-  console.log(
-    "\n\ndeserializeUser입니다. serializeuser에서 받은 obj가 여기서 req.user에 저장됩니다.",
-    Obj
-  );
+  // console.log(
+  //   "\n\ndeserializeUser입니다. serializeuser에서 받은 obj가 여기서 req.user에 저장됩니다.",
+  //   Obj
+  // );
   done(null, Obj); // 여기의 user가 req.user가 됨
 });
 
@@ -141,7 +141,9 @@ router.get("/reportteststst",isLoggedIn, Controller.reportteststst)
 // //로그관리 페이지
 // router.get("/log",Controller.log);
 
-//리액트연습
+// 필터링 관리용 컨트롤러
+router.get("/filter",isLoggedIn ,Controller.filter);
+router.post("/modify_filter",isLoggedIn ,Controller.modifyFilter);
 
 
 // router.get('/auth/google',Controller.auth_google);

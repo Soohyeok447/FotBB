@@ -33,30 +33,52 @@ const _version = current_version.version;
 
 
 //닉네임 비속어 필터링
+// function id_filter(new_id) {
+//     //특수문자 제거용 reg
+
+//     var reg = /[\{\}\[\]\/?.,;:\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi
+//     console.log(`필터링 함수 내의 id - ${new_id}`);
+//     //특수문자 필터링
+//     var _filter = filter.toString().replace(reg, "");
+//     var _filter = _filter.toString().replace(/\r\n/g, ""); //엔터
+//     var result = new RegExp(_filter);
+//     //txt 파일 정규표현식 객체화
+
+//     console.log(result);  // -> 필터링단어 목록을 찍어낸다
+
+//     //필터링되지 않으면 false 반환, 필터링 되면 true 반환
+//     let test = result.exec(new_id);
+//     console.log(`정규표현식 결과 -> ${test}`);
+//     //true, false로 치환
+//     if (test !== null) {
+//         filtered = true;
+//     } else {
+//         console.log("필터링 통과했습니다.")
+//         filtered = false;
+//     }
+//     return filtered;
+// }
+
 function id_filter(new_id) {
-    //특수문자 제거용 reg
+    const reg = /[\{\}\[\]\/?.,;:\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi;
+    let _filter = filter.replace(reg, ``);
+    _filter = _filter.replace(/\r\n/g, ``);
 
-    var reg = /[\{\}\[\]\/?.,;:\)*~`!^\-_+<>@\#$%&\\\=\(\'\"]/gi
-    console.log(`필터링 함수 내의 id - ${new_id}`);
-    //특수문자 필터링
-    var _filter = filter.toString().replace(reg, "");
-    var _filter = _filter.toString().replace(/\r\n/g, ""); //엔터
-    var result = new RegExp(_filter);
-    //txt 파일 정규표현식 객체화
-
-    console.log(result);  // -> 필터링단어 목록을 찍어낸다
-
-    //필터링되지 않으면 false 반환, 필터링 되면 true 반환
-    let test = result.exec(new_id);
-    console.log(`정규표현식 결과 -> ${test}`);
-    //true, false로 치환
-    if (test !== null) {
-        filtered = true;
-    } else {
-        console.log("필터링 통과했습니다.")
-        filtered = false;
+    let tested = false;
+    let from = 0;
+    const division = 10;
+    const length = Math.floor(_filter.length * 1/division)-1
+    while(!tested) {
+        if (from > _filter.length) break;
+        let corr = _filter.substr(from + length, length).indexOf('|');
+        let divided = _filter.substr(from, length + corr -1);
+        let result = new RegExp(divided);
+        if (result.exec(new_id) != null && result.exec(new_id) != '') {
+            tested = true;
+        }
+        from += length + corr + 1;
     }
-    return filtered;
+    return tested;
 }
 
 
